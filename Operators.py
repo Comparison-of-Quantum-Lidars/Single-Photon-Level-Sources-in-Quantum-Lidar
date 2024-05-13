@@ -1,29 +1,109 @@
 import numpy as np
 import math
 from scipy import linalg
+from scipy.sparse import diags
 from typing import Union, Type, List
 
 
 class Operators:
 
-	def __init__(self, dimension):
-		self.operator = np.zeros((dimension, dimension))
-		self.n = dimension
+	def __init__(self, operator: np.array):
+		self.operator = operator
+		self.assert_operator()
+		self.n = operator.shape[0]
 
-	def __add__(self, other):
-		if isinstance(other, Operators):
-			assert self.n == other.n, "Operators must have the same dimension"
-			return self.operator + other.operator
-		elif isinstance(other, State):
-			pass
+	def assert_operator(self):
+		assert len(self.operator.shape) == 2, "Operator must be a 2D matrix"
+		assert self.operator.shape[0] == self.operator.shape[1], "Operator must be a square matrix"
 
 	def __repr__(self):
-		return f"Operator is ({self.operator})"
+		return f"Operator is : \n ({self.operator})"
 
 	@property
 	def shape(self):
 		return self.operator.shape
 
+	@staticmethod
+	def identity(n: int):
+		return Operators(np.eye(n))
+
+	@staticmethod
+	def annihilation(n: int):
+		return Operators(np.diag([np.sqrt(i) for i in range(1, n)], k=1))
+
+
+	@staticmethod
+	def creation(n: int):
+		return Operators(np.diag([np.sqrt(i) for i in range(1, n)], k=-1))
+
+	def __mul__(self, other):
+		if isinstance(other, float) or isinstance(other, int):
+			return Operators(self.operator * other)
+		if isinstance(other, Operators):
+			my_operator = self.operator
+			other_operator = other.operator
+			return Operators(np.matmul(my_operator, other_operator))
+		if isinstance(other, State):
+			res = np.matmul(self.operator, other.state)
+			# check if matrix or vector
+			if res.shape[0] == res.shape[1]:
+				return Operators(res)
+			elif res.shape[0]==1 or res.shape[1]==1:
+				return State(res)
+			else:
+				raise ValueError("Invalid multiplication : the outcome is not a vector or a squared matrix")
+
+	def __rmul__(self, other):
+		if isinstance(other, float) or isinstance(other, int):
+			return Operators(self.operator * other)
+		if isinstance(other, Operators):
+			my_operator = self.operator
+			other_operator = other.operator
+			return Operators(np.matmul(other_operator, my_operator))
+		if isinstance(other, State):
+			return State(np.matmul(self.operator, other.state))
+
+	def __add__(self, other):
+		if isinstance(other, Operators):
+			return Operators(self.operator + other.operator)
+
+	def __sub__(self, other):
+		if isinstance(other, Operators):
+			return Operators(self.operator - other.operator)
+
+	def __eq__(self, other):
+		if isinstance(other, Operators):
+			return np.allclose(self.operator, other.operator)
+		return False
+
+	@property
+	def type(self):
+		return "Operator"
+
+	@staticmethod
+	def bucket_detector(n: int, efficiency: float, noise: float):
+		observable = np.zeros((n, n))
+		for i in range(n):
+			observable[i, i] = 1 - ((1 - efficiency) ** i)
+		observable = Operators(observable) + Operators.identity(n) * noise
+		return observable
+
+	@staticmethod
+	def displacement(n: int, alpha: complex):
+		argument = alpha*Operators.creation(n) - np.conj(alpha)*Operators.annihilation(n)
+		return Operators(linalg.expm(argument.operator))
+
+	@property
+	def conj(self):
+		return Operators(np.conj(self.operator))
+
+	def dagger(self):
+		return Operators(self.operator.conj().T)
+
+	def expect(self, state):
+		my_operator = self.operator
+		res = state.dagger() * Operators(my_operator) * state
+		return res.state[0][0]
 
 class State:
 
@@ -34,8 +114,6 @@ class State:
 
 	def assert_state_vector(self):
 		assert len(self.state.shape) == 2, "State must be a 2D vectors"
-		assert self.state.shape[1] == 1, "State must be a column vector"
-		assert math.isclose(linalg.norm(self.state), 1, rel_tol=1e-6), "State must be normalized"
 
 	@property
 	def n(self):
@@ -81,47 +159,19 @@ class State:
 	def __sub__(self):
 		pass
 
-	def __mul__(self):
-		pass
+	def __mul__(self, other):
+		if isinstance(other, float) or isinstance(other, int):
+			return State(self.state * other)
+		if isinstance(other, State):
+			res = np.matmul(self.state, other.state)
+			if res.shape[0] == 1:
+				return State(res)
+			else:
+				raise ValueError("Invalid multiplication : the outcome is not a vector")
+		if isinstance(other, Operators):
+			res = np.matmul(self.state, other.operator)
+			if res.shape[0] == 1:
+				return State(res)
+			else:
+				raise ValueError("Invalid multiplication : the outcome is not a vector")
 
-
-class DisplacementOperator(Operators):
-
-	def __init__(self):
-		super().__init__()
-
-	def __add__(self, other: [Operators, State]):
-		pass
-
-	def __sub__(self, other: [Operators, State]):
-		pass
-
-	def __mul__(self, other: [Operators, State]):
-		pass
-
-	def expected_value(self, state: State):
-		pass
-
-
-class AnnihilationOperator(Operators):
-
-	def __init__(self, n: int):
-		super().__init__(n)
-		self.n = n
-
-
-class CreationOperator(Operators):
-
-	def __init__(self, n: int):
-		super().__init__(n)
-
-
-class BucketDetector(Operators):
-
-	def __init__(self, n: int):
-		super(BucketDetector, self).__init__(n)
-
-class Identity(Operators):
-
-	def __init__(self, n: int):
-		super(Identity, self).__init__(n)

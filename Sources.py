@@ -1,25 +1,97 @@
 import numpy as np
+from Operators import State, Operators
 
 
-class EntangledPhotonSource:
+class Source:
 
 	def __init__(self, params):
 		self.params = params
+		self.check_all_params()
+		self.fock_space_dim = params["fock_space_dim"]
+		self.output_power = params["output_power"]
+		self.laser_rate = params["laser_rate"]
+		self.sp_collection = params["sp_collection"]
+		self.sp_p1 = params["sp_p1"]
+		self.sp_p2 = params["sp_p2"]
+		self.spdc_eps_heralding = params["spdc_eps_heralding"]
+		self.spdc_eps_collection = params["spdc_eps_collection"]
+		self.spdc_emission = params["spdc_emission"]
+		self.target_distance = params["target_distance"]
+		self.receiver_diameter = params["receiver_diameter"]
+		self.target_albedo = params["target_albedo"]
+		self.optics_transmitter_eff = params["optics_transmitter"]
+		self.optics_receiver_eff = params["optics_receiver"]
+		self.detection_efficiency = params["detection_efficiency"]
+		self.background = params["background"]
+		self.detector_dark = params["detector_dark"]
+		self.timing_window = params["timing_window"]
 
 	def check_all_params(self):
 		pass
 
 
-class SinglePhotonSource:
+class PulsedLaser(Source):
 
-	def __init__(self):
+	def __init__(self, params):
+		super().__init__(params)
+
+	def check_all_params(self):
 		pass
 
+	def overall_detection_probability(self):
+		# Overall detection of the detector
 
-class PulsedLaserSource:
+		solid_angle_approx = (np.pi * self.receiver_diameter ** 2 / 4) / (2 * np.pi * self.target_distance ** 2)
+		eta_detector = solid_angle_approx * self.optics_receiver_eff * self.target_albedo * self.optics_transmitter_eff * self.detection_efficiency
 
-	def __init__(self):
-		pass
+		# Overall noise detection
+		eta_noise = (self.background + self.detector_dark) * self.timing_window
+
+		return eta_detector, eta_noise
+
+	def compute_alpha(self):
+		return np.sqrt(self.output_power / self.laser_rate)
+
+	def compute_laser_state(self):
+		alpha = self.compute_alpha()
+		vacuum = State.vacuum(self.fock_space_dim)
+		displacement = Operators.displacement(self.fock_space_dim, alpha)
+		laser_state = displacement * vacuum
+		return laser_state
+
+	def effective_trigger_rate(self):
+		return self.laser_rate
+
+	def detector2observable(self):
+		eta_detector, eta_noise = self.overall_detection_probability()
+		apd_detector = Operators.bucket_detector(self.fock_space_dim, eta_detector, eta_noise)
+		return apd_detector
+
+	def signal_rate(self):
+		apd_detector = self.detector2observable()
+		laser_state = self.compute_laser_state()
+		signal = self.effective_trigger_rate() * apd_detector.expect(laser_state)
+		return signal
+
+	def signal_to_noise_rate(self):
+		signal = self.signal_rate()
+		vacuum = State.vacuum(self.fock_space_dim)
+		apd_detector = self.detector2observable()
+		noise = self.effective_trigger_rate() * apd_detector.expect(vacuum)
+		signal_to_noise = signal / noise
+		return signal_to_noise
+
+
+class SinglePhoton(Source):
+
+	def __init__(self, params):
+		super().__init__(params)
+
+
+class EntangledPhoton(Source):
+
+	def __init__(self, params):
+		super().__init__(params)
 
 
 class SetupParameters:
@@ -30,6 +102,8 @@ class SetupParameters:
 	@staticmethod
 	def help():
 		print("Here are the parameters you can set:")
+		print("--- General ---")
+		print("fock_space_dim: Dimension of the fock space, must be an integer")
 		print("--- Sources ---")
 		print("output_power: optical output power of the source in photon per second [s^-1]")
 		print("laser_rate: Pulsing rate of the laser source [Hz]")

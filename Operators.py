@@ -154,7 +154,10 @@ class State:
 		return State(self.state.conj().T)
 
 	def __add__(self, other):
-		pass
+		if isinstance(other, State):
+			return State(self.state + other.state)
+		else:
+			raise NotImplementedError("Only addition between states is implemented")
 
 	def __sub__(self):
 		pass
@@ -175,3 +178,8 @@ class State:
 			else:
 				raise ValueError("Invalid multiplication : the outcome is not a vector")
 
+	def __rmul__(self, other):
+		if isinstance(other, float) or isinstance(other, int):
+			return State(self.state * other)
+		else:
+			raise NotImplementedError("Only right multiplication by scalar is implemented")

@@ -29,15 +29,6 @@ class Source:
 	def check_all_params(self):
 		pass
 
-
-class PulsedLaser(Source):
-
-	def __init__(self, params):
-		super().__init__(params)
-
-	def check_all_params(self):
-		pass
-
 	def overall_detection_probability(self):
 		# Overall detection of the detector
 
@@ -48,6 +39,12 @@ class PulsedLaser(Source):
 		eta_noise = (self.background + self.detector_dark) * self.timing_window
 
 		return eta_detector, eta_noise
+
+
+class PulsedLaser(Source):
+
+	def __init__(self, params):
+		super().__init__(params)
 
 	def compute_alpha(self):
 		return np.sqrt(self.output_power / self.laser_rate)
@@ -87,6 +84,34 @@ class SinglePhoton(Source):
 	def __init__(self, params):
 		super().__init__(params)
 
+	def single_photon_state(self):
+		vacuum = np.sqrt(1 - self.sp_p1 - self.sp_p2) * State.vacuum(self.fock_space_dim)
+		one_photon = np.sqrt(self.sp_p1) * State.one_photon(self.fock_space_dim)
+		two_photon = np.sqrt(self.sp_p2) * State.two_photon(self.fock_space_dim)
+		return vacuum + one_photon + two_photon
+
+	def effective_trigger_rate(self):
+		#TODO : CONFIRM THIS EQUATION -> NOT SURE
+		return self.output_power / (self.sp_p1 + 2 * self.sp_p2) / self.sp_collection
+
+	def detector2observable(self):
+		eta_detector, eta_noise = self.overall_detection_probability()
+		apd_detector = Operators.bucket_detector(self.fock_space_dim, self.sp_collection*eta_detector, eta_noise)
+		return apd_detector
+
+	def signal_rate(self):
+		apd_detector = self.detector2observable()
+		single_photon_state = self.single_photon_state()
+		signal_rate = self.effective_trigger_rate() * apd_detector.expect(single_photon_state)
+		return signal_rate
+
+	def signal_to_noise_rate(self):
+		signal = self.signal_rate()
+		apd_detector = self.detector2observable()
+		vacuum = State.vacuum(self.fock_space_dim)
+		noise = self.effective_trigger_rate() * apd_detector.expect(vacuum)
+		signal_to_noise = signal / noise
+		return signal_to_noise
 
 class EntangledPhoton(Source):
 

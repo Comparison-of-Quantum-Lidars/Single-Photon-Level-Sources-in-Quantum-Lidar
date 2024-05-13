@@ -70,6 +70,12 @@ class PulsedLaser(Source):
 		signal = self.effective_trigger_rate() * apd_detector.expect(laser_state)
 		return signal
 
+	def noise_rate(self):
+		apd_detector = self.detector2observable()
+		vacuum = State.vacuum(self.fock_space_dim)
+		noise = self.effective_trigger_rate() * apd_detector.expect(vacuum)
+		return noise
+
 	def signal_to_noise_rate(self):
 		signal = self.signal_rate()
 		vacuum = State.vacuum(self.fock_space_dim)
@@ -85,7 +91,7 @@ class SinglePhoton(Source):
 		super().__init__(params)
 
 	def single_photon_state(self):
-		vacuum = np.sqrt(1 - self.sp_p1 - self.sp_p2) * State.vacuum(self.fock_space_dim)
+		vacuum = np.sqrt(1 - (self.sp_p1 - self.sp_p2)) * State.vacuum(self.fock_space_dim)
 		one_photon = np.sqrt(self.sp_p1) * State.one_photon(self.fock_space_dim)
 		two_photon = np.sqrt(self.sp_p2) * State.two_photon(self.fock_space_dim)
 		return vacuum + one_photon + two_photon
@@ -104,6 +110,12 @@ class SinglePhoton(Source):
 		single_photon_state = self.single_photon_state()
 		signal_rate = self.effective_trigger_rate() * apd_detector.expect(single_photon_state)
 		return signal_rate
+
+	def noise_rate(self):
+		apd_detector = self.detector2observable()
+		vacuum = State.vacuum(self.fock_space_dim)
+		noise = self.effective_trigger_rate() * apd_detector.expect(vacuum)
+		return noise
 
 	def signal_to_noise_rate(self):
 		signal = self.signal_rate()

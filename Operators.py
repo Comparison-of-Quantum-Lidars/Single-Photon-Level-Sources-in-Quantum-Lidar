@@ -6,8 +6,14 @@ from typing import Union, Type, List
 
 
 class Operators:
+	"""
+	Operators class to represent operators in the fock space based on numpy arrays
+	"""
 
 	def __init__(self, operator: np.array):
+		"""
+		:param operator: Matrix representing the operator in the fock space
+		"""
 		self.operator = operator
 		self.assert_operator()
 		self.n = operator.shape[0]
@@ -25,15 +31,30 @@ class Operators:
 
 	@staticmethod
 	def identity(n: int):
+		"""
+		Build the identity operator
+		:param n: Dimension of the operator in the fock space
+		:return: Identity Operators
+		"""
 		return Operators(np.eye(n))
 
 	@staticmethod
 	def annihilation(n: int):
+		"""
+		Build the annihilation operator
+		:param n: Dimension of the operator in the fock space
+		:return: Annihilation Operators
+		"""
 		return Operators(np.diag([np.sqrt(i) for i in range(1, n)], k=1))
 
 
 	@staticmethod
 	def creation(n: int):
+		"""
+		Build the creation operator
+		:param n: Dimension of the operator in the fock space
+		:return: Creation Operators
+		"""
 		return Operators(np.diag([np.sqrt(i) for i in range(1, n)], k=-1))
 
 	def __mul__(self, other):
@@ -82,6 +103,13 @@ class Operators:
 
 	@staticmethod
 	def bucket_detector(n: int, efficiency: float, noise: float):
+		"""
+		Build the bucket detector operator for APD detection
+		:param n: Dimension of the operator in the fock space
+		:param efficiency: Detection efficiency
+		:param noise: Noise in the detector
+		:return: Bucket detector operator
+		"""
 		observable = np.zeros((n, n))
 		for i in range(n):
 			observable[i, i] = 1 - ((1 - efficiency) ** i)
@@ -90,24 +118,47 @@ class Operators:
 
 	@staticmethod
 	def displacement(n: int, alpha: complex):
+		"""
+		Build the displacement operator
+		:param n: Dimension of the operator in the fock space
+		:param alpha: Complex number representing the displacement
+		:return: Displacement operator
+		"""
 		argument = alpha*Operators.creation(n) - np.conj(alpha)*Operators.annihilation(n)
 		return Operators(linalg.expm(argument.operator))
 
 	@property
 	def conj(self):
+		"""
+		Compute the conjugate of the operator
+		"""
 		return Operators(np.conj(self.operator))
 
 	def dagger(self):
+		"""
+		Compute the conjugate transpose of the operator
+		"""
 		return Operators(self.operator.conj().T)
 
 	def expect(self, state):
+		"""
+		Compute the expectation value of the operator in the given state
+		:param state: State object to compute the expected value. Must be a column vector!
+		:return: Expected value as a float
+		"""
 		my_operator = self.operator
 		res = state.dagger() * Operators(my_operator) * state
 		return res.state[0][0]
 
 class State:
+	"""
+	State class to represent states in the fock space based on numpy arrays
+	"""
 
 	def __init__(self, state: np.array):
+		"""
+		:param state: Vector representing the state in the fock space
+		"""
 		self.state = state
 		self.assert_state_vector()
 		self.dimension = state.shape[0]
@@ -121,16 +172,31 @@ class State:
 
 	@staticmethod
 	def vacuum(n: int):
+		"""
+		Built the vacuum state
+		:param n: Dimension of the state in the fock space
+		:return: Vacuum State
+		"""
 		return State(np.array([1] + [0] * (n - 1)).reshape(-1, 1))
 
 	@staticmethod
 	def one_photon(n: int):
+		"""
+		Built the one photon state
+		:param n: Dimension of the state in the fock space
+		:return: One photon State
+		"""
 		assert n > 0, "n must be greater than 0"
 		assert n > 1, "n must be greater than 1"
 		return State(np.array([0] + [1] + [0] * (n - 2)).reshape(-1, 1))
 
 	@staticmethod
 	def two_photon(n: int):
+		"""
+		Built the two photon state
+		:param n: Dimension of the state in the fock space
+		:return: Two photon State
+		"""
 		assert n > 0, "n must be greater than 0"
 		assert n > 2, "n must be greater than 2"
 		return State(np.array([0] * 2 + [1] + [0] * (n - 3)).reshape(-1, 1))
@@ -144,6 +210,10 @@ class State:
 
 	@property
 	def conj(self):
+		"""
+		Compute the conjugate of the state
+		:return:
+		"""
 		return State(np.conj(self.state))
 
 	def dagger(self):

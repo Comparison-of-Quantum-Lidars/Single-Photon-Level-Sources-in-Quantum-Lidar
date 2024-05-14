@@ -16,11 +16,10 @@ class Operators:
 		"""
 		self.operator = operator
 		self.assert_operator()
-		self.n = operator.shape[0]
+		self.n = operator.shape
 
 	def assert_operator(self):
 		assert len(self.operator.shape) == 2, "Operator must be a 2D matrix"
-		assert self.operator.shape[0] == self.operator.shape[1], "Operator must be a square matrix"
 
 	def __repr__(self):
 		return f"Operator is : \n ({self.operator})"
@@ -47,7 +46,6 @@ class Operators:
 		"""
 		return Operators(np.diag([np.sqrt(i) for i in range(1, n)], k=1))
 
-
 	@staticmethod
 	def creation(n: int):
 		"""
@@ -56,6 +54,16 @@ class Operators:
 		:return: Creation Operators
 		"""
 		return Operators(np.diag([np.sqrt(i) for i in range(1, n)], k=-1))
+
+	@staticmethod
+	def squeezed(n: int, spdc_emission: float):
+		a = Operators.annihilation(n)
+		a_dagger = Operators.creation(n)
+		spdc_epsilon = np.arcsinh(np.sqrt(spdc_emission))
+		argument = (a@a) + (a_dagger@a_dagger)
+		argument_complex = -1j*argument*spdc_epsilon
+		squeezed_operator = linalg.expm(argument_complex.operator)
+		return Operators(squeezed_operator)
 
 	def __mul__(self, other):
 		if isinstance(other, float) or isinstance(other, int):
@@ -69,13 +77,13 @@ class Operators:
 			# check if matrix or vector
 			if res.shape[0] == res.shape[1]:
 				return Operators(res)
-			elif res.shape[0]==1 or res.shape[1]==1:
+			elif res.shape[0] == 1 or res.shape[1] == 1:
 				return State(res)
 			else:
 				raise ValueError("Invalid multiplication : the outcome is not a vector or a squared matrix")
 
 	def __rmul__(self, other):
-		if isinstance(other, float) or isinstance(other, int):
+		if isinstance(other, float) or isinstance(other, int) or isinstance(other, complex):
 			return Operators(self.operator * other)
 		if isinstance(other, Operators):
 			my_operator = self.operator
@@ -96,6 +104,49 @@ class Operators:
 		if isinstance(other, Operators):
 			return np.allclose(self.operator, other.operator)
 		return False
+
+	def __matmul__(self, other):
+		"""
+		Perform the kronecker product between two operators
+		:param other: Operator to perform the tensor product with
+		:return: Tensor product of the two operators
+		"""
+		if isinstance(other, Operators):
+			res = np.kron(self.operator, other.operator)
+			if res.shape[0] == 1 or res.shape[1] == 1:
+				return State(res)
+			else:
+				return Operators(res)
+		elif isinstance(other, State):
+			res = np.kron(self.operator, other.state)
+			if res.shape[0] == 1 or res.shape[1] == 1:
+				return State(res)
+			else:
+				return Operators(res)
+		else:
+			raise NotImplementedError("Only Kronecker product between operators is implemented")
+
+	def __rmatmul__(self, other):
+		if isinstance(other, Operators):
+			res = np.kron(other.operator, self.operator)
+			if res.shape[0] == 1 or res.shape[1] == 1:
+				return State(res)
+			else:
+				return Operators(res)
+		elif isinstance(other, State):
+			res = np.kron(other.state, self.operator)
+			if res.shape[0] == 1 or res.shape[1] == 1:
+				return State(res)
+			elif res.shape[0] == res.shape[1]:
+				return Operators(res)
+		else:
+			raise NotImplementedError("Only Kronecker product between operators is implemented")
+
+	def __getitem__(self, item):
+		return self.operator[item]
+
+	def __setitem__(self, key, value):
+		self.operator[key] = value
 
 	@property
 	def type(self):
@@ -124,7 +175,7 @@ class Operators:
 		:param alpha: Complex number representing the displacement
 		:return: Displacement operator
 		"""
-		argument = alpha*Operators.creation(n) - np.conj(alpha)*Operators.annihilation(n)
+		argument = alpha * Operators.creation(n) - np.conj(alpha) * Operators.annihilation(n)
 		return Operators(linalg.expm(argument.operator))
 
 	@property
@@ -150,6 +201,7 @@ class Operators:
 		res = state.dagger() * Operators(my_operator) * state
 		return res.state[0][0]
 
+
 class State:
 	"""
 	State class to represent states in the fock space based on numpy arrays
@@ -161,7 +213,7 @@ class State:
 		"""
 		self.state = state
 		self.assert_state_vector()
-		self.dimension = state.shape[0]
+		self.dimension = max(state.shape)
 
 	def assert_state_vector(self):
 		assert len(self.state.shape) == 2, "State must be a 2D vectors"
@@ -233,7 +285,7 @@ class State:
 		pass
 
 	def __mul__(self, other):
-		if isinstance(other, float) or isinstance(other, int):
+		if isinstance(other, float) or isinstance(other, int) or isinstance(other, complex):
 			return State(self.state * other)
 		if isinstance(other, State):
 			res = np.matmul(self.state, other.state)
@@ -253,3 +305,43 @@ class State:
 			return State(self.state * other)
 		else:
 			raise NotImplementedError("Only right multiplication by scalar is implemented")
+
+	def __matmul__(self, other):
+		# Apply the kronecker product between two states
+		if isinstance(other, State):
+			res = np.kron(self.state, other.state)
+			if res.shape[0] == 1 or res.shape[1] == 1:
+				return State(res)
+			else:
+				return Operators(res)
+		elif isinstance(other, Operators):
+			res = np.kron(self.state, other.operator)
+			if res.shape[0] == 1 or res.shape[1] == 1:
+				return State(res)
+			else:
+				return Operators(res)
+		else:
+			raise NotImplementedError("Only Kronecker product between states and operators is implemented")
+
+	def __rmatmul__(self, other):
+		# Apply the kronecker product between two states
+		if isinstance(other, State):
+			res = np.kron(other.state, self.state)
+			if res.shape[0] == 1 or res.shape[1] == 1:
+				return State(res)
+			else:
+				return Operators(res)
+		elif isinstance(other, Operators):
+			res = np.kron(other.operator, self.state)
+			if res.shape[0] == 1 or res.shape[1] == 1:
+				return State(res)
+			else:
+				return Operators(res)
+		else:
+			raise NotImplementedError("Only Kronecker product between states is implemented")
+
+	def __getitem__(self, item):
+		return self.state[item]
+
+	def __setitem__(self, key, value):
+		self.state[key] = value

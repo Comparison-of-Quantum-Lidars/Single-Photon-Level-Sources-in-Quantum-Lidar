@@ -156,7 +156,7 @@ class SinglePhoton(Source):
 		:return: Observable representing the detector
 		"""
 		eta_detector, eta_noise = self.overall_detection_probability()
-		apd_detector = Operators.bucket_detector(self.fock_space_dim, self.sp_collection*eta_detector, eta_noise)
+		apd_detector = Operators.bucket_detector(self.fock_space_dim, self.sp_collection * eta_detector, eta_noise)
 		return apd_detector
 
 	def signal_rate(self):
@@ -191,11 +191,33 @@ class SinglePhoton(Source):
 		signal_to_noise = signal / noise
 		return signal_to_noise
 
+
 class EntangledPhoton(Source):
 
 	def __init__(self, params):
 		super().__init__(params)
 
+	def compute_spdc_eps_state(self):
+		vacuum = State.vacuum(self.fock_space_dim)
+		squeezed_operator = Operators.squeezed(self.fock_space_dim, self.spdc_emission)
+		return squeezed_operator * (vacuum @ vacuum)
+
+	def detector2observable(self):
+		eta_detector, eta_noise = self.overall_detection_probability()
+		apd_detector = Operators.bucket_detector(self.fock_space_dim, self.spdc_eps_collection * eta_detector, eta_noise)
+		return apd_detector
+
+	def local_detector2observable(self):
+		eta_detector, eta_noise = self.overall_detection_probability()
+		apd_detector_local = Operators.bucket_detector(self.fock_space_dim, self.spdc_eps_heralding, self.detector_dark * self.timing_window)
+		return apd_detector_local
+
+	def compute_eps_rate(self):
+		# TODO : Fix bug of size mismatch
+		ida_vacc = Operators.identity(self.fock_space_dim) @ State.vacuum(self.fock_space_dim)
+		eps_state = self.compute_spdc_eps_state()
+		#expected_value = ida_vacc.expect(eps_state)
+		return None
 
 class SetupParameters:
 

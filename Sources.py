@@ -124,6 +124,48 @@ class PulsedLaser(Source):
 		signal_to_noise = signal / noise
 		return signal_to_noise
 
+	def probabilities(self):
+		"""
+		Compute the probability of detecting a coincidence (signal or noise), the probability of detecting a true
+		positive event (detecting a signal photon) and the probability of detecting a false positive event (detecting a
+		noise photon)
+		P[signal or noise] = <alpha|detector|alpha>
+		P[noise] = <vacuum|detector|vacuum>
+		P[signal] = P[signal or noise] - P[noise]
+		:return:
+		"""
+		apd_detector = self.detector2observable()
+		vacuum = State.vacuum(self.fock_space_dim)
+		laser_state = self.compute_laser_state()
+		prob_signal_or_noise = apd_detector.expect(laser_state)
+		prob_noise = apd_detector.expect(vacuum)
+		prob_signal = prob_signal_or_noise - prob_noise
+		return prob_signal_or_noise, prob_signal, prob_noise
+
+	def true_positive_probability(self):
+		"""
+		Compute the probability of having a true positive when a target is present. This is the probability of detecting
+		a photon and not detecting a noise:
+		P[signal and not noise] = P[signal] * P[not noise]
+		P[signal and not noise] = P[signal] * (1 - P[noise])
+		:return:
+		"""
+		prob_signal_or_noise, prob_signal, prob_noise = self.probabilities()
+		prob_true_positive = prob_signal * (1 - prob_noise)
+		return prob_true_positive
+
+	def false_positive_probability(self):
+		"""
+		Compute the probability of having a false positive. This probability is the probability of detecting a noise
+		photon and not a signal photon.
+		P[noise and not signal] = P[noise] * P[not signal]
+		P[noise and not signal] = P[noise] * (1 - P[signal])
+		:return:
+		"""
+		prob_signal_or_noise, prob_signal, prob_noise = self.probabilities()
+		prob_false_positive = prob_noise * (1 - prob_signal)
+		return prob_false_positive
+
 
 class SinglePhoton(Source):
 	def __init__(self, params):
@@ -191,6 +233,47 @@ class SinglePhoton(Source):
 		signal_to_noise = signal / noise
 		return signal_to_noise
 
+	def probabilities(self):
+		"""
+		Compute the probability of detecting a coincidence (signal or noise), the probability of detecting a true
+		positive event (detecting a signal photon) and the probability of detecting a false positive event (detecting a
+		noise photon)
+		P[signal or noise] = <alpha|detector|alpha>
+		P[noise] = <vacuum|detector|vacuum>
+		P[signal] = P[signal or noise] - P[noise]
+		:return:
+		"""
+		apd_detector = self.detector2observable()
+		vacuum = State.vacuum(self.fock_space_dim)
+		sps_state = self.single_photon_state()
+		prob_signal_or_noise = apd_detector.expect(sps_state)
+		prob_noise = apd_detector.expect(vacuum)
+		prob_signal = prob_signal_or_noise - prob_noise
+		return prob_signal_or_noise, prob_signal, prob_noise
+
+	def true_positive_probability(self):
+		"""
+		Compute the probability of having a true positive when a target is present. This is the probability of detecting
+		a photon and not detecting a noise:
+		P[signal and not noise] = P[signal] * P[not noise]
+		P[signal and not noise] = P[signal] * (1 - P[noise])
+		:return:
+		"""
+		prob_signal_or_noise, prob_signal, prob_noise = self.probabilities()
+		prob_true_positive = prob_signal * (1 - prob_noise)
+		return prob_true_positive
+
+	def false_positive_probability(self):
+		"""
+		Compute the probability of having a false positive. This probability is the probability of detecting a noise
+		photon and not a signal photon.
+		P[noise and not signal] = P[noise] * P[not signal]
+		P[noise and not signal] = P[noise] * (1 - P[signal])
+		:return:
+		"""
+		prob_signal_or_noise, prob_signal, prob_noise = self.probabilities()
+		prob_false_positive = prob_noise * (1 - prob_signal)
+		return prob_false_positive
 
 class EntangledPhoton(Source):
 

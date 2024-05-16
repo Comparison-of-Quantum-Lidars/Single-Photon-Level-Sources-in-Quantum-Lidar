@@ -296,7 +296,6 @@ class EntangledPhoton(Source):
 		return apd_detector_local
 
 	def compute_eps_rate(self):
-		# TODO : Fix bug of size mismatch
 		ida_vacc = Operators.identity(self.fock_space_dim) @ State.vacuum(self.fock_space_dim)
 		eps_state = self.compute_spdc_eps_state()
 		#expected_value = ida_vacc.expect(eps_state)

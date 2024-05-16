@@ -2,6 +2,7 @@ from qutip import Qobj, basis, displace, qeye, expect, destroy, create, tensor
 import numpy as np
 from typing import Optional
 
+
 class Source:
 	"""
 	This class is the parent class for all the sources that can be used in the simulation. It defines the general
@@ -73,10 +74,11 @@ class PulsedLaser(Source):
 
 		self.kwargs = kwargs
 		self.alpha = kwargs.get("alpha", None)
+
 	def compute_alpha(self):
 		"""
 		Compute the alpha parameter of the laser
-		:return: Alpha parameter
+		:return: Alpha parameter [float]
 		"""
 		if self.alpha is None:
 			return np.sqrt(self.output_power / self.laser_rate)
@@ -86,7 +88,7 @@ class PulsedLaser(Source):
 	def compute_laser_state(self):
 		"""
 		Compute the state of the laser
-		:return: State of the laser
+		:return: State of the laser source [Qobj]
 		"""
 		alpha = self.compute_alpha()
 		displacement = displace(self.fock_space_dim, alpha)
@@ -97,32 +99,46 @@ class PulsedLaser(Source):
 		"""
 		Compute the effective trigger rate of the laser source. For the laser source, the effective trigger rate is
 		always equal to the laser rate.
-		:return: Effective trigger rate
+		:return: Effective trigger rate [float]
 		"""
 		return self.laser_rate
 
 	def detector2observable(self):
 		"""
 		Model the detector as an observable based on its detection efficiency and the noise detection probability
-		:return: Observable representing the detector
+		:return: Observable representing the detector [Qobj]
 		"""
 		eta_detector, eta_noise = self.overall_detection_probability()
 		apd_detector = self.bucket_detector(self.fock_space_dim, eta_detector, eta_noise)
 		return apd_detector
 
 	def signal_rate(self):
+		"""
+		Compute the signal rate which is the signal photons + noise photons. It is therefore the probability of
+		having a detection event multiplied by the effective triggering rate.
+		:return: The signal rate [float]
+		"""
 		laser_state = self.compute_laser_state()
 		signal_rate = self.effective_trigger_rate() * expect(self.apd_detector, laser_state)
 		return signal_rate
 
 	def noise_rate(self):
+		"""
+		Compute the noise rate which is the noise photons that are detected. It is possible to determine the noise
+		photons rate by using the system when the target is not present.
+		:return: The noise rate [float]
+		"""
 		noise_rate = self.effective_trigger_rate() * expect(self.apd_detector, self.vacuum)
 		return noise_rate
 
 	def signal_to_noise_rate(self):
+		"""
+		Compute the signal-to-noise rate (SNR) of the laser source.
+		:return: The SNR [float]
+		"""
 		signal = self.signal_rate()
 		noise = self.noise_rate()
-		return signal/noise
+		return signal / noise
 
 
 class SinglePhoton(Source):
@@ -145,30 +161,47 @@ class SinglePhoton(Source):
 		return vacuum + single_photon + two_photon
 
 	def effective_trigger_rate(self):
+		"""
+		Compute the effective trigger rate of the single photon source.
+		:return: Effective trigger rate [float]
+		"""
 		return self.output_power / (self.sp_p1 + 2 * self.sp_p2) / self.sp_collection
 
 	def detector2observable(self):
 		"""
 		Model the detector as an observable based on its detection efficiency and the noise detection probability
-		:return: Observable representing the detector
+		:return: Observable representing the detector [Qobj]
 		"""
 		eta_detector, eta_noise = self.overall_detection_probability()
 		apd_detector = self.bucket_detector(self.fock_space_dim, self.sp_collection * eta_detector, eta_noise)
 		return apd_detector
 
 	def signal_rate(self):
+		"""
+		Compute the signal rate of the single photon source
+		:return: Signal rate [float]
+		"""
 		single_photon_state = self.single_photon_state()
 		signal_rate = self.effective_trigger_rate() * expect(self.apd_detector, single_photon_state)
 		return signal_rate
 
 	def noise_rate(self):
+		"""
+		Compute the noise rate of the single photon source
+		:return: Noise rate [float]
+		"""
 		noise = self.effective_trigger_rate() * expect(self.apd_detector, self.vacuum)
 		return noise
 
 	def signal_to_noise_rate(self):
+		"""
+		Compute the signal-to-noise rate (SNR) of the single photon source. The signal rate includes the noise photons.
+		The SNR can therefore be understood as : (signal photons + noise photons) / noise photons
+		:return:
+		"""
 		signal_rate = self.signal_rate()
 		noise = self.noise_rate()
-		return signal_rate/noise
+		return signal_rate / noise
 
 
 class EntangledPhotonSPDC(Source):
@@ -182,53 +215,88 @@ class EntangledPhotonSPDC(Source):
 		self.vacuum = basis(self.fock_space_dim, 0)
 
 	def squeezed_operator(self):
+		"""
+		Compute the squeezed operator for the SPDC source. The strength of the squeezing opterator is:
+		r = 2*arcsinh(sqrt(spdc_emission)) while theta = pi/2
+		:return: Squeezed operator [Qobj]
+		"""
 		a = destroy(self.fock_space_dim)
 		a_dagger = create(self.fock_space_dim)
 		spdc_epsilon = np.arcsinh(np.sqrt(self.spdc_emission))
-		argument = -1j*(tensor(a, a) + tensor(a_dagger, a_dagger))* spdc_epsilon
+		argument = -1j * (tensor(a, a) + tensor(a_dagger, a_dagger)) * spdc_epsilon
 		squeezed_operator = argument.expm()
 		return squeezed_operator
+
 	def compute_spdc_eps_state(self):
+		"""
+		Compute the state of the SPDC source using the squeezed operator
+		:return: State of the SPDC source [Qobj]
+		"""
 		squeezed_operator = self.squeezed_operator()
 		return squeezed_operator * tensor(self.vacuum, self.vacuum)
 
 	def detector2observable_signal(self):
 		"""
 		Model the detector as an observable based on its detection efficiency and the noise detection probability
-		:return: Observable representing the detector
+		:return: Observable representing the detector [Qobj]
 		"""
 		eta_detector, eta_noise = self.overall_detection_probability()
 		apd_detector = self.bucket_detector(self.fock_space_dim, self.spdc_eps_collection * eta_detector, eta_noise)
 		return apd_detector
 
 	def detector2observable_idler(self):
-		apd_detector_local = self.bucket_detector(self.fock_space_dim, self.spdc_eps_heralding, self.detector_dark * self.timing_window)
+		"""
+		Model the detector as an observable based on its detection efficiency and the noise detection probability
+		:return: Observable representing the detector [Qobj]
+		"""
+		apd_detector_local = self.bucket_detector(self.fock_space_dim, self.spdc_eps_heralding,
+		                                          self.detector_dark * self.timing_window)
 		return apd_detector_local
 
 	def compute_eps_rate(self):
+		"""
+		Compute the rate of the SPDC source. Which is the rate at which EPS should be emitted to have the desired output
+		:return: Rate of the SPDC source [float]
+		"""
 		operator_detection_vacuum_pair = tensor(qeye(self.fock_space_dim), self.vacuum * self.vacuum.dag())
 		prob_pair_vacuum = expect(operator_detection_vacuum_pair, self.compute_spdc_eps_state())
-		eps_rate = self.output_power/((1-prob_pair_vacuum)*self.spdc_eps_collection)
+		eps_rate = self.output_power / ((1 - prob_pair_vacuum) * self.spdc_eps_collection)
 		return eps_rate
 
 	def effective_trigger_rate(self):
+		"""
+		Compute the effective trigger rate of the SPDC source. This effective trigger rate is the rate at which an
+		idler is detected. It is not the rate seen by an adversary.
+		:return: Effective trigger rate [float]
+		"""
 		operator_detection_idler = tensor(self.apd_detector_idler, qeye(self.fock_space_dim))
 		return self.compute_eps_rate() * expect(operator_detection_idler, self.compute_spdc_eps_state())
 
 	def signal_rate(self):
+		"""
+		Compute the signal rate of the SPDC source. The signal rate is the rate at which a signal photon is detected.
+		:return: Signal rate [float]
+		"""
 		operator_joint_detection = tensor(self.apd_detector_idler, self.apd_detector_signal)
 		return self.compute_eps_rate() * expect(operator_joint_detection, self.compute_spdc_eps_state())
 
 	def noise_rate(self):
+		"""
+		Compute the noise rate of the SPDC source. The noise rate is the rate at which noise photons are detected.
+		:return: Noise rate [float]
+		"""
 		operator_detector_signal_only = tensor(qeye(self.fock_space_dim), self.apd_detector_signal)
 		joint_vacuum = tensor(self.vacuum, self.vacuum)
 		return self.effective_trigger_rate() * expect(operator_detector_signal_only, joint_vacuum)
 
 	def signal_to_noise_rate(self):
+		"""
+		Compute the signal-to-noise rate (SNR) of the SPDC source. The signal rate includes the noise photons.
+		:return: The SNR [float]
+		"""
 		signal = self.signal_rate()
 		noise = self.noise_rate()
-		return signal/noise
-
+		return signal / noise
 
 
 class SetupParameters:
@@ -279,5 +347,3 @@ class SetupParameters:
 
 	def __delitem__(self, key):
 		del self.__dict__[key]
-
-

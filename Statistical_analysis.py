@@ -32,10 +32,8 @@ signal_laser = PulsedLaser(param).signal_rate()
 noise_laser = PulsedLaser(param).noise_rate()
 trigger_rate_laser = PulsedLaser(param).effective_trigger_rate()
 
-#q0 = noise_laser/trigger_rate_laser
-#q1 = signal_laser/trigger_rate_laser
-q0 = PulsedLaser(param).false_positive_probability()
-q1 = PulsedLaser(param).true_positive_probability()
+q0 = noise_laser/trigger_rate_laser
+q1 = signal_laser/trigger_rate_laser
 
 
 M = trigger_rate_laser
@@ -45,8 +43,8 @@ x = np.linspace(1, M/1000, int(M/1000))
 p0 = binom.pmf(x, M, q0)
 p1 = binom.pmf(x, M, q1)
 
-range_interval = 80
-n_bins_over_range_interval = range_interval/299792458/param["timing_window"]
+range_interval = 50
+n_bins_over_range_interval = 2*range_interval/299792458/param["timing_window"]
 
 sum_p0 = 1-(1-np.cumsum(np.flip(p0)))**n_bins_over_range_interval
 sum_p1 = np.cumsum(np.flip(p1))
@@ -59,10 +57,10 @@ signal_sp = SinglePhoton(param).signal_rate()
 noise_sp = SinglePhoton(param).noise_rate()
 trigger_rate_sp = SinglePhoton(param).effective_trigger_rate()
 
-#q0 = noise_sp/trigger_rate_sp
-#q1 = signal_sp/trigger_rate_sp
-q0 = SinglePhoton(param).false_positive_probability()
-q1 = SinglePhoton(param).true_positive_probability()
+q0 = noise_sp/trigger_rate_sp
+q1 = signal_sp/trigger_rate_sp
+#q0 = SinglePhoton(param).false_positive_probability()
+#q1 = SinglePhoton(param).true_positive_probability()
 
 
 

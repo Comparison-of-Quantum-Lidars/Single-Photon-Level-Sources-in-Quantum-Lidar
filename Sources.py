@@ -1,6 +1,6 @@
+from qutip import Qobj, basis, displace, qeye, expect, destroy, create, tensor
 import numpy as np
-from Operators import State, Operators
-
+from typing import Optional
 
 class Source:
 	"""
@@ -48,31 +48,49 @@ class Source:
 
 		return eta_detector, eta_noise
 
+	@staticmethod
+	def bucket_detector(n: int, efficiency: float, noise: float):
+		"""
+		Build the bucket detector operator for APD detection
+		:param n: Dimension of the operator in the fock space
+		:param efficiency: Detection efficiency
+		:param noise: Noise in the detector
+		:return: Bucket detector operator
+		"""
+		observable = np.zeros((n, n))
+		for i in range(n):
+			observable[i, i] = 1 - ((1 - efficiency) ** i)
+		observable = Qobj(observable) + qeye(n) * noise
+		return observable
+
 
 class PulsedLaser(Source):
 
-	def __init__(self, params):
-		"""
-		:param params: SetupParameters object containing the parameters of the simulation
-		"""
+	def __init__(self, params, **kwargs):
 		super().__init__(params)
+		self.apd_detector = self.detector2observable()
+		self.vacuum = basis(self.fock_space_dim, 0)
 
+		self.kwargs = kwargs
+		self.alpha = kwargs.get("alpha", None)
 	def compute_alpha(self):
 		"""
-		Compute the alpha parameter for the displacement operator
+		Compute the alpha parameter of the laser
 		:return: Alpha parameter
 		"""
-		return np.sqrt(self.output_power / self.laser_rate)
+		if self.alpha is None:
+			return np.sqrt(self.output_power / self.laser_rate)
+		else:
+			return self.alpha
 
 	def compute_laser_state(self):
 		"""
-		Compute the laser state using the displacement operator on the vacuum state
-		:return: Laser state
+		Compute the state of the laser
+		:return: State of the laser
 		"""
 		alpha = self.compute_alpha()
-		vacuum = State.vacuum(self.fock_space_dim)
-		displacement = Operators.displacement(self.fock_space_dim, alpha)
-		laser_state = displacement * vacuum
+		displacement = displace(self.fock_space_dim, alpha)
+		laser_state = displacement * self.vacuum
 		return laser_state
 
 	def effective_trigger_rate(self):
@@ -89,107 +107,44 @@ class PulsedLaser(Source):
 		:return: Observable representing the detector
 		"""
 		eta_detector, eta_noise = self.overall_detection_probability()
-		apd_detector = Operators.bucket_detector(self.fock_space_dim, eta_detector, eta_noise)
+		apd_detector = self.bucket_detector(self.fock_space_dim, eta_detector, eta_noise)
 		return apd_detector
 
 	def signal_rate(self):
-		"""
-		Compute the signal rate of the laser source
-		:return: Signal rate
-		"""
-		apd_detector = self.detector2observable()
 		laser_state = self.compute_laser_state()
-		signal = self.effective_trigger_rate() * apd_detector.expect(laser_state)
-		return signal
+		signal_rate = self.effective_trigger_rate() * expect(self.apd_detector, laser_state)
+		return signal_rate
 
 	def noise_rate(self):
-		"""
-		Compute the noise rate of the laser source
-		:return: Noise rate
-		"""
-		apd_detector = self.detector2observable()
-		vacuum = State.vacuum(self.fock_space_dim)
-		noise = self.effective_trigger_rate() * apd_detector.expect(vacuum)
-		return noise
+		noise_rate = self.effective_trigger_rate() * expect(self.apd_detector, self.vacuum)
+		return noise_rate
 
 	def signal_to_noise_rate(self):
-		"""
-		Compute the signal-to-noise ratio of the laser source
-		:return: Signal-to-noise ratio
-		"""
 		signal = self.signal_rate()
-		vacuum = State.vacuum(self.fock_space_dim)
-		apd_detector = self.detector2observable()
-		noise = self.effective_trigger_rate() * apd_detector.expect(vacuum)
-		signal_to_noise = signal / noise
-		return signal_to_noise
-
-	def probabilities(self):
-		"""
-		Compute the probability of detecting a coincidence (signal or noise), the probability of detecting a true
-		positive event (detecting a signal photon) and the probability of detecting a false positive event (detecting a
-		noise photon)
-		P[signal or noise] = <alpha|detector|alpha>
-		P[noise] = <vacuum|detector|vacuum>
-		P[signal] = P[signal or noise] - P[noise]
-		:return:
-		"""
-		apd_detector = self.detector2observable()
-		vacuum = State.vacuum(self.fock_space_dim)
-		laser_state = self.compute_laser_state()
-		prob_signal_or_noise = apd_detector.expect(laser_state)
-		prob_noise = apd_detector.expect(vacuum)
-		prob_signal = prob_signal_or_noise - prob_noise
-		return prob_signal_or_noise, prob_signal, prob_noise
-
-	def true_positive_probability(self):
-		"""
-		Compute the probability of having a true positive when a target is present. This is the probability of detecting
-		a photon and not detecting a noise:
-		P[signal and not noise] = P[signal] * P[not noise]
-		P[signal and not noise] = P[signal] * (1 - P[noise])
-		:return:
-		"""
-		prob_signal_or_noise, prob_signal, prob_noise = self.probabilities()
-		prob_true_positive = prob_signal * (1 - prob_noise)
-		return prob_true_positive
-
-	def false_positive_probability(self):
-		"""
-		Compute the probability of having a false positive. This probability is the probability of detecting a noise
-		photon and not a signal photon.
-		P[noise and not signal] = P[noise] * P[not signal]
-		P[noise and not signal] = P[noise] * (1 - P[signal])
-		:return:
-		"""
-		prob_signal_or_noise, prob_signal, prob_noise = self.probabilities()
-		prob_false_positive = prob_noise * (1 - prob_signal)
-		return prob_false_positive
+		noise = self.noise_rate()
+		return signal/noise
 
 
 class SinglePhoton(Source):
-	def __init__(self, params):
-		"""
-		:param params: SetupParameters object containing the parameters of the simulation
-		"""
+
+	def __init__(self, params, **kwargs):
 		super().__init__(params)
+		self.kwargs = kwargs
+
+		self.apd_detector = self.detector2observable()
+		self.vacuum = basis(self.fock_space_dim, 0)
 
 	def single_photon_state(self):
 		"""
-		Compute the single photon state based on the probabilities of the single photon source
-		:return: Single photon state
+		Compute the state of the single photon source
+		:return: State of the single photon source
 		"""
-		vacuum = np.sqrt(1 - (self.sp_p1 + self.sp_p2)) * State.vacuum(self.fock_space_dim)
-		one_photon = np.sqrt(self.sp_p1) * State.one_photon(self.fock_space_dim)
-		two_photon = np.sqrt(self.sp_p2) * State.two_photon(self.fock_space_dim)
-		return vacuum + one_photon + two_photon
+		vacuum = np.sqrt(1 - (self.sp_p1 + self.sp_p2)) * self.vacuum
+		single_photon = np.sqrt(self.sp_p1) * basis(self.fock_space_dim, 1)
+		two_photon = np.sqrt(self.sp_p2) * basis(self.fock_space_dim, 2)
+		return vacuum + single_photon + two_photon
 
 	def effective_trigger_rate(self):
-		"""
-		Compute the effective trigger rate of the single photon source considering the efficiency of the source
-		:return: Effective trigger rate
-		"""
-		#TODO : CONFIRM THIS EQUATION -> NOT SURE
 		return self.output_power / (self.sp_p1 + 2 * self.sp_p2) / self.sp_collection
 
 	def detector2observable(self):
@@ -198,108 +153,83 @@ class SinglePhoton(Source):
 		:return: Observable representing the detector
 		"""
 		eta_detector, eta_noise = self.overall_detection_probability()
-		apd_detector = Operators.bucket_detector(self.fock_space_dim, self.sp_collection * eta_detector, eta_noise)
+		apd_detector = self.bucket_detector(self.fock_space_dim, self.sp_collection * eta_detector, eta_noise)
 		return apd_detector
 
 	def signal_rate(self):
-		"""
-		Compute the signal rate of the single photon source
-		:return: The signal rate for the single photon source
-		"""
-		apd_detector = self.detector2observable()
 		single_photon_state = self.single_photon_state()
-		signal_rate = self.effective_trigger_rate() * apd_detector.expect(single_photon_state)
+		signal_rate = self.effective_trigger_rate() * expect(self.apd_detector, single_photon_state)
 		return signal_rate
 
 	def noise_rate(self):
-		"""
-		Compute the noise rate of the single photon source
-		:return: The noise rate for the single photon source
-		"""
-		apd_detector = self.detector2observable()
-		vacuum = State.vacuum(self.fock_space_dim)
-		noise = self.effective_trigger_rate() * apd_detector.expect(vacuum)
+		noise = self.effective_trigger_rate() * expect(self.apd_detector, self.vacuum)
 		return noise
 
 	def signal_to_noise_rate(self):
-		"""
-		Compute the signal-to-noise ratio of the single photon source
-		:return: The signal-to-noise ratio for the single photon source
-		"""
-		signal = self.signal_rate()
-		apd_detector = self.detector2observable()
-		vacuum = State.vacuum(self.fock_space_dim)
-		noise = self.effective_trigger_rate() * apd_detector.expect(vacuum)
-		signal_to_noise = signal / noise
-		return signal_to_noise
+		signal_rate = self.signal_rate()
+		noise = self.noise_rate()
+		return signal_rate/noise
 
-	def probabilities(self):
-		"""
-		Compute the probability of detecting a coincidence (signal or noise), the probability of detecting a true
-		positive event (detecting a signal photon) and the probability of detecting a false positive event (detecting a
-		noise photon)
-		P[signal or noise] = <alpha|detector|alpha>
-		P[noise] = <vacuum|detector|vacuum>
-		P[signal] = P[signal or noise] - P[noise]
-		:return:
-		"""
-		apd_detector = self.detector2observable()
-		vacuum = State.vacuum(self.fock_space_dim)
-		sps_state = self.single_photon_state()
-		prob_signal_or_noise = apd_detector.expect(sps_state)
-		prob_noise = apd_detector.expect(vacuum)
-		prob_signal = prob_signal_or_noise - prob_noise
-		return prob_signal_or_noise, prob_signal, prob_noise
 
-	def true_positive_probability(self):
-		"""
-		Compute the probability of having a true positive when a target is present. This is the probability of detecting
-		a photon and not detecting a noise:
-		P[signal and not noise] = P[signal] * P[not noise]
-		P[signal and not noise] = P[signal] * (1 - P[noise])
-		:return:
-		"""
-		prob_signal_or_noise, prob_signal, prob_noise = self.probabilities()
-		prob_true_positive = prob_signal * (1 - prob_noise)
-		return prob_true_positive
+class EntangledPhotonSPDC(Source):
 
-	def false_positive_probability(self):
-		"""
-		Compute the probability of having a false positive. This probability is the probability of detecting a noise
-		photon and not a signal photon.
-		P[noise and not signal] = P[noise] * P[not signal]
-		P[noise and not signal] = P[noise] * (1 - P[signal])
-		:return:
-		"""
-		prob_signal_or_noise, prob_signal, prob_noise = self.probabilities()
-		prob_false_positive = prob_noise * (1 - prob_signal)
-		return prob_false_positive
-
-class EntangledPhoton(Source):
-
-	def __init__(self, params):
+	def __init__(self, params, **kwargs):
 		super().__init__(params)
+		self.kwargs = kwargs
 
+		self.apd_detector_signal = self.detector2observable_signal()
+		self.apd_detector_idler = self.detector2observable_idler()
+		self.vacuum = basis(self.fock_space_dim, 0)
+
+	def squeezed_operator(self):
+		a = destroy(self.fock_space_dim)
+		a_dagger = create(self.fock_space_dim)
+		spdc_epsilon = np.arcsinh(np.sqrt(self.spdc_emission))
+		argument = -1j*(tensor(a, a) + tensor(a_dagger, a_dagger))* spdc_epsilon
+		squeezed_operator = argument.expm()
+		return squeezed_operator
 	def compute_spdc_eps_state(self):
-		vacuum = State.vacuum(self.fock_space_dim)
-		squeezed_operator = Operators.squeezed(self.fock_space_dim, self.spdc_emission)
-		return squeezed_operator * (vacuum @ vacuum)
+		squeezed_operator = self.squeezed_operator()
+		return squeezed_operator * tensor(self.vacuum, self.vacuum)
 
-	def detector2observable(self):
+	def detector2observable_signal(self):
+		"""
+		Model the detector as an observable based on its detection efficiency and the noise detection probability
+		:return: Observable representing the detector
+		"""
 		eta_detector, eta_noise = self.overall_detection_probability()
-		apd_detector = Operators.bucket_detector(self.fock_space_dim, self.spdc_eps_collection * eta_detector, eta_noise)
+		apd_detector = self.bucket_detector(self.fock_space_dim, self.spdc_eps_collection * eta_detector, eta_noise)
 		return apd_detector
 
-	def local_detector2observable(self):
-		eta_detector, eta_noise = self.overall_detection_probability()
-		apd_detector_local = Operators.bucket_detector(self.fock_space_dim, self.spdc_eps_heralding, self.detector_dark * self.timing_window)
+	def detector2observable_idler(self):
+		apd_detector_local = self.bucket_detector(self.fock_space_dim, self.spdc_eps_heralding, self.detector_dark * self.timing_window)
 		return apd_detector_local
 
 	def compute_eps_rate(self):
-		ida_vacc = Operators.identity(self.fock_space_dim) @ State.vacuum(self.fock_space_dim)
-		eps_state = self.compute_spdc_eps_state()
-		#expected_value = ida_vacc.expect(eps_state)
-		return None
+		operator_detection_vacuum_pair = tensor(qeye(self.fock_space_dim), self.vacuum * self.vacuum.dag())
+		prob_pair_vacuum = expect(operator_detection_vacuum_pair, self.compute_spdc_eps_state())
+		eps_rate = self.output_power/((1-prob_pair_vacuum)*self.spdc_eps_collection)
+		return eps_rate
+
+	def effective_trigger_rate(self):
+		operator_detection_idler = tensor(self.apd_detector_idler, qeye(self.fock_space_dim))
+		return self.compute_eps_rate() * expect(operator_detection_idler, self.compute_spdc_eps_state())
+
+	def signal_rate(self):
+		operator_joint_detection = tensor(self.apd_detector_idler, self.apd_detector_signal)
+		return self.compute_eps_rate() * expect(operator_joint_detection, self.compute_spdc_eps_state())
+
+	def noise_rate(self):
+		operator_detector_signal_only = tensor(qeye(self.fock_space_dim), self.apd_detector_signal)
+		joint_vacuum = tensor(self.vacuum, self.vacuum)
+		return self.effective_trigger_rate() * expect(operator_detector_signal_only, joint_vacuum)
+
+	def signal_to_noise_rate(self):
+		signal = self.signal_rate()
+		noise = self.noise_rate()
+		return signal/noise
+
+
 
 class SetupParameters:
 
@@ -349,3 +279,5 @@ class SetupParameters:
 
 	def __delitem__(self, key):
 		del self.__dict__[key]
+
+

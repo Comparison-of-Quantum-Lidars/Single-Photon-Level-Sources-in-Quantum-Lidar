@@ -68,8 +68,8 @@ L = int(trigger_rate_sp)
 
 i = np.linspace(1, L/1000, int(L/1000))
 
-p0 = binom.pmf(x, M, q0)
-p1 = binom.pmf(x, M, q1)
+p0 = binom.pmf(x, L, q0)
+p1 = binom.pmf(x, L, q1)
 
 n_bins_over_range_interval = 50/299792458/param["timing_window"]
 

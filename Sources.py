@@ -347,3 +347,9 @@ class SetupParameters:
 
 	def __delitem__(self, key):
 		del self.__dict__[key]
+
+	def __copy__(self):
+		return SetupParameters(**self.__dict__)
+
+	def __deepcopy__(self, memodict={}):
+		return SetupParameters(**self.__dict__)

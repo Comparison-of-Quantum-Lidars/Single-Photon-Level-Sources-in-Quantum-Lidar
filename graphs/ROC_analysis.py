@@ -12,7 +12,7 @@ param = SetupParameters(
 	sp_collection=0.2,
 	sp_p1=0.9999,
 	sp_p2=1e-4,
-	spdc_eps_heralding=0.5,
+	spdc_eps_heralding=0.18,
 	spdc_eps_collection=0.2,
 	spdc_emission=0.1,
 	target_distance=40,
@@ -69,7 +69,6 @@ true_positive_spdc, false_positive_spdc = RocAnalysis(
 	range_interval=range_interval,
 	timing_window=param["timing_window"]
 ).compute_p_d_p_fa()
-
 
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
@@ -148,7 +147,7 @@ plt.plot(false_positive_spdc, true_positive_spdc, "-.", label=f"SPDC:\n-SNR: {sn
 plt.xlabel("False positive", fontsize=22)
 plt.ylabel("True positive", fontsize=22)
 plt.tick_params(labelsize=22)
-plt.legend(fontsize=22, frameon=False, loc="lower right")
+plt.legend(fontsize=18, frameon=False, loc="upper left")
 plt.show()
 
 print(f"SNR laser : {snr_laser}", f"Average power per pulse : {avg_power_per_pulse_laser}")

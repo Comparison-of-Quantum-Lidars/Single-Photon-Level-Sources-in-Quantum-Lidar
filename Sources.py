@@ -69,11 +69,10 @@ class PulsedLaser(Source):
 
 	def __init__(self, params, **kwargs):
 		super().__init__(params)
-		self.apd_detector = self.detector2observable()
 		self.vacuum = basis(self.fock_space_dim, 0)
-
 		self.kwargs = kwargs
 		self.alpha = kwargs.get("alpha", None)
+		self.apd_detector = self.detector2observable()
 
 	def compute_alpha(self):
 		"""
@@ -101,6 +100,8 @@ class PulsedLaser(Source):
 		always equal to the laser rate.
 		:return: Effective trigger rate [float]
 		"""
+		if self.kwargs.get("adversary_trigger_rate_detection", None) is not None:
+			return self.laser_rate * (1-np.exp(-(self.compute_alpha())**2))
 		return self.laser_rate
 
 	def detector2observable(self):
@@ -110,6 +111,10 @@ class PulsedLaser(Source):
 		"""
 		eta_detector, eta_noise = self.overall_detection_probability()
 		apd_detector = self.bucket_detector(self.fock_space_dim, eta_detector, eta_noise)
+		if self.kwargs.get("eta_detection_adversary", None) is not None:
+			eta_detector_adversary = self.kwargs["eta_detection_adversary"]
+			# We only want the signal photons coming from the source
+			apd_detector = self.bucket_detector(self.fock_space_dim, eta_detector_adversary, 0)
 		return apd_detector
 
 	def signal_rate(self):

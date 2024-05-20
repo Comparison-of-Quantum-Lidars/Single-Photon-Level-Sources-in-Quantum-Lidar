@@ -1,4 +1,4 @@
-import matplotlib.pyplot as plt
+from Sources import EntangledPhotonSPDC, SinglePhoton, PulsedLaser
 from scipy.stats import binom
 from typing import Optional
 import numpy as np
@@ -47,14 +47,15 @@ class RocAnalysis:
 
 class HistogramAnalysis:
 
-	def __init__(self, params, signal_rate, noise_rate, acquisition_time, jitter_std_dev: Optional[float] = 0.5e-9):
+	def __init__(self, params, signal_rate, noise_rate, acquisition_time, effective_trigger_rate, jitter_std_dev: Optional[float] = 0.5e-9, **kwargs):
 		self.params = params
-		self.signal_rate = signal_rate
-		self.noise_rate = noise_rate
+		self.signal_rate = signal_rate/effective_trigger_rate
+		self.signal_rate = self.signal_rate * params["laser_rate"]
+		self.noise_rate = noise_rate/kwargs.get("noise_trigger_rate", effective_trigger_rate)
+		self.noise_rate = self.noise_rate * params["laser_rate"]
 		self.acquisition_time = acquisition_time
 		self.jitter_std_dev = jitter_std_dev
 		self.bins = self.compute_bins_number()
-
 
 	def compute_signal_and_noise_rate_per_bins(self):
 		signal = self.signal_rate - self.noise_rate
@@ -76,8 +77,9 @@ class HistogramAnalysis:
 		return trigger_total
 
 	def noise_and_signal_prob_per_bins(self):
-		noise_total = self.noise_rate * self.acquisition_time
-		signal_total = self.signal_rate * self.acquisition_time
+		signal, noise = self.compute_signal_and_noise_rate_per_bins()
+		noise_total = noise * self.acquisition_time
+		signal_total = signal * self.acquisition_time
 		trigger_total = self.compute_trigger_total()
 
 		noise_prob = noise_total / trigger_total
@@ -98,14 +100,12 @@ class HistogramAnalysis:
 		noise_prob, signal_prob = self.noise_and_signal_prob_per_bins()
 		trigger_total = self.compute_trigger_total()
 		tof_target = self.params["target_distance"] / 299792458
-		max_time_of_flight = self.compute_max_time_of_flight()
 		timing_window = self.params["timing_window"]
 
 		counts = np.zeros((self.bins, 1))
 
-		for i in tqdm(range(int(trigger_total))):
+		for _ in tqdm(range(int(trigger_total))):
 			idx_ones = np.array([-1])
-			count2add_noise = np.zeros((self.bins, 1))
 			noise2add = np.random.binomial(self.bins, noise_prob)
 			if noise2add != 0:
 				bin_with_noise = np.ones((noise2add, 1))
@@ -129,7 +129,76 @@ class HistogramAnalysis:
 		bins = self.bins
 		timing_window = self.params["timing_window"]
 		bin_edges = ((np.arange(bins + 1) * timing_window) - timing_window / 2)
-		bin_edges_distance = (np.arange(bins + 1) * timing_window * 299792458) - (timing_window*299792458/2)
+		bin_edges_distance = (np.arange(bins + 1) * timing_window * 299792458) - (timing_window * 299792458 / 2)
 		return bin_edges, bin_edges_distance
+
+
+class HistogramAnalysisFromAdversaryPerspective:
+
+	def __init__(self, params_lidar, params_adversary, acquisition_time, source:str, jitter_std_dev: Optional[float] = 0.5e-9):
+		self.params_lidar = params_lidar
+		self.params_adversary = params_adversary
+		self.source = source
+		if self.source not in ["pulsed", "single", "entangled"]:
+			raise ValueError("Source must be either 'pulsed', 'single' or 'entangled'")
+		self.acquisition_time = acquisition_time
+		self.jitter_std_dev = jitter_std_dev
+
+	def adjust_signal_noise_rate(self):
+		if self.source == "pulsed":
+			signal_rate, noise_rate = self.adjust_signal_noise_for_pulsed()
+			return signal_rate, noise_rate
+		elif self.source == "single":
+			pass
+		else:
+			pass
+
+	def histogram_simulation_adversary(self):
+		noise_prob, _ = self.noise_and_signal_prob_per_bins()
+		signal_rate, noise_rate = self.adjust_signal_noise_rate()
+		ha = HistogramAnalysis(self.params_adversary, signal_rate, noise_rate, self.acquisition_time, self.jitter_std_dev)
+		trigger_total = ha.compute_trigger_total()
+		timing_window = self.params_adversary["timing_window"]
+		bins = ha.compute_bins_number()
+		counts = np.zeros((bins, 1))
+
+		for _ in tqdm(range(int(trigger_total))):
+			idx_ones = np.array([-1])
+			noise2add = np.random.binomial(bins, noise_prob)
+			if noise2add != 0:
+				bin_with_noise = np.ones((noise2add, 1))
+				other_bin = np.zeros((bins - noise2add, 1))
+				count2add_noise = np.concatenate((bin_with_noise, other_bin))
+				np.random.shuffle(count2add_noise)
+				idx_ones = np.where(count2add_noise == 1)
+				counts += count2add_noise
+
+		signal_total = signal_rate * self.acquisition_time
+		bins_total = bins * self.acquisition_time
+		pass
+
+	def noise_and_signal_prob_per_bins(self):
+		signal_rate, noise_rate = self.adjust_signal_noise_rate()
+		noise_total = noise_rate * self.acquisition_time
+		signal_total = signal_rate * self.acquisition_time
+		ha = HistogramAnalysis(self.params_adversary, signal_rate, noise_rate, self.acquisition_time, self.jitter_std_dev)
+		trigger_total = ha.compute_trigger_total()
+
+		noise_prob = noise_total / trigger_total
+		signal_prob = signal_total / trigger_total
+
+		return noise_prob, signal_prob
+
+	def adjust_signal_noise_for_pulsed(self):
+		optics_transmitter_lidar = self.params_lidar["optics_transmitter"]
+		optics_receiver_adversary = self.params_adversary["optics_receiver"]
+		detection_efficiency_adversary = self.params_adversary["detection_efficiency"]
+		eta_detection_adversary = optics_transmitter_lidar * optics_receiver_adversary * detection_efficiency_adversary
+
+		#Photons from the LiDAR per second detected by the adversary
+		signal_rate = PulsedLaser(self.params_lidar, eta_detection_adversary=eta_detection_adversary).signal_rate()
+
+		noise_rate = (self.params_adversary["background"] + self.params_adversary["detector_dark"]) * self.params_adversary["timing_window"]
+		return signal_rate, noise_rate
 
 

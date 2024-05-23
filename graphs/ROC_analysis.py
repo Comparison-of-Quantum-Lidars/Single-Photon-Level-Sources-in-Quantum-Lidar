@@ -8,7 +8,8 @@ from Analysis import *
 param = SetupParameters(
 	fock_space_dim=10,
 	output_power=2e7,
-	laser_rate=1e8,
+	trigger_rate=1e8,
+	multi_photon_probability=None,
 	sp_collection=0.2,
 	sp_p1=0.9999,
 	sp_p2=1e-4,
@@ -91,7 +92,7 @@ aimed_effective_trigger_rate = 1e7
 
 param_laser = deepcopy(param)
 param_laser["output_power"] = 1.0536e7
-param_laser["laser_rate"] = 1e8
+param_laser["trigger_rate"] = 1e8
 
 true_positive_laser, false_positive_laser = RocAnalysis(
 	signal_rate=PulsedLaser(param_laser).signal_rate(),
@@ -104,6 +105,7 @@ true_positive_laser, false_positive_laser = RocAnalysis(
 
 snr_laser = PulsedLaser(param_laser).signal_to_noise_rate()
 avg_power_per_pulse_laser = 1.0536e7/aimed_effective_trigger_rate
+
 
 print(f"Detectable triggering rate laser : {1e8*(1-np.exp(-(1.0536e7/1e8)))}")
 
@@ -161,7 +163,7 @@ aimed_effective_trigger_rate = 2.5e7
 
 param_laser = deepcopy(param)
 param_laser["output_power"] = 2.8768e7
-param_laser["laser_rate"] = 1e8
+param_laser["trigger_rate"] = 1e8
 
 true_positive_laser, false_positive_laser = RocAnalysis(
 	signal_rate=PulsedLaser(param_laser).signal_rate(),
@@ -225,7 +227,7 @@ aimed_effective_trigger_rate = 5e7
 
 param_laser = deepcopy(param)
 param_laser["output_power"] = 6.9315e7
-param_laser["laser_rate"] = 1e8
+param_laser["trigger_rate"] = 1e8
 
 true_positive_laser, false_positive_laser = RocAnalysis(
 	signal_rate=PulsedLaser(param_laser).signal_rate(),

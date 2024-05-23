@@ -97,6 +97,7 @@ class HistogramAnalysis:
 		return random.random() < prob
 
 	def histogram_simulation(self):
+		# TODO : Correct the tof_target to be twice as big
 		noise_prob, signal_prob = self.noise_and_signal_prob_per_bins()
 		trigger_total = self.compute_trigger_total()
 		tof_target = self.params["target_distance"] / 299792458

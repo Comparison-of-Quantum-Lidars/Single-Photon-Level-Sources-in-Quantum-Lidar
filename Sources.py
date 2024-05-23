@@ -1,5 +1,6 @@
 from qutip import Qobj, basis, displace, qeye, expect, destroy, create, tensor
 import numpy as np
+from scipy.special import lambertw
 from typing import Optional
 
 
@@ -14,7 +15,8 @@ class Source:
 		self.check_all_params()
 		self.fock_space_dim = params["fock_space_dim"]
 		self.output_power = params["output_power"]
-		self.laser_rate = params["laser_rate"]
+		self.trigger_rate = params["trigger_rate"]
+		self.multi_photon_probability = params["multi_photon_probability"]
 		self.sp_collection = params["sp_collection"]
 		self.sp_p1 = params["sp_p1"]
 		self.sp_p2 = params["sp_p2"]
@@ -69,20 +71,34 @@ class PulsedLaser(Source):
 
 	def __init__(self, params, **kwargs):
 		super().__init__(params)
-		self.vacuum = basis(self.fock_space_dim, 0)
 		self.kwargs = kwargs
-		self.alpha = kwargs.get("alpha", None)
+		self.fix_parameters()
+		self.vacuum = basis(self.fock_space_dim, 0)
 		self.apd_detector = self.detector2observable()
+
+	def fix_parameters(self):
+		"""
+		Three parameters can be played with: Output power, trigger rate and multi-photon probability. However, the
+		output power is always constant. Therefore, it is only possible to fix the trigger rate or the multi-photon
+		probability
+		"""
+		assert self.trigger_rate is None or self.multi_photon_probability is None, "Cannot have both trigger rate and multi-photon probability fixed"
+		if self.trigger_rate is not None:
+			alpha = np.sqrt(self.output_power / self.trigger_rate)
+			self.multi_photon_probability = 1 - (1 + alpha ** 2) * np.exp(-alpha ** 2)
+		elif self.multi_photon_probability is not None:
+			assert 0 < self.multi_photon_probability < 1, "The multi-photon probability must be between 0 and 1"
+			alpha = np.sqrt(-lambertw(z=(self.multi_photon_probability-1)/np.exp(1), k=-1)-1)
+			assert alpha.imag == 0, "The multi-photon probability is not valid: alpha is complex"
+			alpha = alpha.real
+			self.trigger_rate = self.output_power / (alpha ** 2)
 
 	def compute_alpha(self):
 		"""
 		Compute the alpha parameter of the laser
 		:return: Alpha parameter [float]
 		"""
-		if self.alpha is None:
-			return np.sqrt(self.output_power / self.laser_rate)
-		else:
-			return self.alpha
+		return np.sqrt(self.output_power / self.trigger_rate)
 
 	def compute_laser_state(self):
 		"""
@@ -101,8 +117,8 @@ class PulsedLaser(Source):
 		:return: Effective trigger rate [float]
 		"""
 		if self.kwargs.get("adversary_trigger_rate_detection", None) is not None:
-			return self.laser_rate * (1-np.exp(-(self.compute_alpha())**2))
-		return self.laser_rate
+			return self.trigger_rate * (1 - np.exp(-(self.compute_alpha()) ** 2))
+		return self.trigger_rate
 
 	def detector2observable(self):
 		"""
@@ -145,15 +161,26 @@ class PulsedLaser(Source):
 		noise = self.noise_rate()
 		return signal / noise
 
+	def debug(self):
+		laser_state = self.compute_laser_state()
+		return expect(self.apd_detector, laser_state)
+
 
 class SinglePhoton(Source):
 
 	def __init__(self, params, **kwargs):
 		super().__init__(params)
 		self.kwargs = kwargs
-
+		self.fix_parameters()
 		self.apd_detector = self.detector2observable()
 		self.vacuum = basis(self.fock_space_dim, 0)
+
+	def fix_parameters(self):
+		assert self.trigger_rate is None, "The trigger cannot be fixed for the single photon source"
+		assert self.multi_photon_probability is None, "The multi-photon probability cannot be fixed for the single photon source"
+		if self.trigger_rate is None:
+			self.trigger_rate = self.effective_trigger_rate()
+
 
 	def single_photon_state(self):
 		"""
@@ -187,7 +214,7 @@ class SinglePhoton(Source):
 		:return: Signal rate [float]
 		"""
 		single_photon_state = self.single_photon_state()
-		signal_rate = self.effective_trigger_rate() * expect(self.apd_detector, single_photon_state)
+		signal_rate = self.trigger_rate * expect(self.apd_detector, single_photon_state)
 		return signal_rate
 
 	def noise_rate(self):
@@ -195,7 +222,7 @@ class SinglePhoton(Source):
 		Compute the noise rate of the single photon source
 		:return: Noise rate [float]
 		"""
-		noise = self.effective_trigger_rate() * expect(self.apd_detector, self.vacuum)
+		noise = self.trigger_rate * expect(self.apd_detector, self.vacuum)
 		return noise
 
 	def signal_to_noise_rate(self):
@@ -214,10 +241,14 @@ class EntangledPhotonSPDC(Source):
 	def __init__(self, params, **kwargs):
 		super().__init__(params)
 		self.kwargs = kwargs
-
+		self.fix_parameters()
 		self.apd_detector_signal = self.detector2observable_signal()
 		self.apd_detector_idler = self.detector2observable_idler()
 		self.vacuum = basis(self.fock_space_dim, 0)
+
+	def fix_parameters(self):
+		#TODO : Obtain fix parameters for SPDC sources
+		pass
 
 	def squeezed_operator(self):
 		"""
@@ -316,7 +347,8 @@ class SetupParameters:
 		print("fock_space_dim: Dimension of the fock space, must be an integer")
 		print("--- Sources ---")
 		print("output_power: optical output power of the source in photon per second [s^-1]")
-		print("laser_rate: Pulsing rate of the laser source [Hz]")
+		print("trigger_rate: Pulsing rate of the laser source [Hz]")
+		print("multi_photon_probability: Probability of the laser source emitting more than 1 photon [-]")
 		print(
 			"sp_collection: Efficiency of the single photon source collection, does not include detector efficiency [-]")
 		print("sp_p1: Probability that the single photon source emits 1 photons [-]")

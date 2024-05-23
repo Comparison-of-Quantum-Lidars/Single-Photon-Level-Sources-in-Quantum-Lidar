@@ -6,7 +6,8 @@ from tqdm import tqdm
 param = SetupParameters(
 	fock_space_dim=5,
 	output_power=2e6,
-	laser_rate=5e6,
+	trigger_rate=5e6,
+	multi_photon_probability=None,
 	sp_collection=0.1,
 	sp_p1=0.99,
 	sp_p2=1e-3,
@@ -26,7 +27,7 @@ param = SetupParameters(
 
 ### SNR SPS as a function of collection efficiency ###
 
-collection_efficiency_sps = np.linspace(0.05, 1, 1000)
+collection_efficiency_sps = np.linspace(0.05, 1, 6000)
 snr_all_sps = []
 for eff in tqdm(collection_efficiency_sps):
 	param.sp_collection = eff
@@ -42,7 +43,7 @@ multi_photon_prob = 1-(np.exp(-alpha**2)*(1+alpha**2))
 snr_all_laser = []
 
 for a in tqdm(alpha):
-	output_power = param["laser_rate"]*(a**2)
+	output_power = param["trigger_rate"]*(a**2)
 	param.output_power = output_power
 	signal = PulsedLaser(param).signal_rate()
 	noise = PulsedLaser(param).noise_rate()
@@ -94,7 +95,7 @@ plt.text(0.1, snr_20+0.5, "Collection efficiency of SPS=20%", fontsize=16)
 plt.hlines(snr_100, 0, 0.38, colors="b", linestyles="--", linewidth=3)
 plt.text(0.1, snr_100+2, "Collection efficiency of SPS=100%", fontsize=16)
 plt.vlines(multi_100, 1e-2, intersection_snr_100, colors="k", linestyles="-.", linewidth=2)
-plt.text(0.265, 25.5, f"Probability of multi-photons={multi_100:.3f}\nSPS : 1 photon/pulse", fontsize=14)
+plt.text(0.265, 25.5, f"Probability of multi-photons={multi_100*100:.1f}%\nSPS : 1 photon/pulse", fontsize=14)
 plt.xlabel("Multi-Photon probability [-]", fontsize=22)
 plt.ylabel("Log(SNR) [-]", fontsize=22)
 plt.tick_params(axis='both', which='major', labelsize=25)
@@ -173,6 +174,11 @@ snr_02_entangled = snr_all_entangled[idx]
 idx = (np.abs(collection_efficiency - 1)).argmin()
 snr_1_entangled = snr_all_entangled[idx]
 
+#intersection between entangled photon source and single photon source
+max_snr_sps = max(snr_all_sps)
+idx = (np.abs(np.array(snr_all_entangled) - max_snr_sps)).argmin()
+eff_entangled = collection_efficiency[idx]
+
 # 1) SNR of entangled photon source as a subplot
 
 fig, ax = plt.subplots(1, 2, figsize=(16.1, 30))
@@ -183,10 +189,11 @@ ax[0].text(0.25, snr_005_sps+0.5, "Collection efficiency of SPS=5%", fontsize=16
 ax[0].hlines(snr_02_sps, 0, 1, colors="b", linestyles="--", linewidth=3)
 ax[0].text(0.25, snr_02_sps+0.5, "Collection efficiency of SPS=20%", fontsize=16)
 ax[0].hlines(snr_1_sps, 0, 1, colors="b", linestyles="--", linewidth=3)
-ax[0].text(0, snr_1_sps-2, "Collection efficiency of SPS=100%", fontsize=16)
+ax[0].text(0, snr_1_sps-4.5, f"Collection efficiency of SPS=100%\nCollection efficiency of EPS {eff_entangled*100:.1f}%", fontsize=16)
 #ax[0].set_xlabel("Collection efficiency [-]", fontsize=22)
 #ax[0].set_ylabel("SNR [-]", fontsize=22)
 ax[0].tick_params(axis='both', which='major', labelsize=22)
+ax[0].set_title("a)", fontsize=22, fontweight="bold", loc="left")
 ax[0].legend(fontsize=18, frameon=False, loc="upper left")
 
 # Intersection with multi-photon probability
@@ -199,22 +206,23 @@ intersection_snr_entangled = snr_all_laser[idx]
 
 ax[1].plot(collection_efficiency, snr_all_entangled, "-", linewidth=2, label="Entangled Photon Source")
 ax[1].hlines(snr_0001_laser, 0, 1, colors="r", linestyles="--", label="Pulsed Laser", linewidth=3)
-ax[1].text(0.12, snr_0001_laser+1, "Multi-photon probability of laser=0.001", fontsize=16)
+ax[1].text(0.12, snr_0001_laser+1, "Multi-photon probability of laser=0.1%", fontsize=16)
 ax[1].hlines(snr_001_laser, 0, 1, colors="r", linestyles="--", linewidth=3)
-ax[1].text(0.18, snr_001_laser+1, "Multi-photon probability of laser=0.01", fontsize=16)
+ax[1].text(0.18, snr_001_laser+1, "Multi-photon probability of laser=1%", fontsize=16)
 ax[1].hlines(snr_01_laser, 0, 1, colors="r", linestyles="--", linewidth=3)
-ax[1].text(0.5, snr_01_laser-5, "Multi-photon probability\nof laser=0.1", fontsize=16)
+ax[1].text(0.5, snr_01_laser-5, "Multi-photon probability\nof laser=10%", fontsize=16)
 ax[1].hlines(intersection_snr_entangled, 0, 1, colors="r", linestyles="--", linewidth=3)
-ax[1].text(0, intersection_snr_entangled-4, f"Multi-photon probability of laser={multi_prob_match_entangled:.2f}\n", fontsize=16)
+ax[1].text(0, intersection_snr_entangled-4, f"Multi-photon probability of laser={multi_prob_match_entangled*100:.1f}%", fontsize=16)
 #ax[1].hlines(snr_1_laser, 0, 1, colors="r", linestyles="--", linewidth=3)
 #ax[1].text(0, snr_1_laser-7, f"Multi-photon probability\nof laser={multi_100:.3f}\nSPS : 1 photon/pulse", fontsize=16)
 #ax[1].set_xlabel("Collection efficiency [-]", fontsize=22)
 #ax[1].set_ylabel("SNR [-]", fontsize=22)
 ax[1].tick_params(axis='both', which='major', labelsize=22)
+ax[1].set_title("b)", fontsize=22, fontweight="bold", loc="left")
 ax[1].legend(fontsize=18, frameon=False, loc="center left", bbox_to_anchor=(0, 0.75))
 
 fig.text(0.5, 0.04, 'Collection efficiency [-]', ha='center', fontsize=22)
-fig.text(0.04, 0.5, 'SNR [-]', va='center', rotation='vertical', fontsize=22)
+fig.text(0.1, 0.5, 'SNR [-]', va='center', rotation='vertical', fontsize=22)
 
 plt.show()
 

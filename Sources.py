@@ -161,10 +161,6 @@ class PulsedLaser(Source):
 		noise = self.noise_rate()
 		return signal / noise
 
-	def debug(self):
-		laser_state = self.compute_laser_state()
-		return expect(self.apd_detector, laser_state)
-
 
 class SinglePhoton(Source):
 
@@ -180,6 +176,7 @@ class SinglePhoton(Source):
 		assert self.multi_photon_probability is None, "The multi-photon probability cannot be fixed for the single photon source"
 		if self.trigger_rate is None:
 			self.trigger_rate = self.effective_trigger_rate()
+			self.multi_photon_probability = self.sp_p2
 
 
 	def single_photon_state(self):
@@ -247,8 +244,18 @@ class EntangledPhotonSPDC(Source):
 		self.vacuum = basis(self.fock_space_dim, 0)
 
 	def fix_parameters(self):
-		#TODO : Obtain fix parameters for SPDC sources
-		pass
+		assert self.trigger_rate is None or self.multi_photon_probability is None, "Cannot have both trigger rate and multi-photon probability fixed"
+		if self.trigger_rate is not None:
+			epsilon = self.output_power/(self.trigger_rate * self.spdc_eps_collection)
+			self.spdc_emission = epsilon
+			self.multi_photon_probability = (epsilon**2)/((epsilon+1)**2)
+		elif self.multi_photon_probability is not None:
+			assert 0 < self.multi_photon_probability < 1, "The multi-photon probability must be between 0 and 1"
+			epsilon = np.sqrt(self.multi_photon_probability)/(1-np.sqrt(self.multi_photon_probability))
+			self.spdc_emission = epsilon
+			self.trigger_rate = self.output_power/(epsilon * self.spdc_eps_collection)
+		else:
+			raise ValueError("The trigger rate or the multi-photon probability must be fixed")
 
 	def squeezed_operator(self):
 		"""
@@ -291,20 +298,26 @@ class EntangledPhotonSPDC(Source):
 
 	def compute_eps_rate(self):
 		"""
+		#TODO : CONFIRM THIS
 		Compute the rate of the SPDC source. Which is the rate at which EPS should be emitted to have the desired output
 		:return: Rate of the SPDC source [float]
 		"""
-		operator_detection_vacuum_pair = tensor(qeye(self.fock_space_dim), self.vacuum * self.vacuum.dag())
-		prob_pair_vacuum = expect(operator_detection_vacuum_pair, self.compute_spdc_eps_state())
-		eps_rate = self.output_power / ((1 - prob_pair_vacuum) * self.spdc_eps_collection)
+		#operator_detection_vacuum_pair = tensor(qeye(self.fock_space_dim), self.vacuum * self.vacuum.dag())
+		#prob_pair_vacuum = expect(operator_detection_vacuum_pair, self.compute_spdc_eps_state())
+		#eps_rate = self.output_power / ((1 - prob_pair_vacuum) * self.spdc_eps_collection)
+		operator_detection_idler = tensor(self.apd_detector_idler, qeye(self.fock_space_dim))
+		eps_rate = self.trigger_rate/expect(operator_detection_idler, self.compute_spdc_eps_state())
+
 		return eps_rate
 
 	def effective_trigger_rate(self):
+		# TODO : MAYBE CHANGE THAT -> REMOVE IT
 		"""
 		Compute the effective trigger rate of the SPDC source. This effective trigger rate is the rate at which an
 		idler is detected. It is not the rate seen by an adversary.
 		:return: Effective trigger rate [float]
 		"""
+		#self.output_power/(epsilon * self.spdc_eps_collection)
 		operator_detection_idler = tensor(self.apd_detector_idler, qeye(self.fock_space_dim))
 		return self.compute_eps_rate() * expect(operator_detection_idler, self.compute_spdc_eps_state())
 

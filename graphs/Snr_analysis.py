@@ -2,18 +2,18 @@ import numpy as np
 from Sources import SinglePhoton, PulsedLaser, EntangledPhotonSPDC, SetupParameters
 import matplotlib.pyplot as plt
 from tqdm import tqdm
+from copy import deepcopy
 
 param = SetupParameters(
 	fock_space_dim=5,
 	output_power=2e6,
-	trigger_rate=5e6,
-	multi_photon_probability=None,
-	sp_collection=0.1,
+	trigger_rate=None,
+	multi_photon_probability=1e-3,
+	sp_collection=0.2,
 	sp_p1=0.99,
 	sp_p2=1e-3,
-	spdc_eps_heralding=0.5,
+	spdc_eps_heralding=0.05,
 	spdc_eps_collection=0.2,
-	spdc_emission=0.1,
 	target_distance=1,
 	receiver_diameter=0.05,
 	target_albedo=0.2,
@@ -38,19 +38,19 @@ for eff in tqdm(collection_efficiency_sps):
 
 
 ### SNR Pulsed Laser as a function of alpha ###
-alpha = np.linspace(0.05, 1.15, 6000)
-multi_photon_prob = 1-(np.exp(-alpha**2)*(1+alpha**2))
+#alpha = np.linspace(0.05, 1.15, 6000)
+#multi_photon_prob = 1-(np.exp(-alpha**2)*(1+alpha**2))
+param_laser = deepcopy(param)
+multi_photon_prob = np.linspace(0.0001, 0.4, 6000)
 snr_all_laser = []
 
-for a in tqdm(alpha):
-	output_power = param["trigger_rate"]*(a**2)
-	param.output_power = output_power
-	signal = PulsedLaser(param).signal_rate()
-	noise = PulsedLaser(param).noise_rate()
-	snr = signal/noise
+for mpp in tqdm(multi_photon_prob):
+	param_laser.multi_photon_probability = mpp
+	snr = PulsedLaser(param_laser).signal_to_noise_rate()
 	snr_all_laser.append(snr)
 
 ### SNR Entangled Source as a function of eps_heralding ###
+
 
 collection_efficiency = np.linspace(0.05, 1, 6000)
 snr_all_entangled = []
@@ -58,7 +58,7 @@ snr_all_entangled = []
 for collec_eff in tqdm(collection_efficiency):
 	param.spdc_eps_heralding = collec_eff * param["detection_efficiency"]
 	param.spdc_eps_collection = collec_eff
-	snr = EntangledPhotonSPDC(param).signal_to_noise_rate()
+	snr = EntangledPhotonSPDC(param, adjust_eps_rate=True).signal_to_noise_rate()
 	snr_all_entangled.append(snr)
 
 
@@ -189,12 +189,13 @@ ax[0].text(0.25, snr_005_sps+0.5, "Collection efficiency of SPS=5%", fontsize=16
 ax[0].hlines(snr_02_sps, 0, 1, colors="b", linestyles="--", linewidth=3)
 ax[0].text(0.25, snr_02_sps+0.5, "Collection efficiency of SPS=20%", fontsize=16)
 ax[0].hlines(snr_1_sps, 0, 1, colors="b", linestyles="--", linewidth=3)
-ax[0].text(0, snr_1_sps-4.5, f"Collection efficiency of SPS=100%\nCollection efficiency of EPS {eff_entangled*100:.1f}%", fontsize=16)
+ax[0].text(0, snr_1_sps-2.5, f"Collection efficiency of SPS=100%", fontsize=16)
+ax[0].text(0, snr_1_sps-4, f"Collection efficiency of EPS {eff_entangled*100:.1f}%", fontsize=16, color="blue")
 #ax[0].set_xlabel("Collection efficiency [-]", fontsize=22)
 #ax[0].set_ylabel("SNR [-]", fontsize=22)
 ax[0].tick_params(axis='both', which='major', labelsize=22)
 ax[0].set_title("a)", fontsize=22, fontweight="bold", loc="left")
-ax[0].legend(fontsize=18, frameon=False, loc="upper left")
+ax[0].legend(fontsize=18, frameon=False, loc="center left", bbox_to_anchor=(0, 0.75))
 
 # Intersection with multi-photon probability
 
@@ -293,7 +294,7 @@ ax[1].text(0.03, snr_005_entangled+0.2, "Collection efficiency of\nentangled sou
 ax[1].hlines(snr_02_entangled, 0, 0.38, colors="g", linestyles="--", linewidth=3)
 ax[1].text(0.05, snr_02_entangled+1, "Collection efficiency of\nentangled source=20%", fontsize=16)
 ax[1].hlines(snr_1_entangled, 0, 0.38, colors="g", linestyles="--", linewidth=3)
-ax[1].text(-0.01, snr_1_entangled-13, "Collection efficiency of\nentangled source=100%", fontsize=16)
+ax[1].text(-0.01, snr_1_entangled+1.5, "Collection efficiency of\nentangled source=100%", fontsize=16)
 #ax[1].set_xlabel("Multi-Photon probability [-]", fontsize=22)
 #ax[1].set_ylabel("Log(SNR) [-]", fontsize=22)
 ax[1].tick_params(axis='both', which='major', labelsize=25)

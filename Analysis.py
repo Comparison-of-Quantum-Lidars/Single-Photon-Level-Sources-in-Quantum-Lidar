@@ -22,7 +22,9 @@ class RocAnalysis:
 		return q0, q1
 
 	def create_threshold_array(self):
-		threshold = np.linspace(1, int(self.threshold_limit), int(self.threshold_limit))
+		# TODO: Check if the threshold is correct
+		#threshold = np.linspace(1, int(self.threshold_limit), int(self.threshold_limit))
+		threshold = np.linspace(0, int(self.threshold_limit), int(self.threshold_limit)+1)
 		return threshold
 
 	def compute_binom_pmf(self, threshold, q):
@@ -47,13 +49,14 @@ class RocAnalysis:
 
 class HistogramAnalysis:
 
-	def __init__(self, params, signal_rate, noise_rate, acquisition_time, effective_trigger_rate, jitter_std_dev: Optional[float] = 0.5e-9, **kwargs):
+	def __init__(self, params, signal_rate, noise_rate, acquisition_time, acquisition_rate, effective_trigger_rate, jitter_std_dev: Optional[float] = 0.5e-9, **kwargs):
 		self.params = params
 		self.signal_rate = signal_rate/effective_trigger_rate
-		self.signal_rate = self.signal_rate * params["laser_rate"]
+		self.signal_rate = self.signal_rate * acquisition_rate
 		self.noise_rate = noise_rate/kwargs.get("noise_trigger_rate", effective_trigger_rate)
-		self.noise_rate = self.noise_rate * params["laser_rate"]
+		self.noise_rate = self.noise_rate * acquisition_rate
 		self.acquisition_time = acquisition_time
+		self.acquisition_rate = acquisition_rate
 		self.jitter_std_dev = jitter_std_dev
 		self.bins = self.compute_bins_number()
 
@@ -62,7 +65,7 @@ class HistogramAnalysis:
 		return signal, self.noise_rate
 
 	def compute_window_params(self):
-		total_window = 1 / self.params["laser_rate"]
+		total_window = 1 / self.acquisition_rate
 		half_window = total_window / 2
 		max_range = half_window * 299792458
 		return max_range, total_window, half_window
@@ -73,7 +76,7 @@ class HistogramAnalysis:
 		return bins
 
 	def compute_trigger_total(self):
-		trigger_total = self.params["laser_rate"] * self.acquisition_time
+		trigger_total = self.acquisition_rate * self.acquisition_time
 		return trigger_total
 
 	def noise_and_signal_prob_per_bins(self):

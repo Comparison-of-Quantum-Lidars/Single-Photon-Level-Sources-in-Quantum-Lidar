@@ -5,7 +5,7 @@ from tqdm import tqdm
 from copy import deepcopy
 
 param = SetupParameters(
-	fock_space_dim=5,
+	fock_space_dim=25,
 	output_power=2e6,
 	trigger_rate=None,
 	multi_photon_probability=None,
@@ -32,7 +32,7 @@ param = SetupParameters(
 
 param_match_multi_photon = deepcopy(param)
 
-channel_efficiency = np.linspace(0.05, 1, 6000)
+channel_efficiency = np.linspace(0.05, 1, 60)
 
 multi_photon_probability = []
 snr_laser = []
@@ -42,6 +42,11 @@ snr_eps = []
 average_photon_eps = []
 average_photon_sps = []
 average_photon_laser = []
+
+nvp_laser = []
+nvp_sps = []
+nvp_eps = []
+
 
 for ce in tqdm(channel_efficiency):
 	param_match_multi_photon.channel_efficiency = ce
@@ -56,6 +61,9 @@ for ce in tqdm(channel_efficiency):
 	average_photon_eps.append(EntangledPhotonSPDC(param_match_multi_photon).epsilon)
 	average_photon_sps.append(SinglePhoton(param_match_multi_photon).sp_p1 + 2*SinglePhoton(param_match_multi_photon).sp_p2)
 	average_photon_laser.append((PulsedLaser(param_match_multi_photon).compute_alpha())**2)
+	nvp_laser.append(PulsedLaser(param_match_multi_photon).no_vacuum_probability)
+	nvp_sps.append(SinglePhoton(param_match_multi_photon).no_vacuum_probability)
+	nvp_eps.append(EntangledPhotonSPDC(param_match_multi_photon).no_vacuum_probability)
 
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
@@ -87,11 +95,24 @@ plt.tick_params(axis='both', which='minor', labelsize=22)
 plt.legend(frameon=False, fontsize=22)
 plt.show()
 
+plt.plot(channel_efficiency, nvp_laser, "-", label="Pulsed Laser", linewidth=3, color="blue")
+plt.plot(channel_efficiency, nvp_sps, "--", label="Single Photon Source", linewidth=3, color="red")
+plt.plot(channel_efficiency, nvp_eps, "-.", label="Entangled Photon Source", linewidth=3, color="green")
+plt.xlabel("Channel Efficiency [-]", fontsize=22)
+plt.ylabel("No Vacuum Probability [-]", fontsize=22)
+plt.tick_params(axis='both', which='major', labelsize=22)
+plt.tick_params(axis='both', which='minor', labelsize=22)
+plt.legend(frameon=False, fontsize=22)
+plt.show()
+
+
+
+
 ### Match No-Vacuum Probability ###
 
 param_match_no_vacuum = deepcopy(param)
 
-channel_efficiency = np.linspace(0.05, 1, 6000)
+channel_efficiency = np.linspace(0.000001, 1, 60)
 snr_laser = []
 snr_sps = []
 snr_eps = []
@@ -101,6 +122,9 @@ average_photon_eps = []
 average_photon_sps = []
 average_photon_laser = []
 
+multi_photon_eps = []
+multi_photon_sps = []
+multi_photon_laser = []
 
 for ce in tqdm(channel_efficiency):
 	param_match_no_vacuum.channel_efficiency = ce
@@ -115,6 +139,9 @@ for ce in tqdm(channel_efficiency):
 	average_photon_eps.append(EntangledPhotonSPDC(param_match_no_vacuum).epsilon)
 	average_photon_sps.append(SinglePhoton(param_match_no_vacuum).sp_p1 + 2*SinglePhoton(param_match_no_vacuum).sp_p2)
 	average_photon_laser.append((PulsedLaser(param_match_no_vacuum).compute_alpha())**2)
+	multi_photon_eps.append(EntangledPhotonSPDC(param_match_no_vacuum).multi_photon_probability)
+	multi_photon_sps.append(SinglePhoton(param_match_no_vacuum).multi_photon_probability)
+	multi_photon_laser.append(PulsedLaser(param_match_no_vacuum).multi_photon_probability)
 
 plt.plot(channel_efficiency, no_vacuum_probability, "-", label="No Vacuum Probability", linewidth=3, color="black")
 plt.xlabel("Channel Efficiency [-]", fontsize=22)
@@ -134,7 +161,7 @@ plt.xlabel("Channel Efficiency [-]", fontsize=22)
 plt.ylabel("Signal to Noise Ratio [-]", fontsize=22)
 plt.tick_params(axis='both', which='major', labelsize=22)
 plt.tick_params(axis='both', which='minor', labelsize=22)
-plt.xlim([0, 0.7])
+plt.xlim([0, 0.9])
 plt.legend(frameon=False, fontsize=22)
 plt.show()
 
@@ -145,6 +172,18 @@ plt.xlabel("Channel Efficiency [-]", fontsize=22)
 plt.ylabel("Average Photon Number [-]", fontsize=22)
 plt.tick_params(axis='both', which='major', labelsize=22)
 plt.tick_params(axis='both', which='minor', labelsize=22)
-plt.xlim([0, 0.7])
+#plt.xlim([0, 0.9])
+plt.legend(frameon=False, fontsize=22)
+plt.show()
+
+
+plt.plot(channel_efficiency, multi_photon_laser, "-", label="Pulsed Laser", linewidth=3, color="blue")
+plt.plot(channel_efficiency, multi_photon_sps, "--", label="Single Photon Source", linewidth=3, color="red")
+plt.plot(channel_efficiency, multi_photon_eps, "-.", label="Entangled Photon Source", linewidth=3, color="green")
+plt.xlabel("Channel Efficiency [-]", fontsize=22)
+plt.ylabel("Multi-Photon Probability [-]", fontsize=22)
+plt.tick_params(axis='both', which='major', labelsize=22)
+plt.tick_params(axis='both', which='minor', labelsize=22)
+#plt.xlim([0, 0.7])
 plt.legend(frameon=False, fontsize=22)
 plt.show()

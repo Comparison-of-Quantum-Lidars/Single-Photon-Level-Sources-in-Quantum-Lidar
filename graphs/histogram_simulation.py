@@ -13,26 +13,28 @@ if scenario == "histogram_target":
 
 	param = SetupParameters(
 		fock_space_dim=15,
-		output_power=1e5,
+		output_power=2e7,
 		trigger_rate=None,
-		multi_photon_probability=0.25*(0.2**2),
+		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.2,
-		sp_p1=0.75,
-		sp_p2=0.25,
-		spdc_eps_heralding=0.1,
+		sp_p1=0.9999,
+		sp_p2=1e-4,
+		spdc_eps_heralding=0.18,
 		spdc_eps_collection=0.2,
-		channel_efficiency=1,
+		channel_efficiency=0.5,
 		target_distance=10,
 		receiver_diameter=0.5,
 		target_albedo=0.2,
 		optics_transmitter=0.5,
 		optics_receiver=0.5,
-		detection_efficiency=1,
-		background=400,
-		detector_dark=200,
+		detection_efficiency=0.9,
+		background=100,
+		detector_dark=50,
 		timing_window=0.5e-9,
 	)
+	total_loss = param["sp_collection"]*param["channel_efficiency"]
+	param["no_vacuum_probability"] = param["sp_p1"] * total_loss + param["sp_p2"] * total_loss * (2-total_loss)
 	timing_window = param["timing_window"]
 	acquisition_time = 5
 	acquisition_rate = 5e6

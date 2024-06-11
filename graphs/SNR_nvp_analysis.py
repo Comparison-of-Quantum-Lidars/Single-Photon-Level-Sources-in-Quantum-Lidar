@@ -15,7 +15,7 @@ param = SetupParameters(
 	sp_p2=1e-3,
 	spdc_eps_heralding=None,
 	spdc_eps_collection=None,
-	channel_efficiency=1,
+	channel_efficiency=0.5,
 	target_distance=1,
 	receiver_diameter=0.05,
 	target_albedo=0.2,
@@ -32,6 +32,8 @@ param = SetupParameters(
 param_laser = deepcopy(param)
 
 no_vacuum_probability = np.linspace(0.001, 0.99, 60)
+no_vacuum_probability = np.linspace(0.001, 0.49, 60)
+
 snr_laser = []
 mpp_laser = []
 no_vacuum_probability_laser = no_vacuum_probability

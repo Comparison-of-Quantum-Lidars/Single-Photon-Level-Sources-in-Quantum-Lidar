@@ -393,6 +393,23 @@ class EntangledPhotonSPDC(Source):
 		noise = self.noise_rate()
 		return signal / noise
 
+	@property
+	def g2(self):
+		operator_joint_detection = tensor(self.apd_detector_idler, self.apd_detector_signal)
+		joint_measurement_prob = expect(operator_joint_detection, self.compute_spdc_eps_state())
+
+		prob_idler = (1-(1/((self.epsilon+1)-(self.epsilon*(1-self.spdc_eps_heralding)))))
+
+		efficiency_signal = self.spdc_eps_collection * self.overall_detection_probability()[0]
+		prob_signal = (1-(1/((efficiency_signal+1)-(efficiency_signal*(1-efficiency_signal)))))
+
+		#operator_detector_signal_only = tensor(qeye(self.fock_space_dim), self.apd_detector_signal)
+		#prob_signal = expect(operator_detector_signal_only, self.compute_spdc_eps_state())
+
+		g2 = joint_measurement_prob/(prob_idler*prob_signal)
+
+		return g2
+
 
 class SetupParameters:
 

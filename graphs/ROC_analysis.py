@@ -4,7 +4,7 @@ from Sources import *
 from copy import copy, deepcopy
 from Analysis import *
 
-scenario = "effect_channel_efficiency_laser"
+scenario = "matched_no_vacuum_probability"
 
 if scenario == "matched_trigger_rate_laser_sps":
 
@@ -63,6 +63,12 @@ if scenario == "matched_trigger_rate_laser_sps":
 		range_interval=range_interval,
 		timing_window=param["timing_window"]
 	).compute_p_d_p_fa()
+
+	### Entangled Source ###
+	# param_eps = deepcopy(param)
+	# signal_eps = EntangledPhotonSPDC(param_eps).signal_rate()
+	# noise_eps = EntangledPhotonSPDC(param_eps).noise_rate()
+	# trigger_rate_eps = EntangledPhotonSPDC(param_eps).compute_effective_trigger_rate()
 
 	plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
@@ -285,6 +291,8 @@ if scenario == "matched_no_vacuum_probability":
 		timing_window=param["timing_window"]
 	).compute_p_d_p_fa()
 
+	print(signal/noise)
+
 	### Single photon ###
 
 	signal = SinglePhoton(param).signal_rate()
@@ -305,6 +313,8 @@ if scenario == "matched_no_vacuum_probability":
 	signal = EntangledPhotonSPDC(param).signal_rate()
 	noise = EntangledPhotonSPDC(param).noise_rate()
 	trigger_rate = EntangledPhotonSPDC(param).compute_effective_trigger_rate()
+
+	print(signal/noise)
 
 	true_positive_spdc, false_positive_spdc = RocAnalysis(
 		signal_rate=signal,

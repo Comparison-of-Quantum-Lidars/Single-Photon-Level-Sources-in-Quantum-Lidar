@@ -21,7 +21,7 @@ param = SetupParameters(
 	target_albedo=0.2,
 	optics_transmitter=0.8,
 	optics_receiver=0.5,
-	detection_efficiency=1,
+	detection_efficiency=0.5,
 	background=400,
 	detector_dark=200,
 	timing_window=0.5e-9,
@@ -53,7 +53,6 @@ for mpp in tqdm(multi_photon_prob):
 param_eps = deepcopy(param)
 collection_efficiency = collection_efficiency_sps
 snr_all_entangled = []
-
 mpp_eps = []
 
 for idx, collec_eff in enumerate(tqdm(collection_efficiency)):
@@ -91,23 +90,23 @@ idx = (np.abs(np.array(snr_all_laser) - np.array(snr_100))).argmin()
 multi_100 = multi_photon_prob[idx]
 intersection_snr_100 = snr_all_laser[idx]
 
-# plt.figure(figsize=(16.1, 10))
-# plt.semilogy(multi_photon_prob, snr_all_laser, "-", linewidth=3, label="Pulsed Laser", color="blue")
-# plt.hlines(snr_5, 0, 0.38, colors="red", linestyles="--", label="Single Photon Source", linewidth=3)
-# plt.text(0.1, snr_5+0.1, "Collection efficiency of SPS=5%", fontsize=16)
-# plt.hlines(snr_20, 0, 0.38, colors="red", linestyles="--", linewidth=3)
-# plt.text(0.1, snr_20+0.5, "Collection efficiency of SPS=20%", fontsize=16)
-# plt.hlines(snr_100, 0, 0.38, colors="red", linestyles="--", linewidth=3)
-# plt.text(0.1, snr_100+2, "Collection efficiency of SPS=100%", fontsize=16)
-# plt.vlines(multi_100, 1e-2, intersection_snr_100, colors="k", linestyles="-.", linewidth=2)
-# plt.text(0.265, 25.5, f"Probability of multi-photons={multi_100*100:.1f}%\nSPS : 1 photon/pulse", fontsize=14)
-# plt.xlabel("Multi-Photon probability [-]", fontsize=22)
-# plt.ylabel("Log(SNR) [-]", fontsize=22)
-# plt.tick_params(axis='both', which='major', labelsize=25)
-# #plt.title("Pulsed laser source", fontsize=22, fontweight="bold")
-# plt.legend(fontsize=18, frameon=False, loc="lower right")
-# plt.ylim([0.8, 60])
-# plt.show()
+plt.figure(figsize=(16.1, 10))
+plt.semilogy(multi_photon_prob, snr_all_laser, "-", linewidth=3, label="Pulsed Laser", color="blue")
+plt.hlines(snr_5, 0, 0.38, colors="red", linestyles="--", label="Single Photon Source", linewidth=3)
+plt.text(0.1, snr_5+0.1, "Collection efficiency of SPS=5%", fontsize=16)
+plt.hlines(snr_20, 0, 0.38, colors="red", linestyles="--", linewidth=3)
+plt.text(0.1, snr_20+0.5, "Collection efficiency of SPS=20%", fontsize=16)
+plt.hlines(snr_100, 0, 0.38, colors="red", linestyles="--", linewidth=3)
+plt.text(0.1, snr_100+2, "Collection efficiency of SPS=100%", fontsize=16)
+plt.vlines(multi_100, 1e-2, intersection_snr_100, colors="k", linestyles="-.", linewidth=2)
+plt.text(0.265, 25.5, f"Probability of multi-photons={multi_100*100:.1f}%\nSPS : 1 photon/pulse", fontsize=14)
+plt.xlabel("Multi-Photon probability [-]", fontsize=22)
+plt.ylabel("Log(SNR) [-]", fontsize=22)
+plt.tick_params(axis='both', which='major', labelsize=25)
+#plt.title("Pulsed laser source", fontsize=22, fontweight="bold")
+plt.legend(fontsize=18, frameon=False, loc="lower right")
+plt.ylim([0.8, 60])
+plt.show()
 
 
 # 2) SNR Pulsed Laser compared to SPS using multi-photon probability
@@ -129,22 +128,22 @@ mutli_1 = multi_photon_prob[idx]
 snr_1 = snr_all_laser[idx]
 
 # put text above the horizontal line
-# plt.figure(figsize=(16.1, 10))
-# plt.plot(collection_efficiency_sps, snr_all_sps, "--", linewidth=3, label="Single Photon Source", color="red")
-# plt.hlines(snr_0001, 0, 1, colors="blue", linestyles="-", label="Pulsed Laser", linewidth=3)
-# plt.text(0.6, snr_0001+1, "Multi-photon probability of laser=0.001", fontsize=16)
-# plt.hlines(snr_001, 0, 1, colors="blue", linestyles="-", linewidth=3)
-# plt.text(0.6, snr_001+1, "Multi-photon probability of laser=0.01", fontsize=16)
-# plt.hlines(snr_01, 0, 1, colors="blue", linestyles="-", linewidth=3)
-# plt.text(0.6, snr_01+1, "Multi-photon probability of laser=0.1", fontsize=16)
-# plt.hlines(snr_1, 0, 1, colors="blue", linestyles="-", linewidth=3)
-# plt.text(0, snr_1-4, f"Multi-photon probability of laser={multi_100:.3f}\nSPS : 1 photon/pulse", fontsize=16)
-# plt.xlabel("Collection efficiency [-]", fontsize=22)
-# plt.ylabel("SNR [-]", fontsize=22)
-# plt.tick_params(axis='both', which='major', labelsize=22)
-# #plt.title("Single photon source", fontsize=22, fontweight="bold")
-# plt.legend(fontsize=22, frameon=False, loc="best", bbox_to_anchor=(0.4, 0.5))
-# plt.show()
+plt.figure(figsize=(16.1, 10))
+plt.plot(collection_efficiency_sps, snr_all_sps, "--", linewidth=3, label="Single Photon Source", color="red")
+plt.hlines(snr_0001, 0, 1, colors="blue", linestyles="-", label="Pulsed Laser", linewidth=3)
+plt.text(0.6, snr_0001+1, "Multi-photon probability of laser=0.001", fontsize=16)
+plt.hlines(snr_001, 0, 1, colors="blue", linestyles="-", linewidth=3)
+plt.text(0.6, snr_001+1, "Multi-photon probability of laser=0.01", fontsize=16)
+plt.hlines(snr_01, 0, 1, colors="blue", linestyles="-", linewidth=3)
+plt.text(0.6, snr_01+1, "Multi-photon probability of laser=0.1", fontsize=16)
+plt.hlines(snr_1, 0, 1, colors="blue", linestyles="-", linewidth=3)
+plt.text(0, snr_1-4, f"Multi-photon probability of laser={multi_100:.3f}\nSPS : 1 photon/pulse", fontsize=16)
+plt.xlabel("Collection efficiency [-]", fontsize=22)
+plt.ylabel("SNR [-]", fontsize=22)
+plt.tick_params(axis='both', which='major', labelsize=22)
+#plt.title("Single photon source", fontsize=22, fontweight="bold")
+plt.legend(fontsize=22, frameon=False, loc="best", bbox_to_anchor=(0.4, 0.5))
+plt.show()
 
 
 ### Multi-Graph ###

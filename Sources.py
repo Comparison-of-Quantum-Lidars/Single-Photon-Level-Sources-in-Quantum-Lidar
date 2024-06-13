@@ -354,7 +354,6 @@ class EntangledPhotonSPDC(Source):
 				self.spdc_eps_collection * (1 + self.epsilon * self.spdc_eps_heralding))
 
 	def compute_eps_rate(self):
-		#return (self.trigger_rate * self.spdc_eps_heralding)/(self.epsilon * (1 + self.epsilon * self.spdc_eps_heralding))
 		return (self.trigger_rate * (1 + (self.epsilon * self.spdc_eps_heralding))) / (
 				self.spdc_eps_heralding * self.epsilon)
 

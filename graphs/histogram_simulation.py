@@ -22,7 +22,7 @@ if scenario == "histogram_target":
 		sp_p2=1e-4,
 		spdc_eps_heralding=0.18,
 		spdc_eps_collection=0.2,
-		channel_efficiency=0.5,
+		atmosphere=0.8,
 		target_distance=10,
 		receiver_diameter=0.5,
 		target_albedo=0.2,
@@ -33,8 +33,8 @@ if scenario == "histogram_target":
 		detector_dark=50,
 		timing_window=0.5e-9,
 	)
-	total_loss = param["sp_collection"]*param["channel_efficiency"]
-	param["no_vacuum_probability"] = param["sp_p1"] * total_loss + param["sp_p2"] * total_loss * (2-total_loss)
+	extr_efficiency = param["sp_collection"]
+	param["no_vacuum_probability"] = param["sp_p1"] * extr_efficiency + param["sp_p2"] * extr_efficiency * (2-extr_efficiency)
 	timing_window = param["timing_window"]
 	acquisition_time = 5
 	acquisition_rate = 5e6

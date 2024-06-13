@@ -4,7 +4,7 @@ from Sources import *
 from copy import copy, deepcopy
 from Analysis import *
 
-scenario = "matched_no_vacuum_probability"
+scenario = "effect_channel_efficiency_laser"
 
 if scenario == "matched_trigger_rate_laser_sps":
 
@@ -20,7 +20,7 @@ if scenario == "matched_trigger_rate_laser_sps":
 		sp_p2=1e-4,
 		spdc_eps_heralding=0.18,
 		spdc_eps_collection=0.2,
-		channel_efficiency=1,
+		atmosphere=1,
 		target_distance=40,
 		receiver_diameter=0.5,
 		target_albedo=0.2,
@@ -97,7 +97,7 @@ if scenario == "matched_trigger_rate_laser_eps":
 		sp_p2=None,
 		spdc_eps_heralding=0.18,
 		spdc_eps_collection=0.2,
-		channel_efficiency=1,
+		atmosphere=1,
 		target_distance=40,
 		receiver_diameter=0.5,
 		target_albedo=0.2,
@@ -169,7 +169,7 @@ if scenario == "matched_multi_photon":
 		sp_p2=1e-4,
 		spdc_eps_heralding=0.18,
 		spdc_eps_collection=0.2,
-		channel_efficiency=1,
+		atmosphere=1,
 		target_distance=40,
 		receiver_diameter=0.5,
 		target_albedo=0.2,
@@ -181,7 +181,7 @@ if scenario == "matched_multi_photon":
 		timing_window=0.5e-9,
 	)
 
-	param["multi_photon_probability"] = param["sp_p2"] * (param["sp_collection"]*param["channel_efficiency"])**2
+	param["multi_photon_probability"] = param["sp_p2"] * (param["sp_collection"])**2
 
 	range_interval = 50
 
@@ -260,7 +260,7 @@ if scenario == "matched_no_vacuum_probability":
 		sp_p2=1e-4,
 		spdc_eps_heralding=0.18,
 		spdc_eps_collection=0.2,
-		channel_efficiency=1,
+		atmosphere=1,
 		target_distance=40,
 		receiver_diameter=0.5,
 		target_albedo=0.2,
@@ -271,8 +271,8 @@ if scenario == "matched_no_vacuum_probability":
 		detector_dark=50,
 		timing_window=0.5e-9,
 	)
-	total_loss = param["sp_collection"]*param["channel_efficiency"]
-	param["no_vacuum_probability"] = param["sp_p1"] * total_loss + param["sp_p2"] * total_loss * (2-total_loss)
+	extr_loss = param["sp_collection"]
+	param["no_vacuum_probability"] = param["sp_p1"] * extr_loss + param["sp_p2"] * extr_loss * (2-extr_loss)
 
 	range_interval = 50
 
@@ -352,7 +352,7 @@ if scenario == "effect_channel_efficiency_laser":
 		sp_p2=1e-4,
 		spdc_eps_heralding=0.18,
 		spdc_eps_collection=0.2,
-		channel_efficiency=None,
+		atmosphere=None,
 		target_distance=40,
 		receiver_diameter=0.5,
 		target_albedo=0.2,
@@ -367,13 +367,13 @@ if scenario == "effect_channel_efficiency_laser":
 	range_interval = 50
 
 	param_channel_1 = deepcopy(param)
-	param_channel_1["channel_efficiency"] = 1
+	param_channel_1["atmosphere"] = 1
 
 	param_channel_08 = deepcopy(param)
-	param_channel_08["channel_efficiency"] = 0.8
+	param_channel_08["atmosphere"] = 0.8
 
 	param_channel_01 = deepcopy(param)
-	param_channel_01["channel_efficiency"] = 0.1
+	param_channel_01["atmosphere"] = 0.1
 
 	signal_laser_channel_1 = PulsedLaser(param_channel_1).signal_rate()
 	noise_laser_channel_1 = PulsedLaser(param_channel_1).noise_rate()
@@ -418,9 +418,9 @@ if scenario == "effect_channel_efficiency_laser":
 
 	fig = plt.figure(figsize=(16.1, 10))
 
-	plt.plot(false_positive_laser_channel_1, true_positive_laser_channel_1, "-", label="Channel efficiency = 1", linewidth=2.5, color="blue")
-	plt.plot(false_positive_laser_channel_08, true_positive_laser_channel_08, "--", label="Channel efficiency = 0.8", linewidth=2.5, color="blue")
-	plt.plot(false_positive_laser_channel_01, true_positive_laser_channel_01, "-.", label="Channel efficiency = 0.1", linewidth=2.5, color="blue")
+	plt.plot(false_positive_laser_channel_1, true_positive_laser_channel_1, "-", label="Atmosphere efficiency = 1", linewidth=2.5, color="blue")
+	plt.plot(false_positive_laser_channel_08, true_positive_laser_channel_08, "--", label="Atmosphere efficiency = 0.8", linewidth=2.5, color="blue")
+	plt.plot(false_positive_laser_channel_01, true_positive_laser_channel_01, "-.", label="Atmosphere efficiency = 0.1", linewidth=2.5, color="blue")
 	plt.xlabel("False positive", fontsize=22)
 	plt.ylabel("True positive", fontsize=22)
 	plt.title("ROC curve of laser for different channel efficiency", fontsize=22, fontweight="bold")

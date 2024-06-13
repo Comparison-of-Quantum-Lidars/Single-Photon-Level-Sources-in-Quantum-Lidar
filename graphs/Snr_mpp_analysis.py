@@ -15,7 +15,8 @@ param = SetupParameters(
 	sp_p2=1e-3,
 	spdc_eps_heralding=None,
 	spdc_eps_collection=None,
-	channel_efficiency=1,
+	atmosphere=1,
+	adversary=1,
 	target_distance=1,
 	receiver_diameter=0.05,
 	target_albedo=0.2,
@@ -58,7 +59,7 @@ mpp_eps = []
 for idx, collec_eff in enumerate(tqdm(collection_efficiency)):
 	param_eps.spdc_eps_heralding = collec_eff * param["detection_efficiency"]
 	param_eps.spdc_eps_collection = collec_eff
-	param_eps.multi_photon_probability = (collection_efficiency_sps[idx] * param.channel_efficiency)**2 * param_sps.sp_p2
+	param_eps.multi_photon_probability = (collection_efficiency_sps[idx] * param.atmosphere)**2 * param_sps.sp_p2
 	snr = EntangledPhotonSPDC(param_eps).signal_to_noise_rate()
 	snr_all_entangled.append(snr)
 	mpp_eps.append(EntangledPhotonSPDC(param_eps).multi_photon_probability)

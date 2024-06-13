@@ -12,46 +12,53 @@ scenario = "histogram_target"
 if scenario == "histogram_target":
 
 	param = SetupParameters(
-		fock_space_dim=5,
-		output_power=5e6,
-		laser_rate=5e6,
+		fock_space_dim=15,
+		output_power=2e7,
+		trigger_rate=None,
+		multi_photon_probability=None,
+		no_vacuum_probability=None,
 		sp_collection=0.2,
 		sp_p1=0.9999,
 		sp_p2=1e-4,
-		spdc_eps_heralding=0.1,
+		spdc_eps_heralding=0.18,
 		spdc_eps_collection=0.2,
-		spdc_emission=0.1,
+		atmosphere=0.8,
 		target_distance=10,
 		receiver_diameter=0.5,
 		target_albedo=0.2,
 		optics_transmitter=0.5,
 		optics_receiver=0.5,
-		detection_efficiency=0.5,
-		background=400,
-		detector_dark=200,
+		detection_efficiency=0.9,
+		background=100,
+		detector_dark=50,
 		timing_window=0.5e-9,
 	)
+	extr_efficiency = param["sp_collection"]
+	param["no_vacuum_probability"] = param["sp_p1"] * extr_efficiency + param["sp_p2"] * extr_efficiency * (2-extr_efficiency)
 	timing_window = param["timing_window"]
 	acquisition_time = 5
+	acquisition_rate = 5e6
 
 	signal_pulsed = PulsedLaser(param).signal_rate()
 	noise_pulsed = PulsedLaser(param).noise_rate()
-	counts_pulsed, bin_edges_pulsed, bin_edges_distance_pulsed = HistogramAnalysis(param, signal_pulsed, noise_pulsed, acquisition_time=acquisition_time, effective_trigger_rate=param["laser_rate"]).histogram_simulation()
+	counts_pulsed, bin_edges_pulsed, bin_edges_distance_pulsed = HistogramAnalysis(param, signal_pulsed, noise_pulsed, acquisition_time=acquisition_time, acquisition_rate=acquisition_rate, effective_trigger_rate=PulsedLaser(param).compute_effective_trigger_rate()).histogram_simulation()
 	bin_edges_pulsed = bin_edges_pulsed / 1e-9
 	snr_pulsed = PulsedLaser(param).signal_to_noise_rate()
 
 
 	signal_sps = SinglePhoton(param).signal_rate()
 	noise_sps = SinglePhoton(param).noise_rate()
-	counts_sps, bin_edges_sps, bin_edges_distance_sps = HistogramAnalysis(param, signal_sps, noise_sps, acquisition_time=acquisition_time, effective_trigger_rate=SinglePhoton(param).effective_trigger_rate()).histogram_simulation()
+	counts_sps, bin_edges_sps, bin_edges_distance_sps = HistogramAnalysis(param, signal_sps, noise_sps, acquisition_time=acquisition_time, acquisition_rate=acquisition_rate, effective_trigger_rate=SinglePhoton(param).compute_effective_trigger_rate()).histogram_simulation()
 	bin_edges_sps = bin_edges_sps / 1e-9
 	snr_sps = SinglePhoton(param).signal_to_noise_rate()
 
 	signal_entangled = EntangledPhotonSPDC(param).signal_rate()
 	noise_entangled = EntangledPhotonSPDC(param).noise_rate()
-	counts_entangled, bin_edges_entangled, bin_edges_distance_entangled = HistogramAnalysis(param, signal_entangled, noise_entangled, acquisition_time=acquisition_time, effective_trigger_rate=EntangledPhotonSPDC(param).effective_trigger_rate()).histogram_simulation()
+	counts_entangled, bin_edges_entangled, bin_edges_distance_entangled = HistogramAnalysis(param, signal_entangled, noise_entangled, acquisition_time=acquisition_time, acquisition_rate=acquisition_rate, effective_trigger_rate=EntangledPhotonSPDC(param).compute_effective_trigger_rate()).histogram_simulation()
 	bin_edges_entangled = bin_edges_entangled / 1e-9
 	snr_entangled = EntangledPhotonSPDC(param).signal_to_noise_rate()
+	print(signal_entangled, noise_entangled, snr_entangled)
+
 
 	plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 

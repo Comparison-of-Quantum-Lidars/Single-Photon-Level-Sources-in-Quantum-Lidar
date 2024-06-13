@@ -471,6 +471,8 @@ class SetupParameters:
 		print("--- Detection ---")
 		print("target_distance: Distance to target, loss is assumed as a 2*pi sphere scattering from target, "
 		      "no other channel losses included")
+		print("atmosphere: Efficiency of propagation in the atmosphere")
+		print("adversary_eff: Overall efficiency of the adversary at detecting (includes the atmospheric efficiency)")
 		print("receiver_diameter: Diameter of the receiver telescope, assume no obstruction [m]")
 		print("target_albedo: Albedo of the target [-]")
 		print("optics_transmitter: Optical efficiency of the transmitter [-]")

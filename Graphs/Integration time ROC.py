@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from Analysis import *
 from copy import deepcopy
 
-scenario = "histogram_roc_combined"
+scenario = "ROC_Comparison_Acquisition_Time_all_Sources"
 
 if scenario == "histogram_roc_combined":
 
@@ -46,6 +46,7 @@ if scenario == "histogram_roc_combined":
 	snr_eps = eps.signal_to_noise_rate()
 	print(f"SNR of the Entangled Source: {snr_eps:.2f}")
 	trigger_rate_eps = eps.compute_effective_trigger_rate()
+	print(f"Effective Trigger Rate of the Entangled Source: {trigger_rate_eps:.2f}")
 
 	count_eps_all = {}
 	bin_edges_distance_eps_all = {}
@@ -77,7 +78,7 @@ if scenario == "histogram_roc_combined":
 
 	axs[0, 0].plot(false_positive_eps[acquisition_time[0]], true_positive_eps[acquisition_time[0]], "-", linewidth=2, color="k")
 	axs[0, 0].tick_params(axis='both', which='major', labelsize=20)
-	axs[0, 0].set_title("Acquisition Time : 0.1s", fontsize=22, fontweight="bold")
+	axs[0, 0].set_title("0.1s", fontsize=22, fontweight="bold")
 
 	axs[1, 0].plot(bin_edges_distance_eps_all[acquisition_time[0]], count_eps_all[acquisition_time[0]], "-", color="k", linewidth=2)
 	axs[1, 0].set_xlim([0, 25])
@@ -85,7 +86,7 @@ if scenario == "histogram_roc_combined":
 
 	axs[0, 1].plot(false_positive_eps[acquisition_time[1]], true_positive_eps[acquisition_time[1]], "-", linewidth=2, color="k")
 	axs[0, 1].tick_params(axis='both', which='major', labelsize=20)
-	axs[0, 1].set_title("Acquisition Time : 1s", fontsize=22, fontweight="bold")
+	axs[0, 1].set_title("1s", fontsize=22, fontweight="bold")
 
 	axs[1, 1].plot(bin_edges_distance_eps_all[acquisition_time[1]], count_eps_all[acquisition_time[1]], "-", color="k", linewidth=2)
 	axs[1, 1].set_xlim([0, 25])
@@ -93,7 +94,7 @@ if scenario == "histogram_roc_combined":
 
 	axs[0, 2].plot(false_positive_eps[acquisition_time[2]], true_positive_eps[acquisition_time[2]], "-", color="k", linewidth=2)
 	axs[0, 2].tick_params(axis='both', which='major', labelsize=20)
-	axs[0, 2].set_title("Acquisition Time : 10s", fontsize=22, fontweight="bold")
+	axs[0, 2].set_title("10s", fontsize=22, fontweight="bold")
 
 	axs[1, 2].plot(bin_edges_distance_eps_all[acquisition_time[2]], count_eps_all[acquisition_time[2]], "-", color="k", linewidth=2)
 	axs[1, 2].set_xlim([0, 25])
@@ -102,7 +103,7 @@ if scenario == "histogram_roc_combined":
 	plt.subplots_adjust(wspace=0.4, hspace=0.3)
 
 	# label for first row of subplots
-	fig.text(0.53, 0.5, "False Postive", ha='center', fontsize=22, fontweight="bold")
+	fig.text(0.53, 0.5, "False Positive", ha='center', fontsize=22, fontweight="bold")
 	fig.text(0.53, 0.08, "Distance [m]", ha='center', fontsize=22, fontweight="bold")
 
 	fig.text(0.08, 0.7, "True Positive", va='center', rotation='vertical', fontsize=22, fontweight="bold")
@@ -110,7 +111,7 @@ if scenario == "histogram_roc_combined":
 
 	plt.show()
 
-if scenario == "ROC Comparison Acquisition Time all Sources":
+if scenario == "ROC_Comparison_Acquisition_Time_all_Sources":
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
@@ -166,5 +167,134 @@ if scenario == "ROC Comparison Acquisition Time all Sources":
 
 	# *** ROC Curves ***
 
+	# acquisition time = 0.1s
 
+	true_positive_sps_01, false_positive_sps_01 = RocAnalysis(
+		signal_rate=signal_sps,
+		noise_rate=noise_sps,
+		trigger_rate=trigger_rate_sps,
+		threshold_limit=trigger_rate_sps/100,
+		timing_window=param_sps["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[0],
+	).compute_p_d_p_fa()
+
+	true_positive_laser_01, false_positive_laser_01 = RocAnalysis(
+		signal_rate=signal_laser,
+		noise_rate=noise_laser,
+		trigger_rate=trigger_rate_laser,
+		threshold_limit=trigger_rate_laser/100,
+		timing_window=param_laser["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[0],
+	).compute_p_d_p_fa()
+
+	true_positive_eps_01, false_positive_eps_01 = RocAnalysis(
+		signal_rate=signal_eps,
+		noise_rate=noise_eps,
+		trigger_rate=trigger_rate_eps,
+		threshold_limit=trigger_rate_eps/100,
+		timing_window=param_eps["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[0],
+	).compute_p_d_p_fa()
+
+	# acquisition time = 1s
+
+	true_positive_sps_1, false_positive_sps_1 = RocAnalysis(
+		signal_rate=signal_sps,
+		noise_rate=noise_sps,
+		trigger_rate=trigger_rate_sps,
+		threshold_limit=trigger_rate_sps/100,
+		timing_window=param_sps["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[1],
+	).compute_p_d_p_fa()
+
+	true_positive_laser_1, false_positive_laser_1 = RocAnalysis(
+		signal_rate=signal_laser,
+		noise_rate=noise_laser,
+		trigger_rate=trigger_rate_laser,
+		threshold_limit=trigger_rate_laser/100,
+		timing_window=param_laser["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[1],
+	).compute_p_d_p_fa()
+
+	true_positive_eps_1, false_positive_eps_1 = RocAnalysis(
+		signal_rate=signal_eps,
+		noise_rate=noise_eps,
+		trigger_rate=trigger_rate_eps,
+		threshold_limit=trigger_rate_eps/100,
+		timing_window=param_eps["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[1],
+	).compute_p_d_p_fa()
+
+	# acquisition time = 10s
+
+	true_positive_sps_10, false_positive_sps_10 = RocAnalysis(
+		signal_rate=signal_sps,
+		noise_rate=noise_sps,
+		trigger_rate=trigger_rate_sps,
+		threshold_limit=trigger_rate_sps/100,
+		timing_window=param_sps["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[2],
+	).compute_p_d_p_fa()
+
+	true_positive_laser_10, false_positive_laser_10 = RocAnalysis(
+		signal_rate=signal_laser,
+		noise_rate=noise_laser,
+		trigger_rate=trigger_rate_laser,
+		threshold_limit=trigger_rate_laser/100,
+		timing_window=param_laser["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[2],
+	).compute_p_d_p_fa()
+
+	true_positive_eps_10, false_positive_eps_10 = RocAnalysis(
+		signal_rate=signal_eps,
+		noise_rate=noise_eps,
+		trigger_rate=trigger_rate_eps,
+		threshold_limit=trigger_rate_eps/100,
+		timing_window=param_eps["timing_window"],
+		range_interval=range_distance,
+		acquisition_time=acquisition_time[2],
+	).compute_p_d_p_fa()
+
+	# *** Plotting ***
+
+	plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
+
+	fig, axs = plt.subplots(1, 3)
+
+	axs[0].plot(false_positive_sps_01, true_positive_sps_01, "--", linewidth=2, color="red", label="Single Photon Source", zorder=2)
+	axs[0].plot(false_positive_laser_01, true_positive_laser_01, "-", linewidth=2, color="blue", label="Pulsed Laser", zorder=1)
+	axs[0].plot(false_positive_eps_01, true_positive_eps_01, "-.", linewidth=2, color="green", label="Entangled Source", zorder=2)
+	axs[0].tick_params(axis='both', which='major', labelsize=20)
+	axs[0].set_title("a) 0.1s", fontsize=22, fontweight="bold", loc="left")
+	axs[0].set_aspect('equal', adjustable='box')
+
+	axs[1].plot(false_positive_sps_1, true_positive_sps_1, "--", linewidth=2, color="red", label="Single Photon Source", zorder=2)
+	axs[1].plot(false_positive_laser_1, true_positive_laser_1, "-", linewidth=2, color="blue", label="Pulsed Laser", zorder=1)
+	axs[1].plot(false_positive_eps_1, true_positive_eps_1, "-.", linewidth=2, color="green", label="Entangled Source", zorder=2)
+	axs[1].tick_params(axis='both', which='major', labelsize=20)
+	axs[1].set_title("b) 1s", fontsize=22, fontweight="bold", loc="left")
+	axs[1].set_aspect('equal', adjustable='box')
+
+	axs[2].plot(false_positive_sps_10, true_positive_sps_10, "--", linewidth=2, color="red", label="Single Photon Source", zorder=2)
+	axs[2].plot(false_positive_laser_10, true_positive_laser_10, "-", linewidth=2, color="blue", label="Pulsed Laser", zorder=1)
+	axs[2].plot(false_positive_eps_10, true_positive_eps_10, "-.", linewidth=2, color="green", label="Entangled Source", zorder=2)
+	axs[2].tick_params(axis='both', which='major', labelsize=20)
+	axs[2].set_title("c) 10s", fontsize=22, fontweight="bold", loc="left")
+	axs[2].set_aspect('equal', adjustable='box')
+
+	fig.text(0.53, 0.25, "False Positive", ha='center', fontsize=22, fontweight="bold")
+	fig.text(0.08, 0.5, "True Positive", va='center', rotation='vertical', fontsize=22, fontweight="bold")
+
+	handles, labels = axs[0].get_legend_handles_labels()
+	fig.legend(handles, labels, loc='upper center', bbox_to_anchor=(0.5, 0.85), fontsize=20, ncol=3)
+
+	plt.show()
 

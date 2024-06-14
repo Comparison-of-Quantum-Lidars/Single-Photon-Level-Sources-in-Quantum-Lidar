@@ -3,4 +3,5 @@ testing.py
 __pycache__
 To Delete/Statistical_analysis.py
 testingv2.py
-Graphs/match_mpp.npz
+Graphs/data/match_mpp.npz
+.npz

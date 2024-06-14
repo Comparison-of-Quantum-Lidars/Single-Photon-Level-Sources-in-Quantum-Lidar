@@ -403,7 +403,6 @@ class EntangledPhotonSPDC(Source):
 		"""
 		operator_joint_detection = tensor(self.apd_detector_idler, self.apd_detector_signal)
 		return self.compute_eps_rate() * expect(operator_joint_detection, self.compute_spdc_eps_state())
-
 	def noise_rate(self):
 		"""
 		Compute the noise rate of the SPDC source. The noise rate is the rate at which noise photons are detected.
@@ -426,6 +425,10 @@ class EntangledPhotonSPDC(Source):
 	def average_photon_per_pulse(self):
 		return self.epsilon
 
+	@property
+	def prob_of_last_element_fock_space(self):
+		last_element_prob = np.abs(self.compute_spdc_eps_state()[-1])**2
+		return last_element_prob[0]
 	@property
 	def g2(self):
 		operator_joint_detection = tensor(self.apd_detector_idler, self.apd_detector_signal)

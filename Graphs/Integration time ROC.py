@@ -1,0 +1,170 @@
+import numpy as np
+from Sources import SinglePhoton, PulsedLaser, EntangledPhotonSPDC, SetupParameters
+import matplotlib.pyplot as plt
+from Analysis import *
+from copy import deepcopy
+
+scenario = "histogram_roc_combined"
+
+if scenario == "histogram_roc_combined":
+
+	param = SetupParameters(
+		fock_space_dim=40,
+		output_power=2e6,
+		trigger_rate=None,
+		multi_photon_probability=None,
+		no_vacuum_probability=None,
+		sp_collection=0.57,
+		sp_p1=0.99,
+		sp_p2=1e-3,
+		spdc_eps_heralding=0.285,
+		spdc_eps_collection=0.57,
+		atmosphere=1,
+		target_distance=15,
+		receiver_diameter=0.5,
+		target_albedo=0.2,
+		optics_transmitter=0.8,
+		optics_receiver=0.5,
+		detection_efficiency=0.5,
+		background=400,
+		detector_dark=200,
+		timing_window=0.5e-9,
+	)
+
+	acquisition_time = [0.1, 1, 10]
+
+	range_distance = 50
+
+	param_eps = deepcopy(param)
+	param_eps["spdc_eps_heralding"] = 0.285
+	param_eps["spdc_eps_collection"] = 0.57
+	param_eps["multi_photon_probability"] = param_eps["sp_p2"] * (param_eps["sp_collection"]**2)
+
+	eps = EntangledPhotonSPDC(param_eps)
+	signal_eps = eps.signal_rate()
+	noise_eps = eps.noise_rate()
+	snr_eps = eps.signal_to_noise_rate()
+	print(f"SNR of the Entangled Source: {snr_eps:.2f}")
+	trigger_rate_eps = eps.compute_effective_trigger_rate()
+
+	count_eps_all = {}
+	bin_edges_distance_eps_all = {}
+
+	true_positive_eps = {}
+	false_positive_eps = {}
+
+	for at in acquisition_time:
+		count_eps, _, bin_edges_distance_eps = HistogramAnalysis(param_eps, signal_eps, noise_eps, acquisition_time=at, acquisition_rate=1e6, effective_trigger_rate=trigger_rate_eps).histogram_simulation()
+		count_eps_all[at] = count_eps
+		bin_edges_distance_eps_all[at] = bin_edges_distance_eps
+		true_positive_rate_eps, false_positive_rate_eps = RocAnalysis(
+			signal_rate=signal_eps,
+			noise_rate=noise_eps,
+			trigger_rate=trigger_rate_eps,
+			threshold_limit=trigger_rate_eps/100,
+			timing_window=param_eps["timing_window"],
+			range_interval=range_distance,
+			acquisition_time=at,
+		).compute_p_d_p_fa()
+		true_positive_eps[at] = true_positive_rate_eps
+		false_positive_eps[at] = false_positive_rate_eps
+
+	# 3x2 subplots
+
+	plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
+
+	fig, axs = plt.subplots(2, 3, figsize=(35, 20))
+
+	axs[0, 0].plot(false_positive_eps[acquisition_time[0]], true_positive_eps[acquisition_time[0]], "-", linewidth=2, color="k")
+	axs[0, 0].tick_params(axis='both', which='major', labelsize=20)
+	axs[0, 0].set_title("Acquisition Time : 0.1s", fontsize=22, fontweight="bold")
+
+	axs[1, 0].plot(bin_edges_distance_eps_all[acquisition_time[0]], count_eps_all[acquisition_time[0]], "-", color="k", linewidth=2)
+	axs[1, 0].set_xlim([0, 25])
+	axs[1, 0].tick_params(axis='both', which='major', labelsize=20)
+
+	axs[0, 1].plot(false_positive_eps[acquisition_time[1]], true_positive_eps[acquisition_time[1]], "-", linewidth=2, color="k")
+	axs[0, 1].tick_params(axis='both', which='major', labelsize=20)
+	axs[0, 1].set_title("Acquisition Time : 1s", fontsize=22, fontweight="bold")
+
+	axs[1, 1].plot(bin_edges_distance_eps_all[acquisition_time[1]], count_eps_all[acquisition_time[1]], "-", color="k", linewidth=2)
+	axs[1, 1].set_xlim([0, 25])
+	axs[1, 1].tick_params(axis='both', which='major', labelsize=20)
+
+	axs[0, 2].plot(false_positive_eps[acquisition_time[2]], true_positive_eps[acquisition_time[2]], "-", color="k", linewidth=2)
+	axs[0, 2].tick_params(axis='both', which='major', labelsize=20)
+	axs[0, 2].set_title("Acquisition Time : 10s", fontsize=22, fontweight="bold")
+
+	axs[1, 2].plot(bin_edges_distance_eps_all[acquisition_time[2]], count_eps_all[acquisition_time[2]], "-", color="k", linewidth=2)
+	axs[1, 2].set_xlim([0, 25])
+	axs[1, 2].tick_params(axis='both', which='major', labelsize=20)
+
+	plt.subplots_adjust(wspace=0.4, hspace=0.3)
+
+	# label for first row of subplots
+	fig.text(0.53, 0.5, "False Postive", ha='center', fontsize=22, fontweight="bold")
+	fig.text(0.53, 0.08, "Distance [m]", ha='center', fontsize=22, fontweight="bold")
+
+	fig.text(0.08, 0.7, "True Positive", va='center', rotation='vertical', fontsize=22, fontweight="bold")
+	fig.text(0.08, 0.3, "Counts", va='center', rotation='vertical', fontsize=22, fontweight="bold")
+
+	plt.show()
+
+if scenario == "ROC Comparison Acquisition Time all Sources":
+	param = SetupParameters(
+		fock_space_dim=40,
+		output_power=2e6,
+		trigger_rate=None,
+		multi_photon_probability=None,
+		no_vacuum_probability=None,
+		sp_collection=0.57,
+		sp_p1=0.99,
+		sp_p2=1e-3,
+		spdc_eps_heralding=0.285,
+		spdc_eps_collection=0.57,
+		atmosphere=1,
+		target_distance=15,
+		receiver_diameter=0.5,
+		target_albedo=0.2,
+		optics_transmitter=0.8,
+		optics_receiver=0.5,
+		detection_efficiency=0.5,
+		background=400,
+		detector_dark=200,
+		timing_window=0.5e-9,
+	)
+
+	acquisition_time = [0.1, 1, 10]
+
+	range_distance = 50
+
+	# *** Single Photon Source ***
+	param_sps = deepcopy(param)
+	param_sps["multi_photon_probability"]=param_sps["sp_p2"] * (param_sps["sp_collection"]**2)
+	sps = SinglePhoton(param_sps)
+	signal_sps = sps.signal_rate()
+	noise_sps = sps.noise_rate()
+	trigger_rate_sps = sps.compute_effective_trigger_rate()
+
+	# *** Pulsed Laser ***
+	param_laser = deepcopy(param)
+	param_laser["multi_photon_probability"]=param_laser["sp_p2"] * (param_laser["sp_collection"]**2)
+	laser = PulsedLaser(param_laser)
+	signal_laser = laser.signal_rate()
+	noise_laser = laser.noise_rate()
+	trigger_rate_laser = laser.compute_effective_trigger_rate()
+
+	# *** Entangled Source ***
+	param_eps = deepcopy(param)
+	param_eps["spdc_eps_heralding"] = 0.285
+	param_eps["spdc_eps_collection"] = 0.57
+	param_eps["multi_photon_probability"] = param_eps["sp_p2"] * (param_eps["sp_collection"]**2)
+	eps = EntangledPhotonSPDC(param_eps)
+	signal_eps = eps.signal_rate()
+	noise_eps = eps.noise_rate()
+	trigger_rate_eps = eps.compute_effective_trigger_rate()
+
+	# *** ROC Curves ***
+
+
+

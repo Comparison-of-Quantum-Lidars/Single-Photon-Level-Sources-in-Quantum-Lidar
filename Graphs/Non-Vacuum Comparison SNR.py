@@ -28,9 +28,8 @@ param = SetupParameters(
 	detector_dark=200,
 	timing_window=0.5e-9,
 )
-
-# collection_efficiency = np.array([0.2, 0.57, 0.8])
 #
+# collection_efficiency = np.array([0.2, 0.57, 0.8])
 # # *** Single Photon Source ***
 #
 # param_sps = deepcopy(param)
@@ -71,7 +70,7 @@ param = SetupParameters(
 # last_state = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
 #
 # def adjustable_fock_space(average_photon_per_pulse):
-# 	return round(average_photon_per_pulse)+30
+# 	return round(average_photon_per_pulse)+45
 #
 #
 #
@@ -92,7 +91,7 @@ param = SetupParameters(
 #          snr_sps=snr_sps, snr_entangled=snr_entangled, last_state=last_state,
 #          average_photon_per_pulse_entangled=average_photon_per_pulse_entangled)
 
-data = np.load("data/match_nvp_June14.npz")
+data = np.load("data/match_nvp_June14_AdaptativeFock_plus45.npz")
 
 non_vacuum_probability = data["non_vacuum_probability"]
 non_vacuum_probability_sps = data["non_vacuum_probability_sps"]
@@ -103,7 +102,6 @@ last_state = data["last_state"]
 average_photon_per_pulse_entangled = data["average_photon_per_pulse_entangled"]
 
 
-
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
 # plt.plot(non_vacuum_probability, last_state[:, 0], "-", label="0", color="red")
@@ -112,7 +110,7 @@ plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/
 # # plt.plot(non_vacuum_probability, last_state[:,3], "-", label="3", color="green")
 # plt.legend()
 # plt.show()
-#
+
 # plt.plot(non_vacuum_probability, average_photon_per_pulse_entangled[:, 0], "-", label="0", color="red")
 # plt.plot(non_vacuum_probability, average_photon_per_pulse_entangled[:, 1], "-", label="1")
 # plt.plot(non_vacuum_probability, average_photon_per_pulse_entangled[:, 2], "-", label="2")

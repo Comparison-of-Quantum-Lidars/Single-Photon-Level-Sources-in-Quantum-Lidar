@@ -119,6 +119,11 @@ match_snr_laser_02 = snr_laser[idx]
 
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
+# TODO:REMOVE
+
+snr_laser = snr_laser-1
+snr_sps = snr_sps-1
+snr_eps = snr_eps-1
 
 #intersection between laser and SPS for each collection
 
@@ -173,7 +178,7 @@ str_title = r"$P_{multi}^{laser}= $"+f"{match_mpp_laser_1:.2f}"
 plt.text(match_mpp_laser_1+0.004, 2, str_title, fontsize=18)
 
 plt.xlabel("Multi-Photon Probability [-]", fontsize=22)
-plt.ylabel("Log(SNR) [-]", fontsize=22)
+plt.ylabel("SNR [-]", fontsize=22)
 plt.legend(frameon=False, fontsize=22, bbox_to_anchor=(1, 0.5))
 plt.tick_params(axis='both', which='major', labelsize=22)
 plt.tick_params(axis='both', which='minor', labelsize=22)

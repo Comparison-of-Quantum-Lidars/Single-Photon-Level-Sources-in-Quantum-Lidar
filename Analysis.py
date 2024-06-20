@@ -50,7 +50,7 @@ class RocAnalysis:
 		p_0 = self.compute_binom_pmf(threshold, q0)
 		p_1 = self.compute_binom_pmf(threshold, q1)
 
-		false_positive = 1 - (1 - np.cumsum(np.flip(p_0))) ** self.number_of_bins()
+		false_positive = 1 - ((1 - np.cumsum(np.flip(p_0))) ** self.number_of_bins())
 		true_positive = np.cumsum(np.flip(p_1))
 
 		return true_positive, false_positive

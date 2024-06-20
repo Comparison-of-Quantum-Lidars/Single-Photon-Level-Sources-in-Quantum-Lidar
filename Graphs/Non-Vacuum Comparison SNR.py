@@ -118,22 +118,27 @@ plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/
 # plt.legend()
 # plt.show()
 
+snr_entangled = snr_entangled-1
+snr_sps = snr_sps-1
+snr_laser = snr_laser-1
+
 fig = plt.figure(figsize=(16.2, 10))
 
-plt.plot(non_vacuum_probability, snr_entangled[:, 0], "-.", label="Entangled Photon Source", color="green", linewidth=3, zorder=1)
-plt.plot(non_vacuum_probability, snr_entangled[:, 1], "-.", color="green", linewidth=3, zorder=1)
-plt.plot(non_vacuum_probability, snr_entangled[:, 2], "-.", color="green", linewidth=3, zorder=1)
-plt.plot(non_vacuum_probability, snr_laser, "-", label="Pulsed Laser", color="blue", linewidth=3, zorder=1)
+plt.semilogy(non_vacuum_probability, snr_entangled[:, 0], "-.", label="Entangled Photon Source", color="green", linewidth=3, zorder=1)
+plt.semilogy(non_vacuum_probability, snr_entangled[:, 1], "-.", color="green", linewidth=3, zorder=1)
+plt.semilogy(non_vacuum_probability, snr_entangled[:, 2], "-.", color="green", linewidth=3, zorder=1)
+plt.semilogy(non_vacuum_probability, snr_laser, "-", label="Pulsed Laser", color="blue", linewidth=3, zorder=1)
 plt.scatter(non_vacuum_probability_sps, snr_sps, label="Single Photon Source", color="red", s=100, zorder=2)
-plt.text(non_vacuum_probability_sps[0]-0.008, snr_sps[0]-14, "20%", fontsize=22, fontweight="bold")
-plt.text(non_vacuum_probability_sps[1]-0.008, snr_sps[1]-14, "57%", fontsize=22, fontweight="bold")
-plt.text(non_vacuum_probability_sps[2]-0.04, snr_sps[2]-14, "80%", fontsize=22, fontweight="bold")
-plt.text(-0.055, snr_entangled[0, 0]-5, "20%", fontsize=22, fontweight="bold")
+plt.text(non_vacuum_probability_sps[0]-0.01, snr_sps[0]-3.5, "20%", fontsize=22, fontweight="bold")
+plt.text(non_vacuum_probability_sps[1]-0.01, snr_sps[1]-8, "57%", fontsize=22, fontweight="bold")
+plt.text(non_vacuum_probability_sps[2]-0.04, snr_sps[2]-11, "80%", fontsize=22, fontweight="bold")
+plt.text(-0.055, snr_entangled[0, 0], "20%", fontsize=22, fontweight="bold")
 plt.text(-0.055, snr_entangled[0, 1]-5, "57%", fontsize=22, fontweight="bold")
 plt.text(-0.055, snr_entangled[0, 2]-5, "80%", fontsize=22, fontweight="bold")
 plt.xlim([-0.065, 0.81])
+plt.ylim([0.1, None])
 plt.xlabel("Non-Vacuum Probability", fontsize=22)
-plt.ylabel("SNR", fontsize=22)
+plt.ylabel("SNR [-]", fontsize=22)
 plt.legend(frameon=False, fontsize=22)
 plt.xticks(fontsize=22)
 plt.yticks(fontsize=22)

@@ -119,8 +119,7 @@ match_snr_laser_02 = snr_laser[idx]
 
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
-# TODO:REMOVE
-
+print(f"WARNING: MINUS ONE IS APPLIED TO THE SNR BECAUSE THIS IS AN OLD DATASET !!!")
 snr_laser = snr_laser-1
 snr_sps = snr_sps-1
 snr_eps = snr_eps-1

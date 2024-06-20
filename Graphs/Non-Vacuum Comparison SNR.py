@@ -117,7 +117,7 @@ plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/
 # # plt.plot(non_vacuum_probability, average_photon_per_pulse_entangled[:,3], "-", label="3", color="green")
 # plt.legend()
 # plt.show()
-
+print("WARNING: MINUS ONE IS REMOVE TO SNR MANUALLY BECAUSE THIS IS AN OLD DATASET!!!")
 snr_entangled = snr_entangled-1
 snr_sps = snr_sps-1
 snr_laser = snr_laser-1

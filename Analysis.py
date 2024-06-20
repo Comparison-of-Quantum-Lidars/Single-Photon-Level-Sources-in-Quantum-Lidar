@@ -58,14 +58,13 @@ class RocAnalysis:
 
 class HistogramAnalysis:
 
-	def __init__(self, params, signal_rate, noise_rate, acquisition_time, acquisition_rate, effective_trigger_rate, jitter_std_dev: Optional[float] = 0, **kwargs):
+	def __init__(self, params, signal_rate, noise_rate, acquisition_time, range_distance, effective_trigger_rate, jitter_std_dev: Optional[float] = 0, **kwargs):
 		self.params = params
-		self.signal_rate = signal_rate/effective_trigger_rate
-		self.signal_rate = self.signal_rate * acquisition_rate
-		self.noise_rate = noise_rate/kwargs.get("noise_trigger_rate", effective_trigger_rate)
-		self.noise_rate = self.noise_rate * acquisition_rate
+		self.effective_trigger_rate = effective_trigger_rate
+		self.signal_rate = signal_rate
+		self.noise_rate = noise_rate
 		self.acquisition_time = acquisition_time
-		self.acquisition_rate = acquisition_rate
+		self.range_distance = range_distance
 		self.jitter_std_dev = jitter_std_dev
 		self.bins = self.compute_bins_number()
 
@@ -73,35 +72,25 @@ class HistogramAnalysis:
 		signal = self.signal_rate - self.noise_rate
 		return signal, self.noise_rate
 
-	def compute_window_params(self):
-		total_window = 1 / self.acquisition_rate
-		half_window = total_window / 2
-		max_range = half_window * 299792458
-		return max_range, total_window, half_window
-
 	def compute_bins_number(self):
-		max_range, _, __ = self.compute_window_params()
-		bins = round(2 * max_range / (299792458 * self.params["timing_window"]))
+		bins = round(2 * self.range_distance / (299792458 * self.params["timing_window"]))
 		return bins
 
 	def compute_trigger_total(self):
-		trigger_total = self.acquisition_rate * self.acquisition_time
+		trigger_total = self.effective_trigger_rate * self.acquisition_time
 		return trigger_total
 
 	def noise_and_signal_prob_per_bins(self):
 		signal, noise = self.compute_signal_and_noise_rate_per_bins()
-		noise_total = noise * self.acquisition_time
-		signal_total = signal * self.acquisition_time
 		trigger_total = self.compute_trigger_total()
 
-		noise_prob = noise_total / trigger_total
-		signal_prob = signal_total / trigger_total
+		noise_prob = (noise * self.acquisition_time)/trigger_total
+		signal_prob = (signal * self.acquisition_time)/trigger_total
 
 		return noise_prob, signal_prob
 
 	def compute_max_time_of_flight(self):
-		max_range, _, __ = self.compute_window_params()
-		max_time_of_flight = 2 * max_range / 299792458
+		max_time_of_flight = 2 * self.range_distance / 299792458
 		return max_time_of_flight
 
 	@staticmethod

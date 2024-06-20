@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from Analysis import *
 from copy import deepcopy
 
-scenario = "ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_nvp"
+scenario = "histogram_roc_combined"
 
 if scenario == "histogram_roc_combined":
 
@@ -55,7 +55,7 @@ if scenario == "histogram_roc_combined":
 	false_positive_eps = {}
 
 	for at in acquisition_time:
-		count_eps, _, bin_edges_distance_eps = HistogramAnalysis(param_eps, signal_eps, noise_eps, acquisition_time=at, acquisition_rate=1e6, effective_trigger_rate=trigger_rate_eps).histogram_simulation()
+		count_eps, _, bin_edges_distance_eps = HistogramAnalysis(param_eps, signal_eps, noise_eps, acquisition_time=at, range_distance=range_distance, effective_trigger_rate=trigger_rate_eps).histogram_simulation()
 		count_eps_all[at] = count_eps
 		bin_edges_distance_eps_all[at] = bin_edges_distance_eps
 		true_positive_rate_eps, false_positive_rate_eps = RocAnalysis(

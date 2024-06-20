@@ -191,7 +191,7 @@ class PulsedLaser(Source):
 		"""
 		signal = self.signal_rate()
 		noise = self.noise_rate()
-		return signal / noise
+		return (signal - noise) / noise
 
 	@property
 	def average_photon_per_pulse(self):
@@ -287,7 +287,7 @@ class SinglePhoton(Source):
 		"""
 		signal_rate = self.signal_rate()
 		noise = self.noise_rate()
-		return signal_rate / noise
+		return (signal_rate - noise) / noise
 
 	@property
 	def average_photon_per_pulse(self):
@@ -419,7 +419,7 @@ class EntangledPhotonSPDC(Source):
 		"""
 		signal = self.signal_rate()
 		noise = self.noise_rate()
-		return signal / noise
+		return (signal - noise) / noise
 
 	@property
 	def average_photon_per_pulse(self):

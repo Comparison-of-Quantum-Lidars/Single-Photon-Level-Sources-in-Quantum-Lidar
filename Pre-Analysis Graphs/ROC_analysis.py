@@ -4,7 +4,7 @@ from Sources import *
 from copy import copy, deepcopy
 from Analysis import *
 
-scenario = "effect_channel_efficiency_laser"
+scenario = "matched_no_vacuum_probability"
 
 if scenario == "matched_trigger_rate_laser_sps":
 

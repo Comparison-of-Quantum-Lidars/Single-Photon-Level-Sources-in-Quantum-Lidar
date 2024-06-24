@@ -8,13 +8,24 @@ from tqdm import tqdm
 
 class RocAnalysis:
 
-	def __init__(self, signal_rate, noise_rate, trigger_rate, threshold_limit, range_interval, timing_window):
+	def __init__(
+			self,
+			signal_rate,
+			noise_rate,
+			trigger_rate,
+			threshold_limit,
+			range_interval,
+			timing_window,
+			acquisition_time=1
+	):
+		#TODO: ADD DOCUMENTATION, INTEGRATION TIME MUST BE IN SECOND TO FIT WITH THE TRIGGERING RATE
 		self.signal_rate = signal_rate
 		self.noise_rate = noise_rate
 		self.trigger_rate = trigger_rate
 		self.threshold_limit = threshold_limit
 		self.range_interval = range_interval
 		self.timing_window = timing_window
+		self.acquisition_time = acquisition_time
 
 	def compute_q0_q1(self):
 		q0 = self.noise_rate / self.trigger_rate
@@ -22,13 +33,11 @@ class RocAnalysis:
 		return q0, q1
 
 	def create_threshold_array(self):
-		# TODO: Check if the threshold is correct
-		#threshold = np.linspace(1, int(self.threshold_limit), int(self.threshold_limit))
 		threshold = np.linspace(0, int(self.threshold_limit), int(self.threshold_limit)+1)
 		return threshold
 
 	def compute_binom_pmf(self, threshold, q):
-		p = binom.pmf(threshold, int(self.trigger_rate), q)
+		p = binom.pmf(threshold, int(self.trigger_rate * self.acquisition_time), q)
 		return p
 
 	def number_of_bins(self):
@@ -41,7 +50,7 @@ class RocAnalysis:
 		p_0 = self.compute_binom_pmf(threshold, q0)
 		p_1 = self.compute_binom_pmf(threshold, q1)
 
-		false_positive = 1 - (1 - np.cumsum(np.flip(p_0))) ** self.number_of_bins()
+		false_positive = 1 - ((1 - np.cumsum(np.flip(p_0))) ** self.number_of_bins())
 		true_positive = np.cumsum(np.flip(p_1))
 
 		return true_positive, false_positive
@@ -49,14 +58,13 @@ class RocAnalysis:
 
 class HistogramAnalysis:
 
-	def __init__(self, params, signal_rate, noise_rate, acquisition_time, acquisition_rate, effective_trigger_rate, jitter_std_dev: Optional[float] = 0.5e-9, **kwargs):
+	def __init__(self, params, signal_rate, noise_rate, acquisition_time, range_distance, effective_trigger_rate, jitter_std_dev: Optional[float] = 0, **kwargs):
 		self.params = params
-		self.signal_rate = signal_rate/effective_trigger_rate
-		self.signal_rate = self.signal_rate * acquisition_rate
-		self.noise_rate = noise_rate/kwargs.get("noise_trigger_rate", effective_trigger_rate)
-		self.noise_rate = self.noise_rate * acquisition_rate
+		self.effective_trigger_rate = effective_trigger_rate
+		self.signal_rate = signal_rate
+		self.noise_rate = noise_rate
 		self.acquisition_time = acquisition_time
-		self.acquisition_rate = acquisition_rate
+		self.range_distance = range_distance
 		self.jitter_std_dev = jitter_std_dev
 		self.bins = self.compute_bins_number()
 
@@ -64,35 +72,25 @@ class HistogramAnalysis:
 		signal = self.signal_rate - self.noise_rate
 		return signal, self.noise_rate
 
-	def compute_window_params(self):
-		total_window = 1 / self.acquisition_rate
-		half_window = total_window / 2
-		max_range = half_window * 299792458
-		return max_range, total_window, half_window
-
 	def compute_bins_number(self):
-		max_range, _, __ = self.compute_window_params()
-		bins = round(2 * max_range / (299792458 * self.params["timing_window"]))
+		bins = round(2 * self.range_distance / (299792458 * self.params["timing_window"]))
 		return bins
 
 	def compute_trigger_total(self):
-		trigger_total = self.acquisition_rate * self.acquisition_time
+		trigger_total = self.effective_trigger_rate * self.acquisition_time
 		return trigger_total
 
 	def noise_and_signal_prob_per_bins(self):
 		signal, noise = self.compute_signal_and_noise_rate_per_bins()
-		noise_total = noise * self.acquisition_time
-		signal_total = signal * self.acquisition_time
 		trigger_total = self.compute_trigger_total()
 
-		noise_prob = noise_total / trigger_total
-		signal_prob = signal_total / trigger_total
+		noise_prob = (noise * self.acquisition_time)/trigger_total
+		signal_prob = (signal * self.acquisition_time)/trigger_total
 
 		return noise_prob, signal_prob
 
 	def compute_max_time_of_flight(self):
-		max_range, _, __ = self.compute_window_params()
-		max_time_of_flight = 2 * max_range / 299792458
+		max_time_of_flight = 2 * self.range_distance / 299792458
 		return max_time_of_flight
 
 	@staticmethod
@@ -100,10 +98,9 @@ class HistogramAnalysis:
 		return random.random() < prob
 
 	def histogram_simulation(self):
-		# TODO : Correct the tof_target to be twice as big
 		noise_prob, signal_prob = self.noise_and_signal_prob_per_bins()
 		trigger_total = self.compute_trigger_total()
-		tof_target = self.params["target_distance"] / 299792458
+		tof_target = 2*self.params["target_distance"] / 299792458
 		timing_window = self.params["timing_window"]
 
 		counts = np.zeros((self.bins, 1))
@@ -127,13 +124,13 @@ class HistogramAnalysis:
 
 		bin_edges, bin_edges_distance = self.bin_edges()
 
-		return counts, bin_edges, bin_edges_distance
+		return counts[:, 0], bin_edges, bin_edges_distance
 
 	def bin_edges(self):
 		bins = self.bins
 		timing_window = self.params["timing_window"]
-		bin_edges = ((np.arange(bins + 1) * timing_window) - timing_window / 2)
-		bin_edges_distance = (np.arange(bins + 1) * timing_window * 299792458) - (timing_window * 299792458 / 2)
+		bin_edges = (np.arange(bins) * timing_window)
+		bin_edges_distance = (bin_edges * 299792458)/2
 		return bin_edges, bin_edges_distance
 
 

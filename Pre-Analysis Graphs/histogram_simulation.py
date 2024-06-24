@@ -4,7 +4,7 @@ from Sources import PulsedLaser, SinglePhoton, EntangledPhotonSPDC, SetupParamet
 import random
 from tqdm import tqdm
 from scipy.stats import binom
-from Analysis import HistogramAnalysis, HistogramAnalysisFromAdversaryPerspective
+from Analysis import HistogramAnalysis, HistogramAnalysisFromAdversaryPerspective, RocAnalysis
 
 
 scenario = "histogram_target"
@@ -36,36 +36,79 @@ if scenario == "histogram_target":
 	extr_efficiency = param["sp_collection"]
 	param["no_vacuum_probability"] = param["sp_p1"] * extr_efficiency + param["sp_p2"] * extr_efficiency * (2-extr_efficiency)
 	timing_window = param["timing_window"]
-	acquisition_time = 5
-	acquisition_rate = 5e6
+	acquisition_time = 1
+	range_distance = 30
 
 	signal_pulsed = PulsedLaser(param).signal_rate()
 	noise_pulsed = PulsedLaser(param).noise_rate()
-	counts_pulsed, bin_edges_pulsed, bin_edges_distance_pulsed = HistogramAnalysis(param, signal_pulsed, noise_pulsed, acquisition_time=acquisition_time, acquisition_rate=acquisition_rate, effective_trigger_rate=PulsedLaser(param).compute_effective_trigger_rate()).histogram_simulation()
+	counts_pulsed, bin_edges_pulsed, bin_edges_distance_pulsed = HistogramAnalysis(param, signal_pulsed, noise_pulsed, acquisition_time=acquisition_time, range_distance=range_distance, effective_trigger_rate=PulsedLaser(param).compute_effective_trigger_rate()).histogram_simulation()
 	bin_edges_pulsed = bin_edges_pulsed / 1e-9
 	snr_pulsed = PulsedLaser(param).signal_to_noise_rate()
 
 
 	signal_sps = SinglePhoton(param).signal_rate()
 	noise_sps = SinglePhoton(param).noise_rate()
-	counts_sps, bin_edges_sps, bin_edges_distance_sps = HistogramAnalysis(param, signal_sps, noise_sps, acquisition_time=acquisition_time, acquisition_rate=acquisition_rate, effective_trigger_rate=SinglePhoton(param).compute_effective_trigger_rate()).histogram_simulation()
+	counts_sps, bin_edges_sps, bin_edges_distance_sps = HistogramAnalysis(param, signal_sps, noise_sps, acquisition_time=acquisition_time, range_distance=range_distance, effective_trigger_rate=SinglePhoton(param).compute_effective_trigger_rate()).histogram_simulation()
 	bin_edges_sps = bin_edges_sps / 1e-9
 	snr_sps = SinglePhoton(param).signal_to_noise_rate()
 
 	signal_entangled = EntangledPhotonSPDC(param).signal_rate()
 	noise_entangled = EntangledPhotonSPDC(param).noise_rate()
-	counts_entangled, bin_edges_entangled, bin_edges_distance_entangled = HistogramAnalysis(param, signal_entangled, noise_entangled, acquisition_time=acquisition_time, acquisition_rate=acquisition_rate, effective_trigger_rate=EntangledPhotonSPDC(param).compute_effective_trigger_rate()).histogram_simulation()
+	counts_entangled, bin_edges_entangled, bin_edges_distance_entangled = HistogramAnalysis(param, signal_entangled, noise_entangled, acquisition_time=acquisition_time, range_distance=range_distance, effective_trigger_rate=EntangledPhotonSPDC(param).compute_effective_trigger_rate()).histogram_simulation()
 	bin_edges_entangled = bin_edges_entangled / 1e-9
 	snr_entangled = EntangledPhotonSPDC(param).signal_to_noise_rate()
 	print(signal_entangled, noise_entangled, snr_entangled)
 
 
+	true_positive_laser, false_positive_laser = RocAnalysis(
+		signal_rate=signal_pulsed,
+		noise_rate=noise_pulsed,
+		trigger_rate=PulsedLaser(param).compute_effective_trigger_rate(),
+		threshold_limit=PulsedLaser(param).compute_effective_trigger_rate()/100,
+		timing_window=timing_window,
+		range_interval=range_distance,
+		acquisition_time=acquisition_time,
+	).compute_p_d_p_fa()
+
+	true_positive_sps, false_positive_sps = RocAnalysis(
+		signal_rate=signal_sps,
+		noise_rate=noise_sps,
+		trigger_rate=SinglePhoton(param).compute_effective_trigger_rate(),
+		threshold_limit=SinglePhoton(param).compute_effective_trigger_rate()/100,
+		timing_window=timing_window,
+		range_interval=range_distance,
+		acquisition_time=acquisition_time,
+	).compute_p_d_p_fa()
+
+	true_positive_entangled, false_positive_entangled = RocAnalysis(
+		signal_rate=signal_entangled,
+		noise_rate=noise_entangled,
+		trigger_rate=EntangledPhotonSPDC(param).compute_effective_trigger_rate(),
+		threshold_limit=EntangledPhotonSPDC(param).compute_effective_trigger_rate()/100,
+		timing_window=timing_window,
+		range_interval=range_distance,
+		acquisition_time=acquisition_time,
+	).compute_p_d_p_fa()
+
+
+
 	plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
 	fig = plt.figure(figsize=(16.1, 10))
-	plt.plot(bin_edges_sps[:-1], counts_sps[:, 0], "-", color="blue", label=f"Single Photon - SNR : {snr_sps:.2f}", linewidth=2.5)
-	plt.plot(bin_edges_pulsed[:-1], counts_pulsed[:, 0], "-", color="red", label=f"Pulsed Laser - SNR : {snr_pulsed:.2f}", linewidth=2.5)
-	plt.plot(bin_edges_entangled[:-1], counts_entangled[:, 0], "-", color="green", label=f"Entangled Photon - SNR : {snr_entangled:.2f}", linewidth=2.5)
+	plt.plot(false_positive_laser, true_positive_laser, "-", color="blue", label=f"Pulsed Laser", linewidth=2.5)
+	plt.plot(false_positive_sps, true_positive_sps, "--", color="red", label=f"Single Photon Source", linewidth=2.5)
+	plt.plot(false_positive_entangled, true_positive_entangled, "-.", color="green", label=f"Entangled Photon", linewidth=2.5)
+	plt.xlabel('False Positive Rate [-]', fontsize=22)
+	plt.ylabel('True Positive Rate [-]', fontsize=22)
+	plt.tick_params(axis='both', which='major', labelsize=22)
+	plt.legend(frameon=False, fontsize=22)
+	plt.show()
+
+
+	fig = plt.figure(figsize=(16.1, 10))
+	plt.plot(bin_edges_sps, counts_sps, "-", color="red", label=f"Single Photon - SNR : {snr_sps:.2f}", linewidth=2.5)
+	plt.plot(bin_edges_pulsed, counts_pulsed, "-", color="blue", label=f"Pulsed Laser - SNR : {snr_pulsed:.2f}", linewidth=2.5)
+	plt.plot(bin_edges_entangled, counts_entangled, "-", color="green", label=f"Entangled Photon - SNR : {snr_entangled:.2f}", linewidth=2.5)
 	plt.xlabel('Time of Flight [ns]', fontsize=22)
 	plt.ylabel('Coincidence Counts [-]', fontsize=22)
 	plt.tick_params(axis='both', which='major', labelsize=22)
@@ -73,31 +116,21 @@ if scenario == "histogram_target":
 	plt.show()
 
 	fig = plt.figure(figsize=(16.1, 10))
-	plt.plot(bin_edges_sps[:-1], counts_sps[:, 0]-min(counts_sps[:, 0]), "-", color="blue", label=f"Single Photon - SNR : {snr_sps:.2f}", linewidth=2.5)
-	plt.plot(bin_edges_pulsed[:-1], counts_pulsed[:, 0]-min(counts_pulsed[:, 0]), "-", color="red", label=f"Pulsed Laser - SNR : {snr_pulsed:.2f}", linewidth=2.5)
-	plt.plot(bin_edges_entangled[:-1], counts_entangled[:, 0]-min(counts_entangled[:, 0]), "-", color="green", label=f"Entangled Photon - SNR : {snr_entangled:.2f}", linewidth=2.5)
-	plt.xlabel('Time of Flight [ns]', fontsize=22)
-	plt.ylabel("Normalized Coincidence Counts [-]", fontsize=22)
-	plt.tick_params(axis='both', which='major', labelsize=22)
-	plt.legend(frameon=False, fontsize=22)
-	plt.show()
-
-	fig = plt.figure(figsize=(16.1, 10))
-	plt.bar(bin_edges_distance_sps[:-1], counts_sps[:, 0], width=timing_window * 299792458, align="edge", edgecolor="black")
+	plt.bar(bin_edges_distance_sps, counts_sps, width=timing_window * 299792458, align="edge", edgecolor="black")
 	plt.xlabel('Distance [m]', fontsize=22)
 	plt.ylabel('Coincidence Counts [-]', fontsize=22)
 	plt.tick_params(axis='both', which='major', labelsize=22)
 	plt.show()
 
 	fig = plt.figure(figsize=(16.1, 10))
-	plt.bar(bin_edges_distance_entangled[:-1], counts_entangled[:, 0], width=timing_window * 299792458, align="edge", edgecolor="black")
+	plt.bar(bin_edges_distance_entangled, counts_entangled, width=timing_window * 299792458, align="edge", edgecolor="black")
 	plt.xlabel('Distance [m]', fontsize=22)
 	plt.ylabel('Coincidence Counts [-]', fontsize=22)
 	plt.tick_params(axis='both', which='major', labelsize=22)
 	plt.show()
 
 	fig = plt.figure(figsize=(16.1, 10))
-	plt.bar(bin_edges_distance_pulsed[:-1], counts_pulsed[:, 0], width=timing_window * 299792458, align="edge", edgecolor="black")
+	plt.bar(bin_edges_distance_pulsed, counts_pulsed, width=timing_window * 299792458, align="edge", edgecolor="black")
 	plt.xlabel('Distance [m]', fontsize=22)
 	plt.ylabel('Coincidence Counts [-]', fontsize=22)
 	plt.tick_params(axis='both', which='major', labelsize=22)

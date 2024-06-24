@@ -45,7 +45,7 @@ class Source:
 		"""
 		# Overall detection of the detector
 
-		solid_angle_approx = (np.pi * self.receiver_diameter ** 2 / 4) / (2 * np.pi * self.target_distance ** 2)
+		solid_angle_approx = (np.pi * (self.receiver_diameter ** 2) / 4) / (2 * np.pi * (self.target_distance ** 2))
 		eta_detector = solid_angle_approx * self.optics_receiver_eff * self.target_albedo * self.optics_transmitter_eff * self.detection_efficiency * (
 				self.atmosphere ** 2)
 

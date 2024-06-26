@@ -21,7 +21,7 @@ param = SetupParameters(
 	spdc_eps_heralding=None,
 	spdc_eps_collection=None,
 	atmosphere=1,
-	target_distance=2,
+	target_distance=2 ,
 	receiver_diameter=0.05,
 	target_albedo=0.2,
 	optics_transmitter=0.8,
@@ -198,6 +198,9 @@ axs[2].plot(false_positive_laser_08, true_positive_laser_08, "-", color="blue", 
 axs[2].plot(false_positive_eps_08, true_positive_eps_08, "-.", color="green", linewidth=2.5, zorder=3)
 axs[2].set_title(r"$\eta_{signal} = 0.8$", fontsize=22)
 axs[2].tick_params(axis='both', which='major', labelsize=22)
+
+fig.text(0.5, 0.04, 'False Positive [-]', ha='center', fontsize=25)
+fig.text(0.04, 0.5, 'True Positive [-]', va='center', rotation='vertical', fontsize=25)
 
 plt.show()
 

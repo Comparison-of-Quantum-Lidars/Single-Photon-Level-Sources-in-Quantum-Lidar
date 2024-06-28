@@ -1,10 +1,11 @@
 from Sources import EntangledPhotonSPDC, SinglePhoton, PulsedLaser
 from scipy.special import gammaln
+from scipy.stats import binom
 from typing import Optional
 import numpy as np
 import random
 from tqdm import tqdm
-import math
+import matplotlib.pyplot as plt
 
 
 class RocAnalysis:
@@ -17,11 +18,11 @@ class RocAnalysis:
 			threshold_limit,
 			range_interval,
 			timing_window,
-			acquisition_time=1
+			acquisition_time=1,
+			precision=50
 	):
 		#TODO: ADD DOCUMENTATION, INTEGRATION TIME MUST BE IN SECOND TO FIT WITH THE TRIGGERING RATE
 		#TODO: ADD OPTION TO SEE MARKER WHEN THE THRESHOLD IS FOR FIX PARAMS
-		#TODO: FIX RUNTIMEWARNING
 		self.signal_rate = signal_rate
 		self.noise_rate = noise_rate
 		self.trigger_rate = trigger_rate
@@ -29,6 +30,7 @@ class RocAnalysis:
 		self.range_interval = range_interval
 		self.timing_window = timing_window
 		self.acquisition_time = acquisition_time
+		self.precision = precision
 
 	def compute_q0_q1(self):
 		q0 = self.noise_rate / self.trigger_rate
@@ -36,19 +38,18 @@ class RocAnalysis:
 		return q0, q1
 
 	def create_threshold_array(self):
-		threshold = np.linspace(0, int(self.threshold_limit), 50*int(self.threshold_limit) + 1)
+		threshold = np.linspace(0, int(self.threshold_limit), (self.precision*int(self.threshold_limit)) + 1)
 		return threshold
 
 	def compute_binomial_experiment(self, threshold, q):
-		#p = binom.pmf(threshold, int(self.trigger_rate * self.acquisition_time), q)
 
 		n = int(self.trigger_rate * self.acquisition_time)
 		k = threshold
 
-		prob_mass_function_log = gammaln(n + 1) - gammaln(k + 1) - gammaln(n - k + 1) + k * np.log(q) + (n - k) * np.log(1 - q)
+		prob_mass_function_log = (gammaln(n + 1) - gammaln(k + 1) - gammaln(n - k + 1)) + (k * np.log(q)) + ((n - k) * np.log(1 - q))
 		prob_mass_function = np.exp(prob_mass_function_log)
 
-		distance_between_thresholds = threshold[1] - threshold[0]
+		distance_between_thresholds = 1/self.precision
 
 		p = prob_mass_function * distance_between_thresholds
 
@@ -68,6 +69,58 @@ class RocAnalysis:
 		true_positive = np.cumsum(np.flip(p_1))
 
 		return true_positive, false_positive
+
+	def compute_discrete_binomial_experiment(self, threshold, n, q):
+		p = binom.pmf(threshold, n, q)
+		return p
+
+	def markers_integer_threshold(self):
+		threshold = np.linspace(0, int(self.threshold_limit), int(self.threshold_limit) + 1)
+		q0, q1 = self.compute_q0_q1()
+		n = int(self.trigger_rate * self.acquisition_time)
+		p_0 = self.compute_discrete_binomial_experiment(threshold, n, q0)
+		p_1 = self.compute_discrete_binomial_experiment(threshold, n, q1)
+
+		false_positive = 1 - ((1 - np.cumsum(np.flip(p_0))) ** self.number_of_bins())
+		true_positive = np.cumsum(np.flip(p_1))
+
+		return true_positive, false_positive
+
+	def debug(self):
+		#TODO : REMOVE THIS FUNCTION
+		threshold_dis = np.linspace(0, int(self.threshold_limit), int(self.threshold_limit) + 1)
+		threshold_exp = np.linspace(0, int(self.threshold_limit), self.precision*int(self.threshold_limit) + 1)
+		q0, q1 = self.compute_q0_q1()
+		n = int(self.trigger_rate * self.acquisition_time)
+		p_0_dis = self.compute_discrete_binomial_experiment(threshold_dis, n, q0)
+		p_1_dis = self.compute_discrete_binomial_experiment(threshold_dis, n, q1)
+
+		p_0_exp = self.compute_binomial_experiment(threshold_exp, q0)
+		p_1_exp = self.compute_binomial_experiment(threshold_exp, q1)
+
+		# plt.plot(threshold_exp, p_0_exp*self.precision, "-", label="p_0_exp", linewidth=2.5)
+		# plt.plot(threshold_dis, p_0_dis, "--", label="p_0_dis", linewidth=2.5)
+		# plt.show()
+
+		plt.plot(threshold_exp, p_1_exp*self.precision, "-", label="Continuous", linewidth=2.5)
+		plt.plot(threshold_dis, p_1_dis, "--", label="Discrete", linewidth=2.5)
+		plt.legend(frameon=False, fontsize=22)
+		plt.xlabel("k: Threshold", fontsize=22)
+		plt.ylabel("Probability of having k signal photons", fontsize=22)
+		plt.tick_params(labelsize=22)
+		plt.show()
+
+		false_positive_dis = 1 - ((1 - np.cumsum(np.flip(p_0_dis))) ** self.number_of_bins())
+		true_positive_dis = np.cumsum(np.flip(p_1_dis))
+
+		false_positive_exp = 1 - ((1 - np.cumsum(np.flip(p_0_exp))) ** self.number_of_bins())
+		true_positive_exp = np.cumsum(np.flip(p_1_exp))
+
+		plt.plot(false_positive_exp, true_positive_exp, "-", label="exp")
+		plt.scatter(false_positive_dis, true_positive_dis, label="dis")
+		plt.legend()
+		plt.show()
+
 
 
 class HistogramAnalysis:

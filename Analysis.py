@@ -1,9 +1,10 @@
 from Sources import EntangledPhotonSPDC, SinglePhoton, PulsedLaser
-from scipy.stats import binom
+from scipy.special import gammaln
 from typing import Optional
 import numpy as np
 import random
 from tqdm import tqdm
+import math
 
 
 class RocAnalysis:
@@ -19,6 +20,8 @@ class RocAnalysis:
 			acquisition_time=1
 	):
 		#TODO: ADD DOCUMENTATION, INTEGRATION TIME MUST BE IN SECOND TO FIT WITH THE TRIGGERING RATE
+		#TODO: ADD OPTION TO SEE MARKER WHEN THE THRESHOLD IS FOR FIX PARAMS
+		#TODO: FIX RUNTIMEWARNING
 		self.signal_rate = signal_rate
 		self.noise_rate = noise_rate
 		self.trigger_rate = trigger_rate
@@ -33,11 +36,22 @@ class RocAnalysis:
 		return q0, q1
 
 	def create_threshold_array(self):
-		threshold = np.linspace(0, int(self.threshold_limit), int(self.threshold_limit)+1)
+		threshold = np.linspace(0, int(self.threshold_limit), 50*int(self.threshold_limit) + 1)
 		return threshold
 
-	def compute_binom_pmf(self, threshold, q):
-		p = binom.pmf(threshold, int(self.trigger_rate * self.acquisition_time), q)
+	def compute_binomial_experiment(self, threshold, q):
+		#p = binom.pmf(threshold, int(self.trigger_rate * self.acquisition_time), q)
+
+		n = int(self.trigger_rate * self.acquisition_time)
+		k = threshold
+
+		prob_mass_function_log = gammaln(n + 1) - gammaln(k + 1) - gammaln(n - k + 1) + k * np.log(q) + (n - k) * np.log(1 - q)
+		prob_mass_function = np.exp(prob_mass_function_log)
+
+		distance_between_thresholds = threshold[1] - threshold[0]
+
+		p = prob_mass_function * distance_between_thresholds
+
 		return p
 
 	def number_of_bins(self):
@@ -47,8 +61,8 @@ class RocAnalysis:
 	def compute_p_d_p_fa(self):
 		threshold = self.create_threshold_array()
 		q0, q1 = self.compute_q0_q1()
-		p_0 = self.compute_binom_pmf(threshold, q0)
-		p_1 = self.compute_binom_pmf(threshold, q1)
+		p_0 = self.compute_binomial_experiment(threshold, q0)
+		p_1 = self.compute_binomial_experiment(threshold, q1)
 
 		false_positive = 1 - ((1 - np.cumsum(np.flip(p_0))) ** self.number_of_bins())
 		true_positive = np.cumsum(np.flip(p_1))
@@ -58,7 +72,8 @@ class RocAnalysis:
 
 class HistogramAnalysis:
 
-	def __init__(self, params, signal_rate, noise_rate, acquisition_time, range_distance, effective_trigger_rate, jitter_std_dev: Optional[float] = 0, **kwargs):
+	def __init__(self, params, signal_rate, noise_rate, acquisition_time, range_distance, effective_trigger_rate,
+	             jitter_std_dev: Optional[float] = 0, **kwargs):
 		self.params = params
 		self.effective_trigger_rate = effective_trigger_rate
 		self.signal_rate = signal_rate
@@ -84,8 +99,8 @@ class HistogramAnalysis:
 		signal, noise = self.compute_signal_and_noise_rate_per_bins()
 		trigger_total = self.compute_trigger_total()
 
-		noise_prob = (noise * self.acquisition_time)/trigger_total
-		signal_prob = (signal * self.acquisition_time)/trigger_total
+		noise_prob = (noise * self.acquisition_time) / trigger_total
+		signal_prob = (signal * self.acquisition_time) / trigger_total
 
 		return noise_prob, signal_prob
 
@@ -100,7 +115,7 @@ class HistogramAnalysis:
 	def histogram_simulation(self):
 		noise_prob, signal_prob = self.noise_and_signal_prob_per_bins()
 		trigger_total = self.compute_trigger_total()
-		tof_target = 2*self.params["target_distance"] / 299792458
+		tof_target = 2 * self.params["target_distance"] / 299792458
 		timing_window = self.params["timing_window"]
 
 		counts = np.zeros((self.bins, 1))
@@ -130,13 +145,14 @@ class HistogramAnalysis:
 		bins = self.bins
 		timing_window = self.params["timing_window"]
 		bin_edges = (np.arange(bins) * timing_window)
-		bin_edges_distance = (bin_edges * 299792458)/2
+		bin_edges_distance = (bin_edges * 299792458) / 2
 		return bin_edges, bin_edges_distance
 
 
 class HistogramAnalysisFromAdversaryPerspective:
 
-	def __init__(self, params_lidar, params_adversary, acquisition_time, source:str, jitter_std_dev: Optional[float] = 0.5e-9):
+	def __init__(self, params_lidar, params_adversary, acquisition_time, source: str,
+	             jitter_std_dev: Optional[float] = 0.5e-9):
 		self.params_lidar = params_lidar
 		self.params_adversary = params_adversary
 		self.source = source
@@ -157,7 +173,8 @@ class HistogramAnalysisFromAdversaryPerspective:
 	def histogram_simulation_adversary(self):
 		noise_prob, _ = self.noise_and_signal_prob_per_bins()
 		signal_rate, noise_rate = self.adjust_signal_noise_rate()
-		ha = HistogramAnalysis(self.params_adversary, signal_rate, noise_rate, self.acquisition_time, self.jitter_std_dev)
+		ha = HistogramAnalysis(self.params_adversary, signal_rate, noise_rate, self.acquisition_time,
+		                       self.jitter_std_dev)
 		trigger_total = ha.compute_trigger_total()
 		timing_window = self.params_adversary["timing_window"]
 		bins = ha.compute_bins_number()
@@ -182,7 +199,8 @@ class HistogramAnalysisFromAdversaryPerspective:
 		signal_rate, noise_rate = self.adjust_signal_noise_rate()
 		noise_total = noise_rate * self.acquisition_time
 		signal_total = signal_rate * self.acquisition_time
-		ha = HistogramAnalysis(self.params_adversary, signal_rate, noise_rate, self.acquisition_time, self.jitter_std_dev)
+		ha = HistogramAnalysis(self.params_adversary, signal_rate, noise_rate, self.acquisition_time,
+		                       self.jitter_std_dev)
 		trigger_total = ha.compute_trigger_total()
 
 		noise_prob = noise_total / trigger_total
@@ -199,7 +217,6 @@ class HistogramAnalysisFromAdversaryPerspective:
 		#Photons from the LiDAR per second detected by the adversary
 		signal_rate = PulsedLaser(self.params_lidar, eta_detection_adversary=eta_detection_adversary).signal_rate()
 
-		noise_rate = (self.params_adversary["background"] + self.params_adversary["detector_dark"]) * self.params_adversary["timing_window"]
+		noise_rate = (self.params_adversary["background"] + self.params_adversary["detector_dark"]) * \
+		             self.params_adversary["timing_window"]
 		return signal_rate, noise_rate
-
-

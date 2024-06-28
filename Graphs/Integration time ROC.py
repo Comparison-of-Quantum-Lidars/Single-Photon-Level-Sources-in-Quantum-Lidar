@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from Analysis import *
 from copy import deepcopy
 
-scenario = "ROC_Comparison_Distance_all_source"
+scenario = "ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_nvp"
 
 if scenario == "histogram_roc_combined":
 

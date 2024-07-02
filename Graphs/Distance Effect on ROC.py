@@ -8,16 +8,16 @@ from copy import deepcopy
 # *** SETUP ***
 
 param = SetupParameters(
-	fock_space_dim=25,
+	fock_space_dim=5,
 	output_power=2e6,
 	trigger_rate=None,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
-	sp_collection=0.8,
+	sp_collection=0.57,
 	sp_p1=0.99,
 	sp_p2=1e-3,
-	spdc_eps_heralding=0.8*0.5,
-	spdc_eps_collection=0.8,
+	spdc_eps_heralding=0.57*0.5,
+	spdc_eps_collection=0.57,
 	atmosphere=1,
 	target_distance=1,
 	receiver_diameter=0.05,
@@ -30,14 +30,14 @@ param = SetupParameters(
 	timing_window=0.5e-9,
 )
 
-match_multi_photon_probability = False
+match_multi_photon_probability = True
 range_interval = None
-distance = np.linspace(1, 250, 250)
+distance = np.linspace(0.5, 30, 250)
 acquisition_time = np.array([1, 60, 3600])
 target_false = 0.2
 target_true = 0.8
 colored_marker = True
-
+precision = 2
 
 
 def distance_at_target(distance, false_positive_array, target_percent):
@@ -142,7 +142,8 @@ for idx, d in enumerate(tqdm(distance)):
 			threshold_limit=trigger_rate_laser/100,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
-			acquisition_time=at
+			acquisition_time=at,
+			precision=precision
 		)
 
 		roc_sps = RocAnalysis(
@@ -152,7 +153,8 @@ for idx, d in enumerate(tqdm(distance)):
 			threshold_limit=trigger_rate_sps/100,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
-			acquisition_time=at
+			acquisition_time=at,
+			precision=precision
 		)
 
 		roc_eps = RocAnalysis(
@@ -162,7 +164,8 @@ for idx, d in enumerate(tqdm(distance)):
 			threshold_limit=trigger_rate_eps/100,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
-			acquisition_time=at
+			acquisition_time=at,
+			precision=precision
 		)
 
 		true_positive_laser, false_positive_laser = roc_laser.compute_p_d_p_fa()
@@ -257,6 +260,6 @@ plt.xlabel("Distance [m]", fontsize=22)
 plt.ylabel("SNR [-]", fontsize=22)
 plt.legend(fontsize=22, frameon=False)
 plt.tick_params(axis='both', which='major', labelsize=22)
-
+#plt.xlim([0, 30])
 plt.show()
 

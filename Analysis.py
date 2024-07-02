@@ -52,7 +52,7 @@ class RocAnalysis:
 	def compute_q0_q1(self):
 		"""
 		Compute the probability of measuring noise or a signal in a time window.
-		:return: the probability of measuring noise and the probability of measuring a signal.
+		:return: the probability of measuring noise and the probability of measuring a signal. [float, float]
 		"""
 		q0 = self.noise_rate / self.trigger_rate
 		q1 = self.signal_rate / self.trigger_rate
@@ -61,7 +61,7 @@ class RocAnalysis:
 	def create_threshold_array(self):
 		"""
 		Create an array of threshold values.
-		:return: an array of threshold values.
+		:return: an array of threshold values. [np.array]
 		"""
 		threshold = np.linspace(0, int(self.threshold_limit), (self.precision*int(self.threshold_limit)) + 1)
 		return threshold
@@ -71,7 +71,7 @@ class RocAnalysis:
 		Continuous binomial experiment to compute the probability of noise or signal to go above a threshold.
 		:param threshold: Array of threshold to test for the binomial experiment.
 		:param q: Probability of measuring a signal photon or a noise photon (q0 or q1).
-		:return: an array of probabilities of measuring a signal or noise above a threshold.
+		:return: an array of probabilities of measuring a signal or noise above a threshold. [np.array]
 		"""
 		n = int(self.trigger_rate * self.acquisition_time)
 		k = threshold
@@ -89,7 +89,7 @@ class RocAnalysis:
 		"""
 		Compute the number of bins in the histogram. The number of bins is proportional to the range interval and the
 		timing window.
-		:return: the number of bins in the histogram.
+		:return: the number of bins in the histogram. [int]
 		"""
 		n_bins = 2 * self.range_interval / (299792458 * self.timing_window)
 		return n_bins
@@ -98,7 +98,7 @@ class RocAnalysis:
 		"""
 		Compute the true positive and false positive arrays needed to plot the ROC curve. This is the function
 		that must be called after creating the object RocAnalysis.
-		:return: the true positive and false positive arrays. Both array will have the same length.
+		:return: the true positive and false positive arrays. Both array will have the same length. [np.array, np.array]
 		"""
 		threshold = self.create_threshold_array()
 		q0, q1 = self.compute_q0_q1()
@@ -117,7 +117,7 @@ class RocAnalysis:
 		:param threshold: Array of threshold to test for the binomial experiment.
 		:param n: Number of trials in the binomial experiment: number of triggers.
 		:param q: Probability of measuring a signal photon or a noise photon (q0 or q1).
-		:return: an array of probabilities of measuring a signal or noise above a threshold.
+		:return: an array of probabilities of measuring a signal or noise above a threshold. [np.array]
 		"""
 		p = binom.pmf(threshold, n, q)
 		return p
@@ -126,7 +126,7 @@ class RocAnalysis:
 		"""
 		Return the marker associated with the true positive and false positive for integer threshold values. This can
 		be used to compare the ROC curves using the discrete or the continuous binomial experiment.
-		:return: the true positive and false positive arrays for integer threshold values.
+		:return: the true positive and false positive arrays for integer threshold values. [np.array, np.array]
 		"""
 		threshold = np.linspace(0, int(self.threshold_limit), int(self.threshold_limit) + 1)
 		q0, q1 = self.compute_q0_q1()
@@ -175,6 +175,7 @@ class HistogramAnalysis:
 		The contribution of the background noise is now removed in order to separate the photon that are reflected from
 		the target and the one that are not.
 		:return: the signal (reflected photons) and noise rate per bins (photons that are not reflected from the target).
+		[float, float]
 		"""
 		signal = self.signal_rate - self.noise_rate
 		return signal, self.noise_rate
@@ -183,7 +184,7 @@ class HistogramAnalysis:
 		"""
 		Compute the number of bins in the histogram. The number of bins is proportional to the range interval and the
 		timing window.
-		:return: the number of bins in the histogram.
+		:return: the number of bins in the histogram. [int]
 		"""
 		bins = round(2 * self.range_distance / (299792458 * self.params["timing_window"]))
 		return bins
@@ -191,7 +192,7 @@ class HistogramAnalysis:
 	def compute_trigger_total(self):
 		"""
 		Compute the total amount of triggers that will be generated during the acquisition time.
-		:return: the total amount of triggers.
+		:return: the total amount of triggers. [float]
 		"""
 		trigger_total = self.effective_trigger_rate * self.acquisition_time
 		return trigger_total
@@ -200,7 +201,7 @@ class HistogramAnalysis:
 		"""
 		Compute the probability of measuring noise or signal in a bin. This is done by computing the overall noise/signal
 		and by dividing it by the total amount of triggers.
-		:return:
+		:return: the probability of measuring noise and the probability of measuring a signal. [float, float]
 		"""
 		signal, noise = self.compute_signal_and_noise_rate_per_bins()
 		trigger_total = self.compute_trigger_total()
@@ -213,7 +214,7 @@ class HistogramAnalysis:
 	def compute_max_time_of_flight(self):
 		"""
 		Compute the maximum time of flight that can be resolved by the LiDAR system based on the maximum distance.
-		:return:
+		:return: the maximum time of flight that can be resolved by the LiDAR system. [float]
 		"""
 		max_time_of_flight = 2 * self.range_distance / 299792458
 		return max_time_of_flight
@@ -223,7 +224,7 @@ class HistogramAnalysis:
 		"""
 		Return a boolean value based on a probability.
 		:param prob: probability of returning True.
-		:return: a boolean value.
+		:return: a boolean value. [bool]
 		"""
 		return random.random() < prob
 
@@ -238,6 +239,7 @@ class HistogramAnalysis:
 			4) If a signal photon is detected, it is added to the bin by taking into account the jitter.
 			5) If a noise photon was already in the bin, the signal photon is not added.
 		:return: The histogram counts as an array, the bin edges in time of flight and the bin edges in distance.
+		[np.array, np.array, np.array]
 		"""
 		noise_prob, signal_prob = self.noise_and_signal_prob_per_bins()
 		trigger_total = self.compute_trigger_total()
@@ -270,7 +272,7 @@ class HistogramAnalysis:
 	def bin_edges(self):
 		"""
 		Compute the bin edges in time of flight and distance.
-		:return: the bin edges in time of flight and distance.
+		:return: the bin edges in time of flight and distance. [np.array, np.array].
 		"""
 		bins = self.bins
 		timing_window = self.params["timing_window"]

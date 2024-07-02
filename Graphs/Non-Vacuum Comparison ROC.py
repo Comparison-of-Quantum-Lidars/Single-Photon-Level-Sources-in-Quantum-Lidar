@@ -184,19 +184,22 @@ fig, axs = plt.subplots(1, 3, figsize=(10, 10))
 axs[0].plot(false_positive_sps_020, true_positive_sps_020, "--", color="red", linewidth=2.5, zorder=2)
 axs[0].plot(false_positive_laser_020, true_positive_laser_020, "-", label="Pulsed Laser", color="blue", linewidth=2.5, zorder=1)
 axs[0].plot(false_positive_eps_020, true_positive_eps_020, "-.", label="Entangled Photon Source", color="green", linewidth=2.5, zorder=3)
-axs[0].set_title(r"$\eta_{signal} = 0.2$", fontsize=22)
+str_title = r"$\eta_{signal} = 0.2$, $P_{nv} = $" + f"{non_vacuum_probability[0] * 100:.2f}%"
+axs[0].set_title(str_title, fontsize=21)
 axs[0].tick_params(axis='both', which='major', labelsize=22)
 
 axs[1].plot(false_positive_sps_057, true_positive_sps_057, "--", color="red", linewidth=2.5, zorder=2)
 axs[1].plot(false_positive_laser_057, true_positive_laser_057, "-", color="blue", linewidth=2.5, zorder=1)
 axs[1].plot(false_positive_eps_057, true_positive_eps_057, "-.", color="green", linewidth=2.5, zorder=3)
-axs[1].set_title(r"$\eta_{signal} = 0.57$", fontsize=22)
+str_title = r"$\eta_{signal} = 0.57$, $P_{nv} = $" + f"{non_vacuum_probability[1] * 100:.2f}%"
+axs[1].set_title(str_title, fontsize=21)
 axs[1].tick_params(axis='both', which='major', labelsize=22)
 
 axs[2].plot(false_positive_sps_08, true_positive_sps_08, "--", color="red", linewidth=2.5, zorder=2)
 axs[2].plot(false_positive_laser_08, true_positive_laser_08, "-", color="blue", linewidth=2.5, zorder=1)
 axs[2].plot(false_positive_eps_08, true_positive_eps_08, "-.", color="green", linewidth=2.5, zorder=3)
-axs[2].set_title(r"$\eta_{signal} = 0.8$", fontsize=22)
+str_title = r"$\eta_{signal} = 0.8$, $P_{nv} = $" + f"{non_vacuum_probability[2] * 100:.2f}%"
+axs[2].set_title(str_title, fontsize=22)
 axs[2].tick_params(axis='both', which='major', labelsize=22)
 
 fig.text(0.5, 0.04, 'False Positive [-]', ha='center', fontsize=25)

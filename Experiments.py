@@ -352,12 +352,12 @@ if __name__ == '__main__':
 
 	# - * - Experiment 5 - * -
 
-	# LaserMeasurement(
-	# 	signal=53172,
-	# 	noise_level=500,
-	# 	detector_efficiency=0.5,
-	# 	aimed_multi_photon_probability=0.06728888888988889,
-	# 	aimed_p_out=116822.22222222223,
-	# ).parameters_estimation()
+	LaserMeasurement(
+		signal=53172,
+		noise_level=500,
+		detector_efficiency=0.5,
+		aimed_multi_photon_probability=0.06728888888988889,
+		aimed_p_out=116822.22222222223,
+	).parameters_estimation()
 
 

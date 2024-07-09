@@ -106,15 +106,15 @@ class SPSMeasurement:
 		signal_sps_no_attenuation = self.signal_no_attenuation - self.noise_level_no_attenuation
 		multi_photon_prob = self.multi_photon_probability()
 		non_vacuum_prob = ((signal_sps_no_attenuation / (
-					self.triggering_rate * self.detector_efficiency)) + multi_photon_prob * (
-					                   self.detector_efficiency - 1))
+				self.triggering_rate * self.detector_efficiency)) + multi_photon_prob * (
+				                   self.detector_efficiency - 1))
 		return non_vacuum_prob
 
 	def optical_power(self):
 		signal_sps_no_attenuation = self.signal_no_attenuation - self.noise_level_no_attenuation
 		multi_photon_prob = self.multi_photon_probability()
 		p_out = self.triggering_rate * (signal_sps_no_attenuation / (
-					self.detector_efficiency * self.triggering_rate) + multi_photon_prob * self.detector_efficiency)
+				self.detector_efficiency * self.triggering_rate) + multi_photon_prob * self.detector_efficiency)
 		return p_out
 
 	@staticmethod
@@ -154,7 +154,7 @@ class EPSMeasurement:
 	def check_params(self):
 		assert self.aimed_multi_photon_probability is None or self.aimed_non_vacuum_probability is None, "Only one parameter can be estimated at a time"
 		assert not (
-					self.aimed_multi_photon_probability is None and self.aimed_non_vacuum_probability is None), "At least one parameter must be estimated"
+				self.aimed_multi_photon_probability is None and self.aimed_non_vacuum_probability is None), "At least one parameter must be estimated"
 		assert self.aimed_p_out is not None, "The output power must be estimated"
 
 	def parameters_estimation(self):
@@ -187,7 +187,7 @@ class EPSMeasurement:
 		multi_photon_prob = self.aimed_multi_photon_probability
 		sqrt_multi_photon_prob = np.sqrt(multi_photon_prob)
 		average_photon_per_pulse = sqrt_multi_photon_prob / (
-					(1 - sqrt_multi_photon_prob) * collection_efficiency_signal)
+				(1 - sqrt_multi_photon_prob) * collection_efficiency_signal)
 		return average_photon_per_pulse
 
 	def aimed_eps_rate(self):
@@ -201,7 +201,6 @@ class EPSMeasurement:
 		collection_efficiency_signal = self.signal_collection_efficiency()
 
 		return self.aimed_p_out / (average_photon_per_pulse * collection_efficiency_signal)
-
 
 	@staticmethod
 	def display_results(eps_rate_current, eps_rate_aimed):
@@ -232,7 +231,7 @@ class LaserMeasurement:
 	def check_params(self):
 		assert self.aimed_multi_photon_probability is None or self.aimed_non_vacuum_probability is None, "Only one parameter can be estimated at a time"
 		assert not (
-					self.aimed_multi_photon_probability is None and self.aimed_non_vacuum_probability is None), "At least one parameter must be estimated"
+				self.aimed_multi_photon_probability is None and self.aimed_non_vacuum_probability is None), "At least one parameter must be estimated"
 		assert self.aimed_p_out is not None, "The output power must be estimated"
 
 	def parameters_estimation(self):
@@ -302,17 +301,16 @@ class LaserMeasurement:
 		print(f"Difference : [{(signal_rate - (self.signal - self.noise_level))}]")
 
 
-
 if __name__ == '__main__':
+	# - * - Experiment 1 : Detector Efficiency - * -
 
-	# - * - Experiment 1 - * -
 	# MeasureDetectorEfficiency(
 	# 	power_after_attenuator=2.5e-9,
 	# 	wavelength=1550*10**-9,
 	# 	real_count_rate=10e9
 	# ).calculate_detector_efficiency()
 
-	# - * - Experiment 2 - * -
+	# - * - Experiment 2 : Overall loss - * -
 
 	# MeasureOverallLoss(
 	# 	detector_efficiency=0.5,
@@ -323,7 +321,7 @@ if __name__ == '__main__':
 	# 	noise_level_signal_with_laser_target=5,
 	# ).calculate_overall_loss()
 
-	# - * - Experiment 3 - * -
+	# - * - Experiment 3 : SPS Measurements - * -
 
 	# SPSMeasurement(
 	# 	signal_no_attenuation=100000,
@@ -335,7 +333,7 @@ if __name__ == '__main__':
 	# 	triggering_rate=0.5e6,
 	# ).parameters_estimation()
 
-	# - * - Experiment 4 - * -
+	# - * - Experiment 4 : EPS Measurements - * -
 
 	# EPSMeasurement(
 	# 	signal_signal_photon=187800,
@@ -350,14 +348,14 @@ if __name__ == '__main__':
 	# 	aimed_p_out=116822.22222222223,
 	# ).parameters_estimation()
 
-	# - * - Experiment 5 - * -
+	# - * - Experiment 5 : Laser Measurements - * -
 
-	LaserMeasurement(
-		signal=53172,
-		noise_level=500,
-		detector_efficiency=0.5,
-		aimed_multi_photon_probability=0.06728888888988889,
-		aimed_p_out=116822.22222222223,
-	).parameters_estimation()
+	# LaserMeasurement(
+	# 	signal=53172,
+	# 	noise_level=500,
+	# 	detector_efficiency=0.5,
+	# 	aimed_multi_photon_probability=0.06728888888988889,
+	# 	aimed_p_out=116822.22222222223,
+	# ).parameters_estimation()
 
-
+	print("done")

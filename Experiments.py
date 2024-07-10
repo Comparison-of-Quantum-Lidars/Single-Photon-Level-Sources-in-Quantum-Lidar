@@ -75,8 +75,8 @@ class SPSMeasurement:
 			signal_no_attenuation: float,
 			noise_level_no_attenuation: float,
 			signal_with_attenuation: float,
-			attenuation: float,
 			noise_level_with_attenuation: float,
+			attenuation: float,
 			detector_efficiency: float,
 			triggering_rate: float,
 	):
@@ -105,9 +105,9 @@ class SPSMeasurement:
 	def non_vacuum_probability(self):
 		signal_sps_no_attenuation = self.signal_no_attenuation - self.noise_level_no_attenuation
 		multi_photon_prob = self.multi_photon_probability()
-		non_vacuum_prob = ((signal_sps_no_attenuation / (
+		non_vacuum_prob = (signal_sps_no_attenuation / (
 				self.triggering_rate * self.detector_efficiency)) + multi_photon_prob * (
-				                   self.detector_efficiency - 1))
+				                   self.detector_efficiency - 1)
 		return non_vacuum_prob
 
 	def optical_power(self):

@@ -44,7 +44,7 @@ sources when they are all as detectable for an adversary with a number-resolving
 
 ## Quick Usage Preview
 ### Calculating the SNR when the non-vacuum probability is matched across sources
-```
+```python
 from Sources import SetupParameters, PulsedLaser, EntangledPhotonSPDC, SinglePhoton
 
 param_laser = SetupParameters(
@@ -72,12 +72,48 @@ param_laser = SetupParameters(
 
 laser = PulsedLaser(param_laser)
 
-snr_laser = laser.signal_to_noise_ratio()
+snr_laser = laser.signal_to_noise_rate()
 ```
 
+### Producing a ROC Curves for the different sources
+```python
 
+signal_rate_laser = laser.signal_rate()
+noise_rate_laser = laser.noise_rate()
+trigger_rate_laser = laser.trigger_rate()
+
+acquisition_time = 1
+precision = 20
+range_interval = 50
+
+true_positive_laser, false_positive_laser = RocAnalysis(
+	signal_rate=signal_rate_laser,
+	noise_rate=noise_rate_laser,
+	trigger_rate=trigger_rate_laser,
+	threshold_limit=trigger_rate_laser/100,
+	range_interval=range_interval,
+	timing_window=param["timing_window"],
+	acquisition_time=acquisition_time,
+	precision=precision,
+).compute_p_d_p_fa()
+
+
+
+```
 
 ## Tutorial
+
+Tutorials on how to use this module are available. They should be followed in that order:
+
+1) [Setting parameters](Tutorials/Setting%20parameters.ipynb)
+2) [ROC Curves](Tutorials/ROC%20Curves.ipynb)
+3) [Histogram simulation](Tutorials/Histogram%20simulation.ipynb)
+
+
+
+## Paper
+
+TODO: ADD LINK TO PAPER AND ADD THE FACT THAT PEOPLE CAN REPRODUCE THE GRAPH
 
 ## About
 
@@ -86,4 +122,3 @@ snr_laser = laser.signal_to_noise_ratio()
 ## License
 
 ## Citation
-

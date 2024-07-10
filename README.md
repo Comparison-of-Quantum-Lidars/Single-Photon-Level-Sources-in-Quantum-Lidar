@@ -8,19 +8,19 @@ sources for quantum LiDAR applications. The source studied in this work are the 
 2) Entangled photon pair sources based on spontaneous parametric down-conversion
 3) Attenuated Pulsed Laser Sources
 
-The goal of this work is to compare fairly the performance of lidars systems based on these sources. The goal is to
+The goal of this work is to compare fairly the performance of lidar systems based on these sources. The goal is to
 provide a fair and complete comparison of quantum illumination and classical illumination in the context of LiDAR.
-The LiDAR system that are modeled in this work are using a source and a detector operating in the quantum regime. No
+The LiDAR systems that are modelled in this work are using a source and a detector operating in the quantum regime. No
 joint-measurement is performed in the lidar architectures studied since those systems requires either a prior knowledge
 of the target, or needs a sweep of the delay line which drastically reduces the speed of the system. Since robust
-Quantum Memory and Non-Destructive measurement device are not yet available, we are using lidar system where the
+Quantum Memory and Non-Destructive measurement device are not yet available, we are using lidar systems where the
 coincidence measurement is post-processed on a _classical_ computer.
 
 To ensure a fair comparison between the different sources, time-correlation is performed for all. For the Entangled-photon source,
 the detection of an idler photon is used to trigger the start of the time-correlation window and coincidence is performed.
 For the single-photon sources and the attenuated pulsed laser, the triggering electrical signal is used to do the coincidence.
 
-In order to perform a fair comparison, one need to fix some parameters across the different sources. Obviously, the
+In order to perform a fair comparison, one needs to fix some parameters across the different sources. Obviously, the
 optical power leaving the system is the same for all sources. From there, one of the following parameters can be fixed:
 1) The Non-Vacuum Probability: This is the probability that at least one photon is emitted and is leaving the lidar system.
 2) The Multi-Photon Probability: This is the probability that more than one photon is emitted and is leaving the lidar system.
@@ -35,7 +35,7 @@ allowing for long-range applications while maintaining a high precision.
 When transitioning to quantum sources, one loses the ability to operate at long range, since the probability of a photon
 being reflected within the solid angle of the detector decreases as $1/L^2$ where $L$ is the distance lidar-target.
 The reason someone might consider going to a quantum source is to increase stealthiness, which is the ability to detect
-without being detected. If the target possesses a _classical_ photodetector, than it cannot detect the quantum lidar.
+without being detected. If the target possesses a _classical_ photodetector, then it cannot detect the quantum lidar.
 However, if it possesses a single-photon detector, it might be able to detect the quantum lidar.
 
 By matching the non-vacuum probability, one can compare the different sources when they are all as detectable for an
@@ -109,16 +109,22 @@ Tutorials on how to use this module are available. They should be followed in th
 2) [ROC Curves](Tutorials/ROC%20Curves.ipynb)
 3) [Histogram simulation](Tutorials/Histogram%20simulation.ipynb)
 
-
-
 ## Paper
 
 TODO: ADD LINK TO PAPER AND ADD THE FACT THAT PEOPLE CAN REPRODUCE THE GRAPH
 
 ## About
 
+This work was supported by [...]
+
 ## Thanks
+
+[...]
 
 ## License
 
+[...]
+
 ## Citation
+
+[...]

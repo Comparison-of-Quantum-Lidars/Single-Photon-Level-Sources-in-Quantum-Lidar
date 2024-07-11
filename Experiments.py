@@ -160,8 +160,9 @@ class EPSMeasurement:
 	def parameters_estimation(self):
 		eps_rate_current = self.current_eps_rate()
 		eps_rate_aimed = self.aimed_eps_rate()
-		self.display_results(eps_rate_current, eps_rate_aimed)
-		return eps_rate_current, eps_rate_aimed
+		aimed_signal_rate = self.aimed_signal_rate()
+		self.display_results(eps_rate_current, eps_rate_aimed, aimed_signal_rate)
+		return eps_rate_current, eps_rate_aimed, aimed_signal_rate
 
 	def signal_collection_efficiency(self):
 		idler_signal_photon = self.signal_idler_photon - self.noise_level_idler_photon
@@ -202,11 +203,18 @@ class EPSMeasurement:
 
 		return self.aimed_p_out / (average_photon_per_pulse * collection_efficiency_signal)
 
-	@staticmethod
-	def display_results(eps_rate_current, eps_rate_aimed):
+	def aimed_signal_rate(self):
+		eps_rate_aimed = self.aimed_eps_rate()
+		collection_efficiency_signal = self.signal_collection_efficiency()
+		return eps_rate_aimed * collection_efficiency_signal * self.signal_detector_efficiency
+
+	def display_results(self, eps_rate_current, eps_rate_aimed, signal_rate):
 		print(f"EPS: Current EPS Rate = {eps_rate_current}")
 		print(f"EPS: Aimed EPS Rate = {eps_rate_aimed}")
 		print(f"EPS: Difference : [{(eps_rate_aimed - eps_rate_current)}]")
+		print(f"EPS: Current signal rate = {self.signal_signal_photon - self.noise_level_signal_photon}")
+		print(f"EPS: Aimed Signal Rate = {signal_rate}")
+		print(f"EPS: Difference : [{(signal_rate - (self.signal_signal_photon - self.noise_level_signal_photon))}]")
 
 
 class LaserMeasurement:
@@ -336,7 +344,7 @@ if __name__ == '__main__':
 	# - * - Experiment 4 : EPS Measurements - * -
 
 	# EPSMeasurement(
-	# 	signal_signal_photon=187800,
+	# 	signal_signal_photon=187457,
 	# 	noise_level_signal_photon=5000,
 	# 	signal_detector_efficiency=0.5,
 	# 	signal_idler_photon=187800,
@@ -350,12 +358,12 @@ if __name__ == '__main__':
 
 	# - * - Experiment 5 : Laser Measurements - * -
 
-	# LaserMeasurement(
-	# 	signal=53172,
-	# 	noise_level=500,
-	# 	detector_efficiency=0.5,
-	# 	aimed_multi_photon_probability=0.06728888888988889,
-	# 	aimed_p_out=116822.22222222223,
-	# ).parameters_estimation()
+	LaserMeasurement(
+		signal=53172,
+		noise_level=500,
+		detector_efficiency=0.5,
+		aimed_multi_photon_probability=0.06728888888988889,
+		aimed_p_out=116822.22222222223,
+	).parameters_estimation()
 
 	print("done")

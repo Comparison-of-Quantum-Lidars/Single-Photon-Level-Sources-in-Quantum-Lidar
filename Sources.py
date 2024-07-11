@@ -81,6 +81,7 @@ class PulsedLaser(Source):
 
 	Setting one of them will automatically compute the two others.
 	"""
+
 	def __init__(self, params, **kwargs):
 		"""
 		:param params: Parameters of the source using the object SetupParameters
@@ -237,6 +238,7 @@ class SinglePhoton(Source):
 	fix the trigger rate, the multi-photon probability or the no-vacuum probability. If one of them is given, it must
 	be the correct value or an error will be raised.
 	"""
+
 	def __init__(self, params, **kwargs):
 		"""
 		:param params: Parameters of the source using the object SetupParameters
@@ -367,6 +369,7 @@ class EntangledPhotonSPDC(Source):
 	Setting one of them will automatically compute the two others. This is possible because, for the SPDC source, the
 	average photon per pulse can easily be modified by playing with the power of the pump laser.
 	"""
+
 	def __init__(self, params, **kwargs):
 		"""
 		:param params: Parameters of the source using the object SetupParameters
@@ -400,7 +403,7 @@ class EntangledPhotonSPDC(Source):
 			assert self.multi_photon_probability is None and self.no_vacuum_probability is None, "multi-photon probability and no-vacuum probability can't be fixed if trigger rate is fixed"
 
 			self.epsilon = (self.output_power / (self.trigger_rate * self.spdc_eps_collection)) - (
-						1 / self.spdc_eps_heralding)
+					1 / self.spdc_eps_heralding)
 
 			self.multi_photon_probability = self.compute_multi_photon_probability()
 			self.no_vacuum_probability = self.compute_no_vacuum_probability()
@@ -502,6 +505,7 @@ class EntangledPhotonSPDC(Source):
 		"""
 		operator_joint_detection = tensor(self.apd_detector_idler, self.apd_detector_signal)
 		return self.compute_eps_rate() * expect(operator_joint_detection, self.compute_spdc_eps_state())
+
 	def noise_rate(self):
 		"""
 		Compute the noise rate of the SPDC source. The noise rate is the rate at which noise photons are detected.
@@ -535,25 +539,62 @@ class EntangledPhotonSPDC(Source):
 		enough. This function is used to check if the Fock space is large enough. Only interesting for debugging.
 		:return: Probability of the last element of the Fock space [float]
 		"""
-		last_element_prob = np.abs(self.compute_spdc_eps_state()[-1])**2
+		last_element_prob = np.abs(self.compute_spdc_eps_state()[-1]) ** 2
 		return last_element_prob[0]
-	@property
-	def g2(self):
-		#TODO : NOT WORKING
+
+
+class EntangledPhotonContinuousSPDC(EntangledPhotonSPDC):
+
+	def __init__(self, params, **kwargs):
+		super().__init__(params)
+		self.kwargs = kwargs
+		self.eps_rate_continuous, self.epsilon_continuous = self.adjusted_parameters()
+
+	def adjusted_parameters(self):
+		eps_rate = self.compute_eps_rate()
+		epsilon_continuous = (self.epsilon * self.timing_window) / (1 / eps_rate)
+		return self.compute_eps_rate_continuous(), epsilon_continuous
+
+	def compute_eps_rate_continuous(self):
+		return 1 / self.timing_window
+
+	def squeezed_operator(self):
+		a = destroy(self.fock_space_dim)
+		a_dagger = create(self.fock_space_dim)
+		spdc_epsilon_continuous = np.arcsinh(np.sqrt(self.epsilon_continuous))
+		argument = -1j * (tensor(a, a) + tensor(a_dagger, a_dagger)) * spdc_epsilon_continuous
+		squeezed_operator = argument.expm()
+		return squeezed_operator
+
+	def compute_spdc_eps_state(self):
+		squeezed_operator = self.squeezed_operator()
+		return squeezed_operator * tensor(self.vacuum, self.vacuum)
+
+	def compute_effective_trigger_rate_continuous(self):
+		return (self.output_power * self.spdc_eps_heralding) / (
+				self.spdc_eps_collection * (1 + self.epsilon_continuous * self.spdc_eps_heralding))
+
+	def signal_rate(self):
 		operator_joint_detection = tensor(self.apd_detector_idler, self.apd_detector_signal)
-		joint_measurement_prob = expect(operator_joint_detection, self.compute_spdc_eps_state())
+		return self.eps_rate_continuous * expect(operator_joint_detection, self.compute_spdc_eps_state())
 
-		prob_idler = (1 - (1 / ((self.epsilon + 1) - (self.epsilon * (1 - self.spdc_eps_heralding)))))
+	def noise_rate(self):
+		operator_detector_signal_only = tensor(qeye(self.fock_space_dim), self.apd_detector_signal)
+		joint_vacuum = tensor(self.vacuum, self.vacuum)
+		return self.compute_effective_trigger_rate_continuous() * expect(operator_detector_signal_only, joint_vacuum)
 
-		efficiency_signal = self.spdc_eps_collection * self.overall_detection_probability()[0]
-		prob_signal = (1 - (1 / ((efficiency_signal + 1) - (efficiency_signal * (1 - efficiency_signal)))))
+	def signal_to_noise_rate(self):
+		signal = self.signal_rate()
+		noise = self.noise_rate()
+		return (signal - noise) / noise
 
-		#operator_detector_signal_only = tensor(qeye(self.fock_space_dim), self.apd_detector_signal)
-		#prob_signal = expect(operator_detector_signal_only, self.compute_spdc_eps_state())
+	@property
+	def average_photon_per_pulse(self):
+		return self.epsilon_continuous
 
-		g2 = joint_measurement_prob / (prob_idler * prob_signal)
-
-		return g2
+	def prob_of_last_element_fock_space(self):
+		last_element_prob = np.abs(self.compute_spdc_eps_state()[-1]) ** 2
+		return last_element_prob[0]
 
 
 class SetupParameters:
@@ -562,6 +603,7 @@ class SetupParameters:
 	the detection and the environment. The user can set the parameters using the __init__ method or by setting the
 	parameters directly. A help function is available to understand the parameters that can be set.
 	"""
+
 	def __init__(self, **kwargs):
 		self.__dict__.update(kwargs)
 

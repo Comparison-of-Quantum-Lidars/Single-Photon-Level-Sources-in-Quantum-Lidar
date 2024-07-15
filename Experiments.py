@@ -10,10 +10,12 @@ class MeasureDetectorEfficiency:
 			power_after_attenuator: float,
 			wavelength: float,
 			real_count_rate: float,
+			acquisition_time: float = 1
 	):
 		self.power_after_attenuator = power_after_attenuator
 		self.wavelength = wavelength
 		self.real_count_rate = real_count_rate
+		self.acquisition_time = acquisition_time
 
 	def calculate_detector_efficiency(self):
 		detector_efficiency = self.real_count_rate / self.compute_expected_counts()
@@ -21,7 +23,7 @@ class MeasureDetectorEfficiency:
 		return detector_efficiency
 
 	def compute_expected_counts(self):
-		return (self.power_after_attenuator * self.wavelength) / (h * c)
+		return ((self.power_after_attenuator * self.wavelength) / (h * c)) * self.acquisition_time
 
 	@staticmethod
 	def display_results(detector_efficiency):

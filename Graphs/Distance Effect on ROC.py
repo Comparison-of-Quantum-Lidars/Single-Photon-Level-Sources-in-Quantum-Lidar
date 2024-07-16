@@ -16,7 +16,7 @@ param = SetupParameters(
 	sp_collection=0.57,
 	sp_p1=0.99,
 	sp_p2=1e-3,
-	spdc_eps_heralding=0.57*0.5,
+	spdc_eps_heralding=0.57 * 0.5,
 	spdc_eps_collection=0.57,
 	atmosphere=1,
 	target_distance=1,
@@ -44,8 +44,9 @@ def distance_at_target(distance, false_positive_array, target_percent):
 	idx = np.argmin(np.abs(false_positive_array - target_percent))
 	return distance[idx]
 
-def atmospheric_loss(distance, attenuation=0.02/1000):
-	return np.exp(-attenuation*distance)
+
+def atmospheric_loss(distance, attenuation=0.02 / 1000):
+	return np.exp(-attenuation * distance)
 
 
 # -*- MATCH MULTI-PHOTON PROBABILITY -*-
@@ -64,8 +65,6 @@ else:
 	no_vacuum_probability = sps.no_vacuum_probability
 	param_laser["no_vacuum_probability"] = no_vacuum_probability
 	param_eps["no_vacuum_probability"] = no_vacuum_probability
-
-
 
 laser = PulsedLaser(param_laser)
 sps = SinglePhoton(param_sps)
@@ -114,19 +113,19 @@ for idx, d in enumerate(tqdm(distance)):
 	signal_laser = laser.signal_rate()
 	noise_laser = laser.noise_rate()
 	trigger_rate_laser = laser.trigger_rate
-	snr_laser_current = (signal_laser-noise_laser)/noise_laser
+	snr_laser_current = (signal_laser - noise_laser) / noise_laser
 	snr_laser.append(snr_laser_current)
 
 	signal_sps = sps.signal_rate()
 	noise_sps = sps.noise_rate()
 	trigger_rate_sps = sps.trigger_rate
-	snr_sps_current = (signal_sps-noise_sps)/noise_sps
+	snr_sps_current = (signal_sps - noise_sps) / noise_sps
 	snr_sps.append(snr_sps_current)
 
 	signal_eps = eps.signal_rate()
 	noise_eps = eps.noise_rate()
 	trigger_rate_eps = eps.trigger_rate
-	snr_eps_current = (signal_eps-noise_eps)/noise_eps
+	snr_eps_current = (signal_eps - noise_eps) / noise_eps
 	snr_eps.append(snr_eps_current)
 
 	last_element.append(eps.prob_of_last_element_fock_space)
@@ -139,7 +138,7 @@ for idx, d in enumerate(tqdm(distance)):
 			signal_rate=signal_laser,
 			noise_rate=noise_laser,
 			trigger_rate=trigger_rate_laser,
-			threshold_limit=trigger_rate_laser/100,
+			threshold_limit=trigger_rate_laser / 100,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
 			acquisition_time=at,
@@ -150,7 +149,7 @@ for idx, d in enumerate(tqdm(distance)):
 			signal_rate=signal_sps,
 			noise_rate=noise_sps,
 			trigger_rate=trigger_rate_sps,
-			threshold_limit=trigger_rate_sps/100,
+			threshold_limit=trigger_rate_sps / 100,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
 			acquisition_time=at,
@@ -161,7 +160,7 @@ for idx, d in enumerate(tqdm(distance)):
 			signal_rate=signal_eps,
 			noise_rate=noise_eps,
 			trigger_rate=trigger_rate_eps,
-			threshold_limit=trigger_rate_eps/100,
+			threshold_limit=trigger_rate_eps / 100,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
 			acquisition_time=at,
@@ -172,10 +171,11 @@ for idx, d in enumerate(tqdm(distance)):
 		true_positive_sps, false_positive_sps = roc_sps.compute_p_d_p_fa()
 		true_positive_eps, false_positive_eps = roc_eps.compute_p_d_p_fa()
 
+		# interp: With the current false positive and true positive, we interpolate the value of the true positive at
+		# the target_false.
 		target_false_value_laser[at][idx] = np.interp(target_false, false_positive_laser, true_positive_laser)
 		target_false_value_sps[at][idx] = np.interp(target_false, false_positive_sps, true_positive_sps)
 		target_false_value_eps[at][idx] = np.interp(target_false, false_positive_eps, true_positive_eps)
-
 
 plt.plot(distance, last_element)
 plt.show()
@@ -199,7 +199,6 @@ distance_cutoff_laser["snr_at0"] = snr_laser[np.where(distance == distance_cutof
 distance_cutoff_laser["snr_at1"] = snr_laser[np.where(distance == distance_cutoff_laser[acquisition_time[1]])]
 distance_cutoff_laser["snr_at2"] = snr_laser[np.where(distance == distance_cutoff_laser[acquisition_time[2]])]
 
-
 distance_cutoff_sps = {
 	acquisition_time[0]: distance_at_target(distance, target_false_value_sps[acquisition_time[0]], target_true),
 	acquisition_time[1]: distance_at_target(distance, target_false_value_sps[acquisition_time[1]], target_true),
@@ -209,7 +208,6 @@ distance_cutoff_sps["snr_at0"] = snr_sps[np.where(distance == distance_cutoff_sp
 distance_cutoff_sps["snr_at1"] = snr_sps[np.where(distance == distance_cutoff_sps[acquisition_time[1]])]
 distance_cutoff_sps["snr_at2"] = snr_sps[np.where(distance == distance_cutoff_sps[acquisition_time[2]])]
 
-
 distance_cutoff_eps = {
 	acquisition_time[0]: distance_at_target(distance, target_false_value_eps[acquisition_time[0]], target_true),
 	acquisition_time[1]: distance_at_target(distance, target_false_value_eps[acquisition_time[1]], target_true),
@@ -218,12 +216,6 @@ distance_cutoff_eps = {
 distance_cutoff_eps["snr_at0"] = snr_eps[np.where(distance == distance_cutoff_eps[acquisition_time[0]])]
 distance_cutoff_eps["snr_at1"] = snr_eps[np.where(distance == distance_cutoff_eps[acquisition_time[1]])]
 distance_cutoff_eps["snr_at2"] = snr_eps[np.where(distance == distance_cutoff_eps[acquisition_time[2]])]
-
-
-
-
-
-
 
 # *** PLOTTING ***
 
@@ -235,26 +227,38 @@ plt.semilogy(distance, snr_laser, "-", label="Pulsed Laser", linewidth=3, color=
 plt.semilogy(distance, snr_sps, "--", label="Single Photon", linewidth=3, color="red", zorder=1)
 plt.semilogy(distance, snr_eps, "-.", label="Entangled Photon", linewidth=3, color="green", zorder=1)
 
-plt.scatter(0, 0, label=f"{target_true*100}% true detection\n{target_false*100}% false detection:", alpha=0)
+plt.scatter(0, 0, label=f"{target_true * 100}% true detection\n{target_false * 100}% false detection:", alpha=0)
 
-plt.scatter(distance_cutoff_laser[acquisition_time[0]], distance_cutoff_laser["snr_at0"], color="k", marker="o", s=100, label="1s", zorder=1)
-plt.scatter(distance_cutoff_laser[acquisition_time[1]], distance_cutoff_laser["snr_at1"], color="k", marker="s", s=100, label="1min", zorder=1)
-plt.scatter(distance_cutoff_laser[acquisition_time[2]], distance_cutoff_laser["snr_at2"], color="k", marker="^", s=100, label="1h", zorder=1)
+plt.scatter(distance_cutoff_laser[acquisition_time[0]], distance_cutoff_laser["snr_at0"], color="k", marker="o", s=100,
+            label="1s", zorder=1)
+plt.scatter(distance_cutoff_laser[acquisition_time[1]], distance_cutoff_laser["snr_at1"], color="k", marker="s", s=100,
+            label="1min", zorder=1)
+plt.scatter(distance_cutoff_laser[acquisition_time[2]], distance_cutoff_laser["snr_at2"], color="k", marker="^", s=100,
+            label="1h", zorder=1)
 
 str_maker_laser = "blue" if colored_marker else "k"
-plt.scatter(distance_cutoff_laser[acquisition_time[0]], distance_cutoff_laser["snr_at0"], color=str_maker_laser, marker="o", s=100, zorder=2)
-plt.scatter(distance_cutoff_laser[acquisition_time[1]], distance_cutoff_laser["snr_at1"], color=str_maker_laser, marker="s", s=100, zorder=2)
-plt.scatter(distance_cutoff_laser[acquisition_time[2]], distance_cutoff_laser["snr_at2"], color=str_maker_laser, marker="^", s=100, zorder=2)
+plt.scatter(distance_cutoff_laser[acquisition_time[0]], distance_cutoff_laser["snr_at0"], color=str_maker_laser,
+            marker="o", s=100, zorder=2)
+plt.scatter(distance_cutoff_laser[acquisition_time[1]], distance_cutoff_laser["snr_at1"], color=str_maker_laser,
+            marker="s", s=100, zorder=2)
+plt.scatter(distance_cutoff_laser[acquisition_time[2]], distance_cutoff_laser["snr_at2"], color=str_maker_laser,
+            marker="^", s=100, zorder=2)
 
 str_maker_sps = "red" if colored_marker else "k"
-plt.scatter(distance_cutoff_sps[acquisition_time[0]], distance_cutoff_sps["snr_at0"], color=str_maker_sps, marker="o", s=100, zorder=2)
-plt.scatter(distance_cutoff_sps[acquisition_time[1]], distance_cutoff_sps["snr_at1"], color=str_maker_sps, marker="s", s=100, zorder=2)
-plt.scatter(distance_cutoff_sps[acquisition_time[2]], distance_cutoff_sps["snr_at2"], color=str_maker_sps, marker="^", s=100, zorder=2)
+plt.scatter(distance_cutoff_sps[acquisition_time[0]], distance_cutoff_sps["snr_at0"], color=str_maker_sps, marker="o",
+            s=100, zorder=2)
+plt.scatter(distance_cutoff_sps[acquisition_time[1]], distance_cutoff_sps["snr_at1"], color=str_maker_sps, marker="s",
+            s=100, zorder=2)
+plt.scatter(distance_cutoff_sps[acquisition_time[2]], distance_cutoff_sps["snr_at2"], color=str_maker_sps, marker="^",
+            s=100, zorder=2)
 
 str_maker_eps = "green" if colored_marker else "k"
-plt.scatter(distance_cutoff_eps[acquisition_time[0]], distance_cutoff_eps["snr_at0"], color=str_maker_eps, marker="o", s=100, zorder=2)
-plt.scatter(distance_cutoff_eps[acquisition_time[1]], distance_cutoff_eps["snr_at1"], color=str_maker_eps, marker="s", s=100, zorder=2)
-plt.scatter(distance_cutoff_eps[acquisition_time[2]], distance_cutoff_eps["snr_at2"], color=str_maker_eps, marker="^", s=100, zorder=2)
+plt.scatter(distance_cutoff_eps[acquisition_time[0]], distance_cutoff_eps["snr_at0"], color=str_maker_eps, marker="o",
+            s=100, zorder=2)
+plt.scatter(distance_cutoff_eps[acquisition_time[1]], distance_cutoff_eps["snr_at1"], color=str_maker_eps, marker="s",
+            s=100, zorder=2)
+plt.scatter(distance_cutoff_eps[acquisition_time[2]], distance_cutoff_eps["snr_at2"], color=str_maker_eps, marker="^",
+            s=100, zorder=2)
 
 plt.xlabel("Distance [m]", fontsize=22)
 plt.ylabel("SNR [-]", fontsize=22)
@@ -262,4 +266,3 @@ plt.legend(fontsize=22, frameon=False)
 plt.tick_params(axis='both', which='major', labelsize=22)
 #plt.xlim([0, 30])
 plt.show()
-

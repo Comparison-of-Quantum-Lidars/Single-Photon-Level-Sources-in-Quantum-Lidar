@@ -147,9 +147,9 @@ class EPSMeasurement:
 		self.signal_idler_photon = signal_idler_photon
 		self.noise_level_idler_photon = noise_level_idler_photon
 		self.idler_detector_efficiency = idler_detector_efficiency
-		self.signal_coincidence = signal_coincidence
 		self.aimed_multi_photon_probability = aimed_multi_photon_probability
 		self.aimed_non_vacuum_probability = aimed_non_vacuum_probability
+		self.signal_coincidence = signal_coincidence
 		self.aimed_p_out = aimed_p_out
 		self.check_params()
 
@@ -160,63 +160,77 @@ class EPSMeasurement:
 		assert self.aimed_p_out is not None, "The output power must be estimated"
 
 	def parameters_estimation(self):
+		aimed_signal_signal_rate = self.aimed_signal_signal_rate()
 		eps_rate_current = self.current_eps_rate()
-		eps_rate_aimed = self.aimed_eps_rate()
-		aimed_signal_rate = self.aimed_signal_rate()
-		self.display_results(eps_rate_current, eps_rate_aimed, aimed_signal_rate)
-		return eps_rate_current, eps_rate_aimed, aimed_signal_rate
-
-	def signal_collection_efficiency(self):
-		idler_signal_photon = self.signal_idler_photon - self.noise_level_idler_photon
-		return self.signal_coincidence / (self.signal_detector_efficiency * idler_signal_photon)
-
-	def idler_collection_efficiency(self):
-		signal_signal_photon = self.signal_signal_photon - self.noise_level_signal_photon
-		return self.signal_coincidence / (self.idler_detector_efficiency * signal_signal_photon)
-
-	def current_eps_rate(self):
-		signal_signal_photon = self.signal_signal_photon - self.noise_level_signal_photon
-		idler_signal_photon = self.signal_idler_photon - self.noise_level_idler_photon
-		return (signal_signal_photon * idler_signal_photon) / self.signal_coincidence
+		aimed_eps_rate = self.aimed_eps_rate()
+		current_coll_eff_average_photon_per_pulse_signal = self.current_coll_eff_average_photon_per_pulse_signal()
+		current_coll_eff_average_photon_per_pulse_idler = self.current_coll_eff_average_photon_per_pulse_idler()
+		self.display_results(aimed_signal_signal_rate, eps_rate_current, aimed_eps_rate,
+		                     current_coll_eff_average_photon_per_pulse_signal,
+		                     current_coll_eff_average_photon_per_pulse_idler)
+		return aimed_signal_signal_rate, eps_rate_current, aimed_eps_rate, current_coll_eff_average_photon_per_pulse_signal, current_coll_eff_average_photon_per_pulse_idler
 
 	def average_photons_per_pulse_if_non_vacuum_fix(self):
-		collection_efficiency_signal = self.signal_collection_efficiency()
 		non_vacuum_prob = self.aimed_non_vacuum_probability
-		average_photon_per_pulse = non_vacuum_prob / ((1 - non_vacuum_prob) * collection_efficiency_signal)
-		return average_photon_per_pulse
+		coll_eff_average_photon_per_pulse = non_vacuum_prob / (1 - non_vacuum_prob)
+		return coll_eff_average_photon_per_pulse
 
 	def average_photons_per_pulse_if_multi_photon_fix(self):
-		collection_efficiency_signal = self.signal_collection_efficiency()
 		multi_photon_prob = self.aimed_multi_photon_probability
 		sqrt_multi_photon_prob = np.sqrt(multi_photon_prob)
-		average_photon_per_pulse = sqrt_multi_photon_prob / (
-				(1 - sqrt_multi_photon_prob) * collection_efficiency_signal)
-		return average_photon_per_pulse
+		coll_eff_average_photon_per_pulse = sqrt_multi_photon_prob / (1 - sqrt_multi_photon_prob)
+		return coll_eff_average_photon_per_pulse
 
 	def aimed_eps_rate(self):
 		if self.aimed_multi_photon_probability is not None:
-			average_photon_per_pulse = self.average_photons_per_pulse_if_multi_photon_fix()
+			coll_eff_average_photon_per_pulse = self.average_photons_per_pulse_if_multi_photon_fix()
 		elif self.aimed_non_vacuum_probability is not None:
-			average_photon_per_pulse = self.average_photons_per_pulse_if_non_vacuum_fix()
+			coll_eff_average_photon_per_pulse = self.average_photons_per_pulse_if_non_vacuum_fix()
 		else:
 			raise ValueError("No parameter to estimate")
 
-		collection_efficiency_signal = self.signal_collection_efficiency()
+		return self.aimed_p_out / coll_eff_average_photon_per_pulse
 
-		return self.aimed_p_out / (average_photon_per_pulse * collection_efficiency_signal)
-
-	def aimed_signal_rate(self):
+	def aimed_signal_signal_rate(self):
 		eps_rate_aimed = self.aimed_eps_rate()
-		collection_efficiency_signal = self.signal_collection_efficiency()
-		return eps_rate_aimed * collection_efficiency_signal * self.signal_detector_efficiency
+		if self.aimed_multi_photon_probability is not None:
+			coll_eff_average_photon_per_pulse = self.average_photons_per_pulse_if_multi_photon_fix()
+		elif self.aimed_non_vacuum_probability is not None:
+			coll_eff_average_photon_per_pulse = self.average_photons_per_pulse_if_non_vacuum_fix()
+		else:
+			raise ValueError("No parameter to estimate")
 
-	def display_results(self, eps_rate_current, eps_rate_aimed, signal_rate):
-		print(f"EPS: Current EPS Rate = {eps_rate_current}")
-		print(f"EPS: Aimed EPS Rate = {eps_rate_aimed}")
-		print(f"EPS: Difference : [{(eps_rate_aimed - eps_rate_current)}]")
-		print(f"EPS: Current signal rate = {self.signal_signal_photon - self.noise_level_signal_photon}")
-		print(f"EPS: Aimed Signal Rate = {signal_rate}")
-		print(f"EPS: Difference : [{(signal_rate - (self.signal_signal_photon - self.noise_level_signal_photon))}]")
+		signal_signal_aimed = eps_rate_aimed * (coll_eff_average_photon_per_pulse * self.signal_detector_efficiency) / (
+				1 + (coll_eff_average_photon_per_pulse * self.signal_detector_efficiency))
+
+		return signal_signal_aimed
+
+	def current_eps_rate(self):
+		signal_signal_photon = self.signal_signal_photon - self.noise_level_signal_photon
+		signal_idler_photon = self.signal_idler_photon - self.noise_level_idler_photon
+		return (signal_signal_photon * signal_idler_photon) / self.signal_coincidence
+
+	def current_coll_eff_average_photon_per_pulse_signal(self):
+		signal_idler_photon = self.signal_idler_photon - self.noise_level_idler_photon
+		return self.signal_coincidence / (
+					(signal_idler_photon - self.signal_coincidence) * self.signal_detector_efficiency)
+
+	def current_coll_eff_average_photon_per_pulse_idler(self):
+		signal_signal_photon = self.signal_signal_photon - self.noise_level_signal_photon
+		return self.signal_coincidence / (
+					(signal_signal_photon - self.signal_coincidence) * self.idler_detector_efficiency)
+
+	def display_results(self, aimed_signal_signal_rate, eps_rate_current, aimed_eps_rate,
+	                    current_coll_eff_average_photon_per_pulse_signal,
+	                    current_coll_eff_average_photon_per_pulse_idler):
+		print(f"EPS: Aimed Signal Rate {aimed_signal_signal_rate}")
+		print(f"EPS: Current Signal Rate {self.signal_signal_photon - self.noise_level_signal_photon}")
+		print(
+			f"EPS: Difference: [{aimed_signal_signal_rate - (self.signal_signal_photon - self.noise_level_signal_photon)}]")
+		print(f"EPS: Aimed EPS Rate {aimed_eps_rate}")
+		print(f"EPS: Current EPS Rate {eps_rate_current}")
+		print(f"EPS: Current Collection Efficiency Signal * Epsilon {current_coll_eff_average_photon_per_pulse_signal}")
+		print(f"EPS: Current Collection Efficiency idler * Epsilon {current_coll_eff_average_photon_per_pulse_idler}")
 
 
 class LaserMeasurement:
@@ -311,107 +325,6 @@ class LaserMeasurement:
 		print(f"Difference : [{(signal_rate - (self.signal - self.noise_level))}]")
 
 
-class EPSMeasurementAlternative:
-
-	def __init__(
-			self,
-			signal_signal_photon: float,
-			noise_level_signal_photon: float,
-			signal_detector_efficiency: float,
-			signal_idler_photon: float,
-			noise_level_idler_photon: float,
-			idler_detector_efficiency: float,
-			signal_coincidence: float,
-			aimed_p_out: float,
-			aimed_multi_photon_probability: float = None,
-			aimed_non_vacuum_probability: float = None,
-	):
-		self.signal_signal_photon = signal_signal_photon
-		self.noise_level_signal_photon = noise_level_signal_photon
-		self.signal_detector_efficiency = signal_detector_efficiency
-		self.signal_idler_photon = signal_idler_photon
-		self.noise_level_idler_photon = noise_level_idler_photon
-		self.idler_detector_efficiency = idler_detector_efficiency
-		self.aimed_multi_photon_probability = aimed_multi_photon_probability
-		self.aimed_non_vacuum_probability = aimed_non_vacuum_probability
-		self.signal_coincidence = signal_coincidence
-		self.aimed_p_out = aimed_p_out
-		self.check_params()
-
-	def check_params(self):
-		assert self.aimed_multi_photon_probability is None or self.aimed_non_vacuum_probability is None, "Only one parameter can be estimated at a time"
-		assert not (
-				self.aimed_multi_photon_probability is None and self.aimed_non_vacuum_probability is None), "At least one parameter must be estimated"
-		assert self.aimed_p_out is not None, "The output power must be estimated"
-
-	def parameters_estimation(self):
-		aimed_signal_signal_rate = self.aimed_signal_signal_rate()
-		eps_rate_current = self.current_eps_rate()
-		aimed_eps_rate = self.aimed_eps_rate()
-		current_coll_eff_average_photon_per_pulse_signal = self.current_coll_eff_average_photon_per_pulse_signal()
-		current_coll_eff_average_photon_per_pulse_idler = self.current_coll_eff_average_photon_per_pulse_idler()
-		self.display_results(aimed_signal_signal_rate, eps_rate_current, aimed_eps_rate, current_coll_eff_average_photon_per_pulse_signal, current_coll_eff_average_photon_per_pulse_idler)
-		return aimed_signal_signal_rate, eps_rate_current, aimed_eps_rate, current_coll_eff_average_photon_per_pulse_signal, current_coll_eff_average_photon_per_pulse_idler
-
-	def average_photons_per_pulse_if_non_vacuum_fix(self):
-		non_vacuum_prob = self.aimed_non_vacuum_probability
-		coll_eff_average_photon_per_pulse = non_vacuum_prob / (1 - non_vacuum_prob)
-		return coll_eff_average_photon_per_pulse
-
-	def average_photons_per_pulse_if_multi_photon_fix(self):
-		multi_photon_prob = self.aimed_multi_photon_probability
-		sqrt_multi_photon_prob = np.sqrt(multi_photon_prob)
-		coll_eff_average_photon_per_pulse = sqrt_multi_photon_prob / (1 - sqrt_multi_photon_prob)
-		return coll_eff_average_photon_per_pulse
-
-	def aimed_eps_rate(self):
-		if self.aimed_multi_photon_probability is not None:
-			coll_eff_average_photon_per_pulse = self.average_photons_per_pulse_if_multi_photon_fix()
-		elif self.aimed_non_vacuum_probability is not None:
-			coll_eff_average_photon_per_pulse = self.average_photons_per_pulse_if_non_vacuum_fix()
-		else:
-			raise ValueError("No parameter to estimate")
-
-		return self.aimed_p_out / coll_eff_average_photon_per_pulse
-
-	def aimed_signal_signal_rate(self):
-		eps_rate_aimed = self.aimed_eps_rate()
-		if self.aimed_multi_photon_probability is not None:
-			coll_eff_average_photon_per_pulse = self.average_photons_per_pulse_if_multi_photon_fix()
-		elif self.aimed_non_vacuum_probability is not None:
-			coll_eff_average_photon_per_pulse = self.average_photons_per_pulse_if_non_vacuum_fix()
-		else:
-			raise ValueError("No parameter to estimate")
-
-		signal_signal_aimed = eps_rate_aimed * (coll_eff_average_photon_per_pulse * self.signal_detector_efficiency) / (
-				1 + (coll_eff_average_photon_per_pulse * self.signal_detector_efficiency))
-
-		return signal_signal_aimed
-
-	def current_eps_rate(self):
-		signal_signal_photon = self.signal_signal_photon - self.noise_level_signal_photon
-		signal_idler_photon = self.signal_idler_photon - self.noise_level_idler_photon
-		return (signal_signal_photon * signal_idler_photon) / self.signal_coincidence
-
-	def current_coll_eff_average_photon_per_pulse_signal(self):
-		signal_idler_photon = self.signal_idler_photon - self.noise_level_idler_photon
-		return self.signal_coincidence / ((signal_idler_photon - self.signal_coincidence) * self.signal_detector_efficiency)
-
-	def current_coll_eff_average_photon_per_pulse_idler(self):
-		signal_signal_photon = self.signal_signal_photon - self.noise_level_signal_photon
-		return self.signal_coincidence / ((signal_signal_photon - self.signal_coincidence) * self.idler_detector_efficiency)
-
-	def display_results(self, aimed_signal_signal_rate, eps_rate_current, aimed_eps_rate, current_coll_eff_average_photon_per_pulse_signal, current_coll_eff_average_photon_per_pulse_idler):
-		print(f"EPS: Aimed Signal Rate {aimed_signal_signal_rate}")
-		print(f"EPS: Current Signal Rate {self.signal_signal_photon - self.noise_level_signal_photon}")
-		print(f"EPS: Difference: [{aimed_signal_signal_rate - (self.signal_signal_photon - self.noise_level_signal_photon)}]")
-		print(f"EPS: Aimed EPS Rate {aimed_eps_rate}")
-		print(f"EPS: Current EPS Rate {eps_rate_current}")
-		print(f"EPS: Current Collection Efficiency Signal * Epsilon {current_coll_eff_average_photon_per_pulse_signal}")
-		print(f"EPS: Current Collection Efficiency idler * Epsilon {current_coll_eff_average_photon_per_pulse_idler}")
-
-
-
 if __name__ == '__main__':
 	# - * - Experiment 1 : Detector Efficiency - * -
 
@@ -446,32 +359,7 @@ if __name__ == '__main__':
 
 	# - * - Experiment 4 : EPS Measurements - * -
 
-	# EPSMeasurement(
-	# 	signal_signal_photon=187457,
-	# 	noise_level_signal_photon=5000,
-	# 	signal_detector_efficiency=0.5,
-	# 	signal_idler_photon=187800,
-	# 	noise_level_idler_photon=5000,
-	# 	idler_detector_efficiency=0.5,
-	# 	signal_coincidence=100000,
-	# 	aimed_multi_photon_probability=0.06728888888988889,
-	# 	#aimed_non_vacuum_probability=0.16635555555555556,
-	# 	aimed_p_out=116822.22222222223,
-	# ).parameters_estimation()
-
-	# - * - Experiment 5 : Laser Measurements - * -
-	#
-	# LaserMeasurement(
-	# 	signal=53172,
-	# 	noise_level=500,
-	# 	detector_efficiency=0.5,
-	# 	aimed_multi_photon_probability=0.06728888888988889,
-	# 	aimed_p_out=116822.22222222223,
-	# ).parameters_estimation()
-
-	# - * - Experiment 6 : EPS Measurement alternative - * -
-
-	EPSMeasurementAlternative(
+	EPSMeasurement(
 		signal_signal_photon=50000,
 		noise_level_signal_photon=200,
 		signal_detector_efficiency=0.5,
@@ -483,5 +371,15 @@ if __name__ == '__main__':
 		#aimed_non_vacuum_probability=0.16635555555555556,
 		aimed_p_out=116822.22222222223,
 	).parameters_estimation()
+
+	# - * - Experiment 5 : Laser Measurements - * -
+	#
+	# LaserMeasurement(
+	# 	signal=53172,
+	# 	noise_level=500,
+	# 	detector_efficiency=0.5,
+	# 	aimed_multi_photon_probability=0.06728888888988889,
+	# 	aimed_p_out=116822.22222222223,
+	# ).parameters_estimation()
 
 	print("done")

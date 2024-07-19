@@ -7,7 +7,6 @@ from copy import deepcopy
 param = SetupParameters(
 	fock_space_dim=25,
 	output_power=2e6,
-	trigger_rate=None,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	sp_collection=None,
@@ -175,7 +174,7 @@ for nvp in tqdm(non_vacuum_prob):
 	eps = EntangledPhotonSPDC(param)
 	snr_laser.append(laser.signal_to_noise_rate())
 	mpp_laser.append(laser.multi_photon_probability)
-	average_photon_laser.append(laser.compute_alpha()**2)
+	average_photon_laser.append(laser.alpha**2)
 	snr_eps.append(eps.signal_to_noise_rate())
 	mpp_eps.append(eps.multi_photon_probability)
 	average_photon_eps.append(eps.epsilon)

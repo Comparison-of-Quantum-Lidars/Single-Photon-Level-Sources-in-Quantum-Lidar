@@ -9,7 +9,6 @@ from copy import deepcopy
 param = SetupParameters(
 	fock_space_dim=40,
 	output_power=2e6,
-	trigger_rate=None,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	sp_collection=None,
@@ -29,56 +28,56 @@ param = SetupParameters(
 	timing_window=0.5e-9,
 )
 
-# collection_efficiency = np.array([0.2, 0.57, 0.8, 1])
-#
-# # *** Single Photon Source ***
-#
-# param_sps = deepcopy(param)
-# snr_sps = np.zeros_like(collection_efficiency)
-# average_photon_per_pulse_sps = np.zeros_like(collection_efficiency)
-# multi_photon_probability_sps = np.zeros_like(collection_efficiency)
-#
-# for idx, ce in enumerate(collection_efficiency):
-# 	param_sps["sp_collection"] = ce
-# 	param_sps["multi_photon_probability"] = param_sps["sp_p2"] * ce**2
-# 	sps = SinglePhoton(param_sps)
-# 	snr_sps[idx] = sps.signal_to_noise_rate()
-# 	average_photon_per_pulse_sps[idx] = sps.average_photon_per_pulse
-# 	multi_photon_probability_sps[idx] = sps.multi_photon_probability
-#
-# multi_photon_probability = np.linspace(0.001, 0.5, 96)
-# multi_photon_probability = np.concatenate((multi_photon_probability, multi_photon_probability_sps))
-# multi_photon_probability = np.sort(multi_photon_probability)
+collection_efficiency = np.array([0.2, 0.57, 0.8, 1])
 
-# # *** LASER ***
-#
-# param_laser = deepcopy(param)
-# snr_laser = np.zeros_like(multi_photon_probability)
-# average_photon_per_pulse_laser = np.zeros_like(multi_photon_probability)
-#
-# for idx, mpp in enumerate(tqdm(multi_photon_probability)):
-# 	param_laser["multi_photon_probability"] = mpp
-# 	laser = PulsedLaser(param_laser)
-# 	snr_laser[idx] = laser.signal_to_noise_rate()
-# 	average_photon_per_pulse_laser[idx] = laser.average_photon_per_pulse
-#
-# # *** ENTANGLED PHOTON SOURCE ***
-#
-# param_eps = deepcopy(param)
-# snr_eps = np.zeros((multi_photon_probability.shape[0], collection_efficiency.shape[0]))
-# average_photon_per_pulse_eps = np.zeros((multi_photon_probability.shape[0], collection_efficiency.shape[0]))
-#
-# last_state = np.zeros((multi_photon_probability.shape[0], collection_efficiency.shape[0]))
-#
-# for idx_ce, ce in enumerate(collection_efficiency):
-# 	param_eps["spdc_eps_collection"] = ce
-# 	param_eps["spdc_eps_heralding"] = ce * param_eps["detection_efficiency"]
-# 	for idx_mpp, mpp in enumerate(tqdm(multi_photon_probability)):
-# 		param_eps["multi_photon_probability"] = mpp
-# 		eps = EntangledPhotonSPDC(param_eps)
-# 		snr_eps[idx_mpp, idx_ce] = eps.signal_to_noise_rate()
-# 		average_photon_per_pulse_eps[idx_mpp, idx_ce] = eps.epsilon
-# 		last_state[idx_mpp, idx_ce] = eps.prob_of_last_element_fock_space
+# *** Single Photon Source ***
+
+param_sps = deepcopy(param)
+snr_sps = np.zeros_like(collection_efficiency)
+average_photon_per_pulse_sps = np.zeros_like(collection_efficiency)
+multi_photon_probability_sps = np.zeros_like(collection_efficiency)
+
+for idx, ce in enumerate(collection_efficiency):
+	param_sps["sp_collection"] = ce
+	param_sps["multi_photon_probability"] = param_sps["sp_p2"] * ce**2
+	sps = SinglePhoton(param_sps)
+	snr_sps[idx] = sps.signal_to_noise_rate()
+	average_photon_per_pulse_sps[idx] = sps.average_photon_per_pulse
+	multi_photon_probability_sps[idx] = sps.multi_photon_probability
+
+multi_photon_probability = np.linspace(0.001, 0.5, 96)
+multi_photon_probability = np.concatenate((multi_photon_probability, multi_photon_probability_sps))
+multi_photon_probability = np.sort(multi_photon_probability)
+
+# *** LASER ***
+
+param_laser = deepcopy(param)
+snr_laser = np.zeros_like(multi_photon_probability)
+average_photon_per_pulse_laser = np.zeros_like(multi_photon_probability)
+
+for idx, mpp in enumerate(tqdm(multi_photon_probability)):
+	param_laser["multi_photon_probability"] = mpp
+	laser = PulsedLaser(param_laser)
+	snr_laser[idx] = laser.signal_to_noise_rate()
+	average_photon_per_pulse_laser[idx] = laser.average_photon_per_pulse
+
+# *** ENTANGLED PHOTON SOURCE ***
+
+param_eps = deepcopy(param)
+snr_eps = np.zeros((multi_photon_probability.shape[0], collection_efficiency.shape[0]))
+average_photon_per_pulse_eps = np.zeros((multi_photon_probability.shape[0], collection_efficiency.shape[0]))
+
+last_state = np.zeros((multi_photon_probability.shape[0], collection_efficiency.shape[0]))
+
+for idx_ce, ce in enumerate(collection_efficiency):
+	param_eps["spdc_eps_collection"] = ce
+	param_eps["spdc_eps_heralding"] = ce * param_eps["detection_efficiency"]
+	for idx_mpp, mpp in enumerate(tqdm(multi_photon_probability)):
+		param_eps["multi_photon_probability"] = mpp
+		eps = EntangledPhotonSPDC(param_eps)
+		snr_eps[idx_mpp, idx_ce] = eps.signal_to_noise_rate()
+		average_photon_per_pulse_eps[idx_mpp, idx_ce] = eps.epsilon
+		last_state[idx_mpp, idx_ce] = eps.prob_of_last_element_fock_space
 #
 #
 # plt.plot(multi_photon_probability, last_state[:,0], "-", label="0")
@@ -95,22 +94,25 @@ param = SetupParameters(
 # plt.legend()
 # plt.show()
 
-#*** GRAPHS ***
 
+#*** LOAD AND SAVE DATA ***
 # np.savez("data/match_mpp", multi_photon_probability=multi_photon_probability,
 #       multi_photon_probability_sps=multi_photon_probability_sps,
 #       snr_laser=snr_laser, snr_sps=snr_sps, snr_eps=snr_eps)
 
 #
-data = np.load("data/match_mpp_June13.npz")
+#data = np.load("data/match_mpp_June13.npz")
 
-multi_photon_probability = data["multi_photon_probability"]
-multi_photon_probability_sps = data["multi_photon_probability_sps"]
-snr_laser = data["snr_laser"]
-snr_sps = data["snr_sps"]
-snr_eps = data["snr_eps"]
+# multi_photon_probability = data["multi_photon_probability"]
+# multi_photon_probability_sps = data["multi_photon_probability_sps"]
+# snr_laser = data["snr_laser"]
+# snr_sps = data["snr_sps"]
+# snr_eps = data["snr_eps"]
 
 # INTERSECTION
+
+
+#*** GRAPHS ***
 
 idx = np.argmin(np.abs(snr_laser - snr_sps[0]))
 match_mpp_laser_02 = multi_photon_probability[idx]
@@ -119,10 +121,10 @@ match_snr_laser_02 = snr_laser[idx]
 
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
-print(f"WARNING: MINUS ONE IS APPLIED TO THE SNR BECAUSE THIS IS AN OLD DATASET !!!")
-snr_laser = snr_laser-1
-snr_sps = snr_sps-1
-snr_eps = snr_eps-1
+# print(f"WARNING: MINUS ONE IS APPLIED TO THE SNR BECAUSE THIS IS AN OLD DATASET !!!")
+# snr_laser = snr_laser-1
+# snr_sps = snr_sps-1
+# snr_eps = snr_eps-1
 
 #intersection between laser and SPS for each collection
 

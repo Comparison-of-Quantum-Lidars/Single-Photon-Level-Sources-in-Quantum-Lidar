@@ -9,7 +9,6 @@ from copy import deepcopy
 param = SetupParameters(
 	fock_space_dim=45,
 	output_power=2e6,
-	trigger_rate=None,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	sp_collection=None,
@@ -28,78 +27,80 @@ param = SetupParameters(
 	detector_dark=200,
 	timing_window=0.5e-9,
 )
-#
-# collection_efficiency = np.array([0.2, 0.57, 0.8])
-# # *** Single Photon Source ***
-#
-# param_sps = deepcopy(param)
-# non_vacuum_probability_sps = np.zeros_like(collection_efficiency)
-# snr_sps = np.zeros_like(collection_efficiency)
-# average_photon_per_pulse_sps = np.zeros_like(collection_efficiency)
-#
-# for idx, ce in enumerate(collection_efficiency):
-# 	param_sps["sp_collection"] = ce
-# 	param_sps["no_vacuum_probability"] = param_sps["sp_p1"] * ce + (param_sps["sp_p2"] * ce * (2 - ce))
-# 	sps = SinglePhoton(param_sps)
-# 	non_vacuum_probability_sps[idx] = sps.no_vacuum_probability
-# 	snr_sps[idx] = sps.signal_to_noise_rate()
-# 	average_photon_per_pulse_sps[idx] = sps.average_photon_per_pulse
-#
-# non_vacuum_probability = np.linspace(0.0001, 0.8, 96)
-# non_vacuum_probability = np.concatenate((non_vacuum_probability, non_vacuum_probability_sps))
-# non_vacuum_probability = np.sort(non_vacuum_probability)
-#
-# # *** Pulsed Laser ***
-#
-# param_laser = deepcopy(param)
-# snr_laser = np.zeros_like(non_vacuum_probability)
-# average_photon_per_pulse_laser = np.zeros_like(non_vacuum_probability)
-#
-# for idx, nvp in enumerate(tqdm(non_vacuum_probability)):
-# 	param_laser["no_vacuum_probability"] = nvp
-# 	laser = PulsedLaser(param_laser)
-# 	snr_laser[idx] = laser.signal_to_noise_rate()
-# 	average_photon_per_pulse_laser[idx] = laser.average_photon_per_pulse
-#
-# # *** Entangled Photon Source ***
-#
-# param_eps = deepcopy(param)
-# snr_entangled = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
-# average_photon_per_pulse_entangled = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
-#
-# last_state = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
-#
-# def adjustable_fock_space(average_photon_per_pulse):
-# 	return round(average_photon_per_pulse)+45
-#
-#
-#
-# for idx_nvp, ce in enumerate(collection_efficiency):
-# 	param_eps["spdc_eps_collection"] = ce
-# 	param_eps["spdc_eps_heralding"] = ce * param_eps["detection_efficiency"]
-#
-# 	for idx_ce, nvp in enumerate(tqdm(non_vacuum_probability)):
-# 		param_eps["no_vacuum_probability"] = nvp
-# 		eps = EntangledPhotonSPDC(param_eps)
-# 		average_photon_per_pulse_entangled[idx_ce, idx_nvp] = eps.average_photon_per_pulse
-# 		param_eps["fock_space_dim"] = adjustable_fock_space(average_photon_per_pulse_entangled[idx_ce, idx_nvp])
-# 		snr_entangled[idx_ce, idx_nvp] = eps.signal_to_noise_rate()
-# 		last_state[idx_ce, idx_nvp] = eps.prob_of_last_element_fock_space
+
+collection_efficiency = np.array([0.2, 0.57, 0.8])
+# *** Single Photon Source ***
+
+param_sps = deepcopy(param)
+non_vacuum_probability_sps = np.zeros_like(collection_efficiency)
+snr_sps = np.zeros_like(collection_efficiency)
+average_photon_per_pulse_sps = np.zeros_like(collection_efficiency)
+
+for idx, ce in enumerate(collection_efficiency):
+	param_sps["sp_collection"] = ce
+	param_sps["no_vacuum_probability"] = param_sps["sp_p1"] * ce + (param_sps["sp_p2"] * ce * (2 - ce))
+	sps = SinglePhoton(param_sps)
+	non_vacuum_probability_sps[idx] = sps.no_vacuum_probability
+	snr_sps[idx] = sps.signal_to_noise_rate()
+	average_photon_per_pulse_sps[idx] = sps.average_photon_per_pulse
+
+non_vacuum_probability = np.linspace(0.0001, 0.8, 96)
+non_vacuum_probability = np.concatenate((non_vacuum_probability, non_vacuum_probability_sps))
+non_vacuum_probability = np.sort(non_vacuum_probability)
+
+# *** Pulsed Laser ***
+
+param_laser = deepcopy(param)
+snr_laser = np.zeros_like(non_vacuum_probability)
+average_photon_per_pulse_laser = np.zeros_like(non_vacuum_probability)
+
+for idx, nvp in enumerate(tqdm(non_vacuum_probability)):
+	param_laser["no_vacuum_probability"] = nvp
+	laser = PulsedLaser(param_laser)
+	snr_laser[idx] = laser.signal_to_noise_rate()
+	average_photon_per_pulse_laser[idx] = laser.average_photon_per_pulse
+
+# *** Entangled Photon Source ***
+
+param_eps = deepcopy(param)
+snr_entangled = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
+average_photon_per_pulse_entangled = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
+
+last_state = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
+
+def adjustable_fock_space(average_photon_per_pulse):
+	return round(average_photon_per_pulse)+45
+
+
+
+for idx_nvp, ce in enumerate(collection_efficiency):
+	param_eps["spdc_eps_collection"] = ce
+	param_eps["spdc_eps_heralding"] = ce * param_eps["detection_efficiency"]
+
+	for idx_ce, nvp in enumerate(tqdm(non_vacuum_probability)):
+		param_eps["no_vacuum_probability"] = nvp
+		eps = EntangledPhotonSPDC(param_eps)
+		average_photon_per_pulse_entangled[idx_ce, idx_nvp] = eps.average_photon_per_pulse
+		#param_eps["fock_space_dim"] = adjustable_fock_space(average_photon_per_pulse_entangled[idx_ce, idx_nvp])
+		snr_entangled[idx_ce, idx_nvp] = eps.signal_to_noise_rate()
+		last_state[idx_ce, idx_nvp] = eps.prob_of_last_element_fock_space
 #
 # np.savez("data/match_nvp", non_vacuum_probability=non_vacuum_probability,
 #          non_vacuum_probability_sps=non_vacuum_probability_sps, snr_laser=snr_laser,
 #          snr_sps=snr_sps, snr_entangled=snr_entangled, last_state=last_state,
 #          average_photon_per_pulse_entangled=average_photon_per_pulse_entangled)
 
-data = np.load("data/match_nvp_June14_AdaptativeFock_plus45.npz")
+#*** LOAD AND SAVE DATA ***
 
-non_vacuum_probability = data["non_vacuum_probability"]
-non_vacuum_probability_sps = data["non_vacuum_probability_sps"]
-snr_laser = data["snr_laser"]
-snr_sps = data["snr_sps"]
-snr_entangled = data["snr_entangled"]
-last_state = data["last_state"]
-average_photon_per_pulse_entangled = data["average_photon_per_pulse_entangled"]
+# data = np.load("data/match_nvp_June14_AdaptativeFock_plus45.npz")
+#
+# non_vacuum_probability = data["non_vacuum_probability"]
+# non_vacuum_probability_sps = data["non_vacuum_probability_sps"]
+# snr_laser = data["snr_laser"]
+# snr_sps = data["snr_sps"]
+# snr_entangled = data["snr_entangled"]
+# last_state = data["last_state"]
+# average_photon_per_pulse_entangled = data["average_photon_per_pulse_entangled"]
 
 
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
@@ -117,10 +118,10 @@ plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/
 # # plt.plot(non_vacuum_probability, average_photon_per_pulse_entangled[:,3], "-", label="3", color="green")
 # plt.legend()
 # plt.show()
-print("WARNING: MINUS ONE IS REMOVE TO SNR MANUALLY BECAUSE THIS IS AN OLD DATASET!!!")
-snr_entangled = snr_entangled-1
-snr_sps = snr_sps-1
-snr_laser = snr_laser-1
+# print("WARNING: MINUS ONE IS REMOVE TO SNR MANUALLY BECAUSE THIS IS AN OLD DATASET!!!")
+# snr_entangled = snr_entangled-1
+# snr_sps = snr_sps-1
+# snr_laser = snr_laser-1
 
 fig = plt.figure(figsize=(16.2, 10))
 

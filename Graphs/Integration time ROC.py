@@ -4,14 +4,13 @@ import matplotlib.pyplot as plt
 from Analysis import *
 from copy import deepcopy
 
-scenario = "ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_nvp"
+scenario = "ROC_Comparison_Distance_all_source"
 
 if scenario == "histogram_roc_combined":
 
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,
@@ -115,7 +114,6 @@ if scenario == "ROC_Comparison_Acquisition_Time_all_Sources":
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,
@@ -311,7 +309,6 @@ if scenario=="ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_mpp":
 	# param = SetupParameters(
 	# 	fock_space_dim=15,
 	# 	output_power=1.3e6,
-	# 	trigger_rate=None,
 	# 	multi_photon_probability=None,
 	# 	no_vacuum_probability=None,
 	# 	sp_collection=0.33,
@@ -334,7 +331,6 @@ if scenario=="ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_mpp":
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,
@@ -484,7 +480,6 @@ if scenario=="ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_nvp":
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,
@@ -603,7 +598,6 @@ if scenario=="ROC_Comparison_Distance_all_source":
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,

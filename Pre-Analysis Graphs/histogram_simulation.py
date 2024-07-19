@@ -14,7 +14,6 @@ if scenario == "histogram_target":
 	param = SetupParameters(
 		fock_space_dim=15,
 		output_power=2e7,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.2,

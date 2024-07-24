@@ -69,7 +69,7 @@ class Source:
 		observable = np.zeros((n, n))
 		for i in range(n):
 			observable[i, i] = 1 - ((1 - efficiency) ** i)
-		observable = Qobj(observable) + qeye(n) * noise
+		observable = Qobj(observable) * (1 - noise) + qeye(n) * noise
 		return observable
 
 

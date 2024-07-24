@@ -25,7 +25,7 @@ class RocAnalysis:
 			range_interval,
 			timing_window,
 			acquisition_time=1,
-			precision=50
+			precision=20
 	):
 		"""
 		:param signal_rate: Detection of photons in one second when the target is present.

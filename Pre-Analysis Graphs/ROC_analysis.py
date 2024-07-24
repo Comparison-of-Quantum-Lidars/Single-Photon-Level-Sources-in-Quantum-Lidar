@@ -185,7 +185,7 @@ if scenario == "matched_multi_photon":
 		timing_window=0.5e-9,
 	)
 
-	param["multi_photon_probability"] = param["sp_p2"] * (param["sp_collection"])**2
+	param["multi_photon_probability"] = param["sp_p2"] * (param["optics_transmitter"]*param["sp_collection"])**2
 
 	range_interval = 100
 

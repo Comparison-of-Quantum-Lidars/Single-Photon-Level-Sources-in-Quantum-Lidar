@@ -7,45 +7,63 @@ from copy import deepcopy
 
 # *** SETUP ***
 
+# param = SetupParameters(
+# 	fock_space_dim=20,
+# 	output_power=400000,
+# 	multi_photon_probability=None,
+# 	no_vacuum_probability=None,
+# 	sp_collection=0.57,
+# 	sp_p1=0.99,
+# 	sp_p2=5e-3,
+# 	spdc_eps_heralding=0.57*0.7,
+# 	spdc_eps_collection=0.57,
+# 	atmosphere=0.5,
+# 	target_distance=2,
+# 	receiver_diameter=0.05,
+# 	target_albedo=0.5,
+# 	optics_transmitter=0.8,
+# 	optics_receiver=0.5,
+# 	detection_efficiency=0.7,
+# 	background=500,
+# 	detector_dark=25,
+# 	timing_window=0.5e-9,
+# )
 param = SetupParameters(
-	fock_space_dim=5,
-	output_power=2e6,
+	fock_space_dim=30,
+	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
-	sp_collection=0.57,
+	sp_collection=1,
 	sp_p1=0.99,
-	sp_p2=1e-3,
-	spdc_eps_heralding=0.57 * 0.5,
-	spdc_eps_collection=0.57,
-	atmosphere=1,
-	target_distance=1,
-	receiver_diameter=0.05,
-	target_albedo=0.2,
+	sp_p2=5e-3,
+	spdc_eps_heralding=1*0.7,
+	spdc_eps_collection=1,
+	atmosphere=0.5,
+	target_distance=2,
+	receiver_diameter=0.5,
+	target_albedo=0.5,
 	optics_transmitter=0.8,
 	optics_receiver=0.5,
-	detection_efficiency=0.5,
-	background=400,
-	detector_dark=200,
+	detection_efficiency=0.7,
+	background=500,
+	detector_dark=25,
 	timing_window=0.5e-9,
 )
 
-match_multi_photon_probability = True
+match_multi_photon_probability = False
 range_interval = None
-distance = np.linspace(0.5, 30, 250)
+#distance = np.linspace(0.5, 40, 300)
+distance = np.linspace(1, 500, 1000)
 acquisition_time = np.array([1, 60, 3600])
 target_false = 0.2
 target_true = 0.8
 colored_marker = True
-precision = 2
+precision = 25
 
 
 def distance_at_target(distance, false_positive_array, target_percent):
 	idx = np.argmin(np.abs(false_positive_array - target_percent))
 	return distance[idx]
-
-
-def atmospheric_loss(distance, attenuation=0.02 / 1000):
-	return np.exp(-attenuation * distance)
 
 
 # -*- MATCH MULTI-PHOTON PROBABILITY -*-
@@ -100,10 +118,6 @@ for idx, d in enumerate(tqdm(distance)):
 	param_laser["target_distance"] = d
 	param_sps["target_distance"] = d
 	param_eps["target_distance"] = d
-
-	param_laser["atmosphere"] = atmospheric_loss(d)
-	param_sps["atmosphere"] = atmospheric_loss(d)
-	param_eps["atmosphere"] = atmospheric_loss(d)
 
 	laser = PulsedLaser(param_laser)
 	sps = SinglePhoton(param_sps)

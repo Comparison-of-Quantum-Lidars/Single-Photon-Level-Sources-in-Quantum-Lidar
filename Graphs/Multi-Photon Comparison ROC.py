@@ -6,25 +6,47 @@ from copy import deepcopy
 
 # *** SETUP ***
 
+# param = SetupParameters(
+# 	fock_space_dim=40,
+# 	output_power=2e6,
+# 	multi_photon_probability=None,
+# 	no_vacuum_probability=None,
+# 	sp_collection=None,
+# 	sp_p1=0.99,
+# 	sp_p2=1e-3,
+# 	spdc_eps_heralding=None,
+# 	spdc_eps_collection=None,
+# 	atmosphere=1,
+# 	target_distance=1.5,
+# 	receiver_diameter=0.05,
+# 	target_albedo=0.2,
+# 	optics_transmitter=0.8,
+# 	optics_receiver=0.5,
+# 	detection_efficiency=0.5,
+# 	background=400,
+# 	detector_dark=200,
+# 	timing_window=0.5e-9,
+# )
+
 param = SetupParameters(
 	fock_space_dim=40,
-	output_power=2e6,
+	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	sp_collection=None,
 	sp_p1=0.99,
-	sp_p2=1e-3,
+	sp_p2=5e-3,
 	spdc_eps_heralding=None,
 	spdc_eps_collection=None,
-	atmosphere=1,
-	target_distance=1,
+	atmosphere=0.5,
+	target_distance=2,
 	receiver_diameter=0.05,
-	target_albedo=0.2,
+	target_albedo=0.5,
 	optics_transmitter=0.8,
 	optics_receiver=0.5,
-	detection_efficiency=0.5,
-	background=400,
-	detector_dark=200,
+	detection_efficiency=1,
+	background=500,
+	detector_dark=25,
 	timing_window=0.5e-9,
 )
 
@@ -42,7 +64,7 @@ trigger_rate_sps = np.zeros_like(collection_efficiency)
 
 for idx, ce in enumerate(tqdm(collection_efficiency)):
 	param_sps["sp_collection"] = ce
-	param_sps["multi_photon_probability"] = param["sp_p2"] * (ce**2)
+	param_sps["multi_photon_probability"] = param["sp_p2"] * ((param["optics_transmitter"] * ce)**2)
 	sps = SinglePhoton(param_sps)
 	signal_sps[idx] = sps.signal_rate()
 	noise_sps[idx] = sps.noise_rate()
@@ -80,6 +102,7 @@ for idx, ce in enumerate(tqdm(collection_efficiency)):
 	trigger_rate_eps[idx] = eps.trigger_rate
 
 
+
 # *** ROC Curves ***
 
 range_distance = 50
@@ -88,7 +111,7 @@ true_positive_sps_02, false_positive_sps_02 = RocAnalysis(
 	signal_rate=signal_sps[0],
 	noise_rate=noise_sps[0],
 	trigger_rate=trigger_rate_sps[0],
-	threshold_limit=trigger_rate_sps[0]/1000,
+	threshold_limit=trigger_rate_sps[0]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -97,7 +120,7 @@ true_positive_laser_02, false_positive_laser_02 = RocAnalysis(
 	signal_rate=signal_laser[0],
 	noise_rate=noise_laser[0],
 	trigger_rate=trigger_rate_laser[0],
-	threshold_limit=trigger_rate_laser[0]/1000,
+	threshold_limit=trigger_rate_laser[0]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -106,7 +129,7 @@ true_positive_eps_02, false_positive_eps_02 = RocAnalysis(
 	signal_rate=signal_eps[0],
 	noise_rate=noise_eps[0],
 	trigger_rate=trigger_rate_eps[0],
-	threshold_limit=trigger_rate_eps[0]/1000,
+	threshold_limit=trigger_rate_eps[0]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -116,7 +139,7 @@ true_positive_sps_057, false_positive_sps_057 = RocAnalysis(
 	signal_rate=signal_sps[1],
 	noise_rate=noise_sps[1],
 	trigger_rate=trigger_rate_sps[1],
-	threshold_limit=trigger_rate_sps[1]/1000,
+	threshold_limit=trigger_rate_sps[1]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -125,7 +148,7 @@ true_positive_laser_057, false_positive_laser_057 = RocAnalysis(
 	signal_rate=signal_laser[1],
 	noise_rate=noise_laser[1],
 	trigger_rate=trigger_rate_laser[1],
-	threshold_limit=trigger_rate_laser[1]/1000,
+	threshold_limit=trigger_rate_laser[1]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -134,7 +157,7 @@ true_positive_eps_057, false_positive_eps_057 = RocAnalysis(
 	signal_rate=signal_eps[1],
 	noise_rate=noise_eps[1],
 	trigger_rate=trigger_rate_eps[1],
-	threshold_limit=trigger_rate_eps[1]/1000,
+	threshold_limit=trigger_rate_eps[1]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -143,7 +166,7 @@ true_positive_sps_08, false_positive_sps_08 = RocAnalysis(
 	signal_rate=signal_sps[2],
 	noise_rate=noise_sps[2],
 	trigger_rate=trigger_rate_sps[2],
-	threshold_limit=trigger_rate_sps[2]/1000,
+	threshold_limit=trigger_rate_sps[2]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -152,7 +175,7 @@ true_positive_laser_08, false_positive_laser_08 = RocAnalysis(
 	signal_rate=signal_laser[2],
 	noise_rate=noise_laser[2],
 	trigger_rate=trigger_rate_laser[2],
-	threshold_limit=trigger_rate_laser[2]/1000,
+	threshold_limit=trigger_rate_laser[2]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -161,7 +184,7 @@ true_positive_eps_08, false_positive_eps_08 = RocAnalysis(
 	signal_rate=signal_eps[2],
 	noise_rate=noise_eps[2],
 	trigger_rate=trigger_rate_eps[2],
-	threshold_limit=trigger_rate_eps[2]/1000,
+	threshold_limit=trigger_rate_eps[2]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -170,7 +193,7 @@ true_positive_sps_1, false_positive_sps_1 = RocAnalysis(
 	signal_rate=signal_sps[3],
 	noise_rate=noise_sps[3],
 	trigger_rate=trigger_rate_sps[3],
-	threshold_limit=trigger_rate_sps[3]/1000,
+	threshold_limit=trigger_rate_sps[3]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -179,7 +202,7 @@ true_positive_laser_1, false_positive_laser_1 = RocAnalysis(
 	signal_rate=signal_laser[3],
 	noise_rate=noise_laser[3],
 	trigger_rate=trigger_rate_laser[3],
-	threshold_limit=trigger_rate_laser[3]/1000,
+	threshold_limit=trigger_rate_laser[3]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
@@ -188,10 +211,13 @@ true_positive_eps_1, false_positive_eps_1 = RocAnalysis(
 	signal_rate=signal_eps[3],
 	noise_rate=noise_eps[3],
 	trigger_rate=trigger_rate_eps[3],
-	threshold_limit=trigger_rate_eps[3]/1000,
+	threshold_limit=trigger_rate_eps[3]/100,
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
+
+print(f"SPS Signal rate: {signal_sps[3]}, Noise: {noise_sps[3]}, trigger rate: {trigger_rate_sps[3]}")
+print(f"EPS Signal rate: {signal_eps[3]}, Noise: {noise_eps[3]}, trigger_rate: {trigger_rate_eps[3]}")
 
 
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")

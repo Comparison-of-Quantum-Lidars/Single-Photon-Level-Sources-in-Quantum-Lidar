@@ -29,7 +29,7 @@ class Source:
 		self.optics_transmitter_eff = params["optics_transmitter"]
 		self.optics_receiver_eff = params["optics_receiver"]
 		self.detection_efficiency = params["detection_efficiency"]
-		self.background = params["background"]
+		self.background = params["background"] * np.pi * ((self.receiver_diameter*100/2)**2)
 		self.detector_dark = params["detector_dark"]
 		self.timing_window = params["timing_window"]
 

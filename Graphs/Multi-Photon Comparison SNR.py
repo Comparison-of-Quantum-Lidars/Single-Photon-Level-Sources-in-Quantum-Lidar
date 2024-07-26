@@ -7,7 +7,7 @@ from copy import deepcopy
 # *** SETUP ***
 
 # param = SetupParameters(
-# 	fock_space_dim=45,
+# 	fock_space_dim=50,
 # 	output_power=400000,
 # 	multi_photon_probability=None,
 # 	no_vacuum_probability=None,
@@ -23,7 +23,7 @@ from copy import deepcopy
 # 	optics_transmitter=0.8,
 # 	optics_receiver=0.5,
 # 	detection_efficiency=0.7,
-# 	background=500,
+# 	background=25,
 # 	detector_dark=25,
 # 	timing_window=0.5e-9,
 # )
@@ -78,7 +78,7 @@ from copy import deepcopy
 # 		snr_eps[idx_mpp, idx_ce] = eps.signal_to_noise_rate()
 # 		average_photon_per_pulse_eps[idx_mpp, idx_ce] = eps.epsilon
 # 		last_state[idx_mpp, idx_ce] = eps.prob_of_last_element_fock_space
-#
+
 #
 # plt.plot(multi_photon_probability, last_state[:,0], "-", label="0")
 # plt.plot(multi_photon_probability, last_state[:,1], "-", label="1")
@@ -96,12 +96,12 @@ from copy import deepcopy
 
 
 # #*** LOAD AND SAVE DATA ***
-# np.savez("data/match_mpp_new_params", multi_photon_probability=multi_photon_probability,
+# np.savez("data/match_mpp_new_params_25_7_2024", multi_photon_probability=multi_photon_probability,
 #       multi_photon_probability_sps=multi_photon_probability_sps,
 #       snr_laser=snr_laser, snr_sps=snr_sps, snr_eps=snr_eps)
 
 #
-data = np.load("data/match_mpp_new_params.npz")
+data = np.load("data/match_mpp_new_params_25_7_2024.npz")
 
 multi_photon_probability = data["multi_photon_probability"]
 multi_photon_probability_sps = data["multi_photon_probability_sps"]

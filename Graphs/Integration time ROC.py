@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 from Analysis import *
 from copy import deepcopy
 
-scenario = "ROC_Comparison_Distance_all_source"
+scenario = "histogram_roc_combined"
 
 if scenario == "histogram_roc_combined":
 
@@ -25,7 +25,7 @@ if scenario == "histogram_roc_combined":
 		optics_transmitter=0.8,
 		optics_receiver=0.5,
 		detection_efficiency=0.5,
-		background=400,
+		background=0.2,
 		detector_dark=200,
 		timing_window=0.5e-9,
 	)
@@ -61,7 +61,7 @@ if scenario == "histogram_roc_combined":
 			signal_rate=signal_eps,
 			noise_rate=noise_eps,
 			trigger_rate=trigger_rate_eps,
-			threshold_limit=trigger_rate_eps/100,
+			threshold_limit=trigger_rate_eps/10,
 			timing_window=param_eps["timing_window"],
 			range_interval=range_distance,
 			acquisition_time=at,

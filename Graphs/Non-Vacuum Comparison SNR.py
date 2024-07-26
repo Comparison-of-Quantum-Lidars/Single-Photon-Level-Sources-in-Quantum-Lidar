@@ -7,7 +7,7 @@ from copy import deepcopy
 # *** SETUP ***
 
 # param = SetupParameters(
-# 	fock_space_dim=45,
+# 	fock_space_dim=5,
 # 	output_power=400000,
 # 	multi_photon_probability=None,
 # 	no_vacuum_probability=None,
@@ -23,7 +23,7 @@ from copy import deepcopy
 # 	optics_transmitter=0.8,
 # 	optics_receiver=0.5,
 # 	detection_efficiency=0.7,
-# 	background=500,
+# 	background=25,
 # 	detector_dark=25,
 # 	timing_window=0.5e-9,
 # )
@@ -70,7 +70,7 @@ from copy import deepcopy
 # last_state = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
 #
 # def adjustable_fock_space(average_photon_per_pulse):
-# 	return round(average_photon_per_pulse)+45
+# 	return round(average_photon_per_pulse)+48
 #
 #
 #
@@ -86,14 +86,14 @@ from copy import deepcopy
 # 		snr_entangled[idx_ce, idx_nvp] = eps.signal_to_noise_rate()
 # 		last_state[idx_ce, idx_nvp] = eps.prob_of_last_element_fock_space
 # #
-# np.savez("data/match_nvp_new_params_adaptative_fock", non_vacuum_probability=non_vacuum_probability,
+# np.savez("data/match_nvp_new_params_adaptative_fock_25_7_2024", non_vacuum_probability=non_vacuum_probability,
 #          non_vacuum_probability_sps=non_vacuum_probability_sps, snr_laser=snr_laser,
 #          snr_sps=snr_sps, snr_entangled=snr_entangled, last_state=last_state,
 #          average_photon_per_pulse_entangled=average_photon_per_pulse_entangled)
 
 #*** LOAD AND SAVE DATA ***
 
-data = np.load("data/match_nvp_new_params_adaptative_fock.npz")
+data = np.load("data/match_nvp_new_params_adaptative_fock_25_7_2024.npz")
 
 non_vacuum_probability = data["non_vacuum_probability"]
 non_vacuum_probability_sps = data["non_vacuum_probability_sps"]

@@ -23,7 +23,7 @@ from copy import deepcopy
 # 	optics_transmitter=0.8,
 # 	optics_receiver=0.5,
 # 	detection_efficiency=0.5,
-# 	background=400,
+# 	background=25,
 # 	detector_dark=200,
 # 	timing_window=0.5e-9,
 # )
@@ -44,8 +44,8 @@ param = SetupParameters(
 	target_albedo=0.5,
 	optics_transmitter=0.8,
 	optics_receiver=0.5,
-	detection_efficiency=1,
-	background=500,
+	detection_efficiency=0.7,
+	background=25,
 	detector_dark=25,
 	timing_window=0.5e-9,
 )
@@ -215,6 +215,15 @@ true_positive_eps_1, false_positive_eps_1 = RocAnalysis(
 	range_interval=range_distance,
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
+
+bin = RocAnalysis(
+	signal_rate=signal_eps[3],
+	noise_rate=noise_eps[3],
+	trigger_rate=trigger_rate_eps[3],
+	threshold_limit=trigger_rate_eps[3]/100,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).number_of_bins()
 
 print(f"SPS Signal rate: {signal_sps[3]}, Noise: {noise_sps[3]}, trigger rate: {trigger_rate_sps[3]}")
 print(f"EPS Signal rate: {signal_eps[3]}, Noise: {noise_eps[3]}, trigger_rate: {trigger_rate_eps[3]}")

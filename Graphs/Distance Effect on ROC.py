@@ -7,63 +7,64 @@ from copy import deepcopy
 
 # *** SETUP ***
 
-# param = SetupParameters(
-# 	fock_space_dim=20,
-# 	output_power=400000,
-# 	multi_photon_probability=None,
-# 	no_vacuum_probability=None,
-# 	sp_collection=0.57,
-# 	sp_p1=0.99,
-# 	sp_p2=5e-3,
-# 	spdc_eps_heralding=0.57*0.7,
-# 	spdc_eps_collection=0.57,
-# 	atmosphere=0.5,
-# 	target_distance=2,
-# 	receiver_diameter=0.05,
-# 	target_albedo=0.5,
-# 	optics_transmitter=0.8,
-# 	optics_receiver=0.5,
-# 	detection_efficiency=0.7,
-# 	background=500,
-# 	detector_dark=25,
-# 	timing_window=0.5e-9,
-# )
 param = SetupParameters(
-	fock_space_dim=30,
+	fock_space_dim=35,
 	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
-	sp_collection=1,
+	sp_collection=0.57,
 	sp_p1=0.99,
 	sp_p2=5e-3,
-	spdc_eps_heralding=1*0.7,
-	spdc_eps_collection=1,
+	spdc_eps_heralding=0.57*0.7,
+	spdc_eps_collection=0.57,
 	atmosphere=0.5,
 	target_distance=2,
-	receiver_diameter=0.5,
+	receiver_diameter=0.05,
 	target_albedo=0.5,
 	optics_transmitter=0.8,
 	optics_receiver=0.5,
 	detection_efficiency=0.7,
-	background=500,
+	background=25,
 	detector_dark=25,
 	timing_window=0.5e-9,
 )
+# param = SetupParameters(
+# 	fock_space_dim=40,
+# 	output_power=400000,
+# 	multi_photon_probability=None,
+# 	no_vacuum_probability=None,
+# 	sp_collection=1,
+# 	sp_p1=0.99,
+# 	sp_p2=5e-3,
+# 	spdc_eps_heralding=1*0.7,
+# 	spdc_eps_collection=1,
+# 	atmosphere=0.5,
+# 	target_distance=2,
+# 	receiver_diameter=0.1,
+# 	target_albedo=0.5,
+# 	optics_transmitter=0.8,
+# 	optics_receiver=0.5,
+# 	detection_efficiency=0.7,
+# 	background=25,
+# 	detector_dark=25,
+# 	timing_window=0.5e-9,
+# )
 
 match_multi_photon_probability = False
 range_interval = None
-#distance = np.linspace(0.5, 40, 300)
-distance = np.linspace(1, 500, 1000)
+distance = np.linspace(0.5, 40, 300)
+#distance = np.linspace(0.5, 75, 300)
 acquisition_time = np.array([1, 60, 3600])
 target_false = 0.2
 target_true = 0.8
 colored_marker = True
 precision = 25
+threshold_limit_factor = 100
 
 
-def distance_at_target(distance, false_positive_array, target_percent):
-	idx = np.argmin(np.abs(false_positive_array - target_percent))
-	return distance[idx]
+def distance_at_target(distance, true_positive_at_target_false_value, target_true):
+	idx2keep = np.argmin(np.abs(true_positive_at_target_false_value - target_true))
+	return distance[idx2keep]
 
 
 # -*- MATCH MULTI-PHOTON PROBABILITY -*-
@@ -95,19 +96,19 @@ noise_laser_all = []
 noise_sps_all = []
 noise_eps_all = []
 
-target_false_value_laser = {
+true_positive_at_target_false_value_laser = {
 	acquisition_time[0]: np.zeros_like(distance),
 	acquisition_time[1]: np.zeros_like(distance),
 	acquisition_time[2]: np.zeros_like(distance)
 }
 
-target_false_value_sps = {
+true_positive_at_target_false_value_sps = {
 	acquisition_time[0]: np.zeros_like(distance),
 	acquisition_time[1]: np.zeros_like(distance),
 	acquisition_time[2]: np.zeros_like(distance)
 }
 
-target_false_value_eps = {
+true_positive_at_target_false_value_eps = {
 	acquisition_time[0]: np.zeros_like(distance),
 	acquisition_time[1]: np.zeros_like(distance),
 	acquisition_time[2]: np.zeros_like(distance)
@@ -151,7 +152,7 @@ for idx, d in enumerate(tqdm(distance)):
 			signal_rate=signal_laser,
 			noise_rate=noise_laser,
 			trigger_rate=trigger_rate_laser,
-			threshold_limit=trigger_rate_laser / 100,
+			threshold_limit=trigger_rate_laser / threshold_limit_factor,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
 			acquisition_time=at,
@@ -162,7 +163,7 @@ for idx, d in enumerate(tqdm(distance)):
 			signal_rate=signal_sps,
 			noise_rate=noise_sps,
 			trigger_rate=trigger_rate_sps,
-			threshold_limit=trigger_rate_sps / 100,
+			threshold_limit=trigger_rate_sps / threshold_limit_factor,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
 			acquisition_time=at,
@@ -173,7 +174,7 @@ for idx, d in enumerate(tqdm(distance)):
 			signal_rate=signal_eps,
 			noise_rate=noise_eps,
 			trigger_rate=trigger_rate_eps,
-			threshold_limit=trigger_rate_eps / 100,
+			threshold_limit=trigger_rate_eps / threshold_limit_factor,
 			range_interval=d if range_interval is None else range_interval,
 			timing_window=param["timing_window"],
 			acquisition_time=at,
@@ -186,9 +187,9 @@ for idx, d in enumerate(tqdm(distance)):
 
 		# interp: With the current false positive and true positive, we interpolate the value of the true positive at
 		# the target_false.
-		target_false_value_laser[at][idx] = np.interp(target_false, false_positive_laser, true_positive_laser)
-		target_false_value_sps[at][idx] = np.interp(target_false, false_positive_sps, true_positive_sps)
-		target_false_value_eps[at][idx] = np.interp(target_false, false_positive_eps, true_positive_eps)
+		true_positive_at_target_false_value_laser[at][idx] = np.interp(target_false, false_positive_laser, true_positive_laser)
+		true_positive_at_target_false_value_sps[at][idx] = np.interp(target_false, false_positive_sps, true_positive_sps)
+		true_positive_at_target_false_value_eps[at][idx] = np.interp(target_false, false_positive_eps, true_positive_eps)
 
 plt.plot(distance, last_element)
 plt.show()
@@ -204,27 +205,27 @@ snr_sps = np.array(snr_sps)
 snr_eps = np.array(snr_eps)
 
 distance_cutoff_laser = {
-	acquisition_time[0]: distance_at_target(distance, target_false_value_laser[acquisition_time[0]], target_true),
-	acquisition_time[1]: distance_at_target(distance, target_false_value_laser[acquisition_time[1]], target_true),
-	acquisition_time[2]: distance_at_target(distance, target_false_value_laser[acquisition_time[2]], target_true)
+	acquisition_time[0]: distance_at_target(distance, true_positive_at_target_false_value_laser[acquisition_time[0]], target_true),
+	acquisition_time[1]: distance_at_target(distance, true_positive_at_target_false_value_laser[acquisition_time[1]], target_true),
+	acquisition_time[2]: distance_at_target(distance, true_positive_at_target_false_value_laser[acquisition_time[2]], target_true)
 }
 distance_cutoff_laser["snr_at0"] = snr_laser[np.where(distance == distance_cutoff_laser[acquisition_time[0]])]
 distance_cutoff_laser["snr_at1"] = snr_laser[np.where(distance == distance_cutoff_laser[acquisition_time[1]])]
 distance_cutoff_laser["snr_at2"] = snr_laser[np.where(distance == distance_cutoff_laser[acquisition_time[2]])]
 
 distance_cutoff_sps = {
-	acquisition_time[0]: distance_at_target(distance, target_false_value_sps[acquisition_time[0]], target_true),
-	acquisition_time[1]: distance_at_target(distance, target_false_value_sps[acquisition_time[1]], target_true),
-	acquisition_time[2]: distance_at_target(distance, target_false_value_sps[acquisition_time[2]], target_true)
+	acquisition_time[0]: distance_at_target(distance, true_positive_at_target_false_value_sps[acquisition_time[0]], target_true),
+	acquisition_time[1]: distance_at_target(distance, true_positive_at_target_false_value_sps[acquisition_time[1]], target_true),
+	acquisition_time[2]: distance_at_target(distance, true_positive_at_target_false_value_sps[acquisition_time[2]], target_true)
 }
 distance_cutoff_sps["snr_at0"] = snr_sps[np.where(distance == distance_cutoff_sps[acquisition_time[0]])]
 distance_cutoff_sps["snr_at1"] = snr_sps[np.where(distance == distance_cutoff_sps[acquisition_time[1]])]
 distance_cutoff_sps["snr_at2"] = snr_sps[np.where(distance == distance_cutoff_sps[acquisition_time[2]])]
 
 distance_cutoff_eps = {
-	acquisition_time[0]: distance_at_target(distance, target_false_value_eps[acquisition_time[0]], target_true),
-	acquisition_time[1]: distance_at_target(distance, target_false_value_eps[acquisition_time[1]], target_true),
-	acquisition_time[2]: distance_at_target(distance, target_false_value_eps[acquisition_time[2]], target_true)
+	acquisition_time[0]: distance_at_target(distance, true_positive_at_target_false_value_eps[acquisition_time[0]], target_true),
+	acquisition_time[1]: distance_at_target(distance, true_positive_at_target_false_value_eps[acquisition_time[1]], target_true),
+	acquisition_time[2]: distance_at_target(distance, true_positive_at_target_false_value_eps[acquisition_time[2]], target_true)
 }
 distance_cutoff_eps["snr_at0"] = snr_eps[np.where(distance == distance_cutoff_eps[acquisition_time[0]])]
 distance_cutoff_eps["snr_at1"] = snr_eps[np.where(distance == distance_cutoff_eps[acquisition_time[1]])]
@@ -278,4 +279,9 @@ plt.ylabel("SNR [-]", fontsize=22)
 plt.legend(fontsize=22, frameon=False)
 plt.tick_params(axis='both', which='major', labelsize=22)
 #plt.xlim([0, 30])
+plt.show()
+
+## DEBUG ##
+
+plt.plot(distance, true_positive_at_target_false_value_eps[60], "-")
 plt.show()

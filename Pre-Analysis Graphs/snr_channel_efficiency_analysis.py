@@ -7,7 +7,6 @@ from copy import deepcopy
 param = SetupParameters(
 	fock_space_dim=25,
 	output_power=2e6,
-	trigger_rate=None,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	sp_collection=1,
@@ -62,7 +61,7 @@ for atm in tqdm(atmosphere):
 	snr_eps.append(eps)
 	average_photon_eps.append(EntangledPhotonSPDC(param_match_multi_photon).epsilon)
 	average_photon_sps.append(SinglePhoton(param_match_multi_photon).sp_p1 + 2*SinglePhoton(param_match_multi_photon).sp_p2)
-	average_photon_laser.append((PulsedLaser(param_match_multi_photon).compute_alpha())**2)
+	average_photon_laser.append((PulsedLaser(param_match_multi_photon).alpha)**2)
 	nvp_laser.append(PulsedLaser(param_match_multi_photon).no_vacuum_probability)
 	nvp_sps.append(SinglePhoton(param_match_multi_photon).no_vacuum_probability)
 	nvp_eps.append(EntangledPhotonSPDC(param_match_multi_photon).no_vacuum_probability)
@@ -141,7 +140,7 @@ for atm in tqdm(atmosphere):
 	snr_eps.append(eps)
 	average_photon_eps.append(EntangledPhotonSPDC(param_match_no_vacuum).epsilon)
 	average_photon_sps.append(SinglePhoton(param_match_no_vacuum).sp_p1 + 2*SinglePhoton(param_match_no_vacuum).sp_p2)
-	average_photon_laser.append((PulsedLaser(param_match_no_vacuum).compute_alpha())**2)
+	average_photon_laser.append((PulsedLaser(param_match_no_vacuum).alpha)**2)
 	multi_photon_eps.append(EntangledPhotonSPDC(param_match_no_vacuum).multi_photon_probability)
 	multi_photon_sps.append(SinglePhoton(param_match_no_vacuum).multi_photon_probability)
 	multi_photon_laser.append(PulsedLaser(param_match_no_vacuum).multi_photon_probability)

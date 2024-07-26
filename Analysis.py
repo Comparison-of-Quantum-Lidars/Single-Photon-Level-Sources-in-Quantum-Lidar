@@ -5,6 +5,7 @@ from typing import Optional
 import numpy as np
 import random
 from tqdm import tqdm
+import warnings
 import matplotlib.pyplot as plt
 
 
@@ -25,7 +26,7 @@ class RocAnalysis:
 			range_interval,
 			timing_window,
 			acquisition_time=1,
-			precision=50
+			precision=20
 	):
 		"""
 		:param signal_rate: Detection of photons in one second when the target is present.
@@ -92,7 +93,7 @@ class RocAnalysis:
 		:return: the number of bins in the histogram. [int]
 		"""
 		n_bins = 2 * self.range_interval / (299792458 * self.timing_window)
-		return n_bins
+		return round(n_bins)
 
 	def compute_p_d_p_fa(self):
 		"""

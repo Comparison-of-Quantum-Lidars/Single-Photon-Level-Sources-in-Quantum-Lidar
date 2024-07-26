@@ -7,7 +7,6 @@ from copy import deepcopy
 param = SetupParameters(
 	fock_space_dim=8,
 	output_power=2e6,
-	trigger_rate=None,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	sp_collection=None,
@@ -16,7 +15,6 @@ param = SetupParameters(
 	spdc_eps_heralding=None,
 	spdc_eps_collection=None,
 	atmosphere=1,
-	adversary=1,
 	target_distance=1,
 	receiver_diameter=0.05,
 	target_albedo=0.2,

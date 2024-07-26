@@ -4,14 +4,13 @@ import matplotlib.pyplot as plt
 from Analysis import *
 from copy import deepcopy
 
-scenario = "ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_nvp"
+scenario = "histogram_roc_combined"
 
 if scenario == "histogram_roc_combined":
 
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,
@@ -26,7 +25,7 @@ if scenario == "histogram_roc_combined":
 		optics_transmitter=0.8,
 		optics_receiver=0.5,
 		detection_efficiency=0.5,
-		background=400,
+		background=0.2,
 		detector_dark=200,
 		timing_window=0.5e-9,
 	)
@@ -62,7 +61,7 @@ if scenario == "histogram_roc_combined":
 			signal_rate=signal_eps,
 			noise_rate=noise_eps,
 			trigger_rate=trigger_rate_eps,
-			threshold_limit=trigger_rate_eps/100,
+			threshold_limit=trigger_rate_eps/10,
 			timing_window=param_eps["timing_window"],
 			range_interval=range_distance,
 			acquisition_time=at,
@@ -113,25 +112,24 @@ if scenario == "histogram_roc_combined":
 
 if scenario == "ROC_Comparison_Acquisition_Time_all_Sources":
 	param = SetupParameters(
-		fock_space_dim=40,
-		output_power=2e6,
-		trigger_rate=None,
+		fock_space_dim=10,
+		output_power=400000,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,
 		sp_p1=0.99,
-		sp_p2=1e-3,
-		spdc_eps_heralding=0.285,
+		sp_p2=5e-3,
+		spdc_eps_heralding=0.57 * 0.7,
 		spdc_eps_collection=0.57,
-		atmosphere=1,
-		target_distance=15,
-		receiver_diameter=0.5,
-		target_albedo=0.2,
+		atmosphere=0.5,
+		target_distance=2,
+		receiver_diameter=0.05,
+		target_albedo=0.5,
 		optics_transmitter=0.8,
 		optics_receiver=0.5,
-		detection_efficiency=0.5,
-		background=400,
-		detector_dark=200,
+		detection_efficiency=0.7,
+		background=500,
+		detector_dark=25,
 		timing_window=0.5e-9,
 	)
 
@@ -141,7 +139,8 @@ if scenario == "ROC_Comparison_Acquisition_Time_all_Sources":
 
 	# *** Single Photon Source ***
 	param_sps = deepcopy(param)
-	param_sps["multi_photon_probability"]=param_sps["sp_p2"] * (param_sps["sp_collection"]**2)
+	extr_coef = param_sps["sp_collection"] * param_sps["optics_transmitter"]
+	param_sps["multi_photon_probability"]=param_sps["sp_p2"] * (extr_coef**2)
 	sps = SinglePhoton(param_sps)
 	signal_sps = sps.signal_rate()
 	noise_sps = sps.noise_rate()
@@ -311,7 +310,6 @@ if scenario=="ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_mpp":
 	# param = SetupParameters(
 	# 	fock_space_dim=15,
 	# 	output_power=1.3e6,
-	# 	trigger_rate=None,
 	# 	multi_photon_probability=None,
 	# 	no_vacuum_probability=None,
 	# 	sp_collection=0.33,
@@ -332,25 +330,24 @@ if scenario=="ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_mpp":
 	# )
 
 	param = SetupParameters(
-		fock_space_dim=40,
-		output_power=2e6,
-		trigger_rate=None,
+		fock_space_dim=20,
+		output_power=400000,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,
 		sp_p1=0.99,
-		sp_p2=1e-3,
-		spdc_eps_heralding=0.285,
+		sp_p2=5e-3,
+		spdc_eps_heralding=0.57 * 0.7,
 		spdc_eps_collection=0.57,
-		atmosphere=1,
-		target_distance=15,
-		receiver_diameter=0.5,
-		target_albedo=0.2,
+		atmosphere=0.5,
+		target_distance=2,
+		receiver_diameter=0.05,
+		target_albedo=0.5,
 		optics_transmitter=0.8,
 		optics_receiver=0.5,
-		detection_efficiency=0.5,
-		background=400,
-		detector_dark=200,
+		detection_efficiency=0.7,
+		background=500,
+		detector_dark=25,
 		timing_window=0.5e-9,
 	)
 
@@ -484,7 +481,6 @@ if scenario=="ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_nvp":
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,
@@ -603,7 +599,6 @@ if scenario=="ROC_Comparison_Distance_all_source":
 	param = SetupParameters(
 		fock_space_dim=40,
 		output_power=2e6,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.57,

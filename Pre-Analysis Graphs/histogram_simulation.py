@@ -14,7 +14,6 @@ if scenario == "histogram_target":
 	param = SetupParameters(
 		fock_space_dim=15,
 		output_power=2e7,
-		trigger_rate=None,
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		sp_collection=0.2,
@@ -33,7 +32,7 @@ if scenario == "histogram_target":
 		detector_dark=50,
 		timing_window=0.5e-9,
 	)
-	extr_efficiency = param["sp_collection"]
+	extr_efficiency = param["sp_collection"]*param["optics_transmitter"]
 	param["no_vacuum_probability"] = param["sp_p1"] * extr_efficiency + param["sp_p2"] * extr_efficiency * (2-extr_efficiency)
 	timing_window = param["timing_window"]
 	acquisition_time = 1

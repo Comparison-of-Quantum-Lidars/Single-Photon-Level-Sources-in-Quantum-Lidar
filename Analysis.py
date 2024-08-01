@@ -284,6 +284,10 @@ class HistogramAnalysis:
 
 
 class RangeLimitation:
+	"""
+	Compute the SNR as a function of the distance. The maximum distance at which a certains specified true positive rate
+	is obtained for a given false positive rate is computed so the user can then plot it as markers.
+	"""
 
 	def __init__(
 			self,
@@ -297,6 +301,25 @@ class RangeLimitation:
 			precision_roc: int,
 			threshold_limit_factor_roc: int,
 	):
+		"""
+		:param params: SetupParams object containing the parameters of the LiDAR system.
+		:param match_multi_photon_probability: If true, the multi-photon probability is matched based on the SPS. If
+		set to false, then the non-vacuum probability is matched based on the SPS.
+		:param range_interval: Maximum distance that can be resolved by the LiDAR system. The greater is the range interval,
+		the more bins will be considered in the histogram which increase the probability that noise surpass the threshold.
+		If set to None, the range interval is computed based on the current distance considered: it is therefore the best
+		case scenario.
+		:param distance: Array of distance at which the SNR is computed. It is recommended to use a linearly spaced array.
+		:param acquisition_time: Array of acquisition time at which the SNR is computed in seconds.
+		:param target_false_positive: Target false positive rate for the ROC curve.
+		:param target_true_positive: Target true positive rate for the ROC curve.
+		:param precision_roc: Number of points considered in the threshold array between two integers. 1/precision is the
+		threshold step.
+		:param threshold_limit_factor_roc: Factor to determine the threshold limit for the ROC curve. The threshold limit
+		is the maximum threshold value considered for the ROC Curve. It should big enough such that it is statistically
+		impossible to cross it. The better is the system, the lower should be this parameter. The threshold is computed
+		using trigger_rate/threshold_limit_factor_roc.
+		"""
 		self.params = params
 		self.match_multi_photon_probability = match_multi_photon_probability
 		self.range_interval = range_interval
@@ -337,10 +360,20 @@ class RangeLimitation:
 
 	@staticmethod
 	def distance_at_target(distance, true_positive_at_target_false_value, target_true):
+		"""
+		Compute the distance at which the true positive rate is the closest to the target true positive rate.
+		:param distance: Array of distance considered for the analysis.
+		:param true_positive_at_target_false_value: Array of true positive rate at the target false positive rate.
+		:param target_true: Target true positive rate.
+		:return: the distance at which the true positive rate is the closest to the target true positive rate. [float]
+		"""
 		idx2keep = np.argmin(np.abs(true_positive_at_target_false_value - target_true))
 		return distance[idx2keep]
 
 	def set_multi_or_non_vacuum_prob(self):
+		"""
+		Set the multi-photon probability or the non-vacuum probability based on the SPS.
+		"""
 		sps = SinglePhoton(self.param_sps)
 		if self.match_multi_photon_probability:
 			multi_photon_probability = sps.multi_photon_probability
@@ -352,14 +385,28 @@ class RangeLimitation:
 			self.param_eps["no_vacuum_probability"] = no_vacuum_probability
 
 	def prepare_dict_true_positive_at_target_false_value(self):
+		"""
+		Prepare the dictionary that will contain the true positive rate at the target false positive rate for each
+		"""
 		for at in self.acquisition_time:
 			self.true_positive_at_target_false_value_laser[at] = np.zeros_like(self.distance)
 			self.true_positive_at_target_false_value_sps[at] = np.zeros_like(self.distance)
 			self.true_positive_at_target_false_value_eps[at] = np.zeros_like(self.distance)
 
 	def compute(self):
+		"""
+		Compute the SNR as a function of the distance with the ROC Curves analysis. Here are the steps of the computation
+		1) For a given distance, compute the signal rate, the noise rate and the triggering rate for each source.
+		2) Compute the SNR for each source.
+		3) For each acquisition time at a specific distance, compute the ROC curve for each source.
+		4) Compute the true positive rate at the target false positive rate for each source. Linear interpolation is used
+		to compute the true positive rate at the target false positive rate.
+		5) Determine the distance at which the true positive rate is the closest to the target true positive rate. This
+		is the distance cutoff.
+		:return: a dictionary containing the distance, the SNR for each source, the distance cutoff for each source and
+		the SNR at the distance cutoff for each source. [dict]
+		"""
 		for idx, d in enumerate(tqdm(self.distance)):
-			performance_sources = {}
 			self.param_laser["target_distance"] = d
 			self.param_sps["target_distance"] = d
 			self.param_eps["target_distance"] = d
@@ -434,6 +481,15 @@ class RangeLimitation:
 		return results
 
 	def compute_roc_curve(self, signal, noise, trigger_rate, distance, acquisition_time):
+		"""
+		Compute the ROC curve for a given source.
+		:param signal: signal rate for the source.
+		:param noise: noise rate for the source.
+		:param trigger_rate: trigger rate for the source.
+		:param distance: distance at which the ROC curve is computed.
+		:param acquisition_time: acquisition time for the ROC curve.
+		:return: the true positive and false positive arrays. [np.array, np.array]
+		"""
 		true_positive, false_positive = RocAnalysis(
 			signal_rate=signal,
 			noise_rate=noise,
@@ -448,6 +504,11 @@ class RangeLimitation:
 		return true_positive, false_positive
 
 	def prepare_results(self):
+		"""
+		Prepare the results in a dictionary.
+		:return: a dictionary containing the distance, the SNR for each source, the distance cutoff for each source and
+		the SNR at the distance cutoff for each source. [dict]
+		"""
 		self.snr_laser = np.array(self.snr_laser)
 		self.snr_sps = np.array(self.snr_sps)
 		self.snr_eps = np.array(self.snr_eps)
@@ -467,6 +528,9 @@ class RangeLimitation:
 		return results
 
 	def cutoff_distance(self):
+		"""
+		Compute the distance cutoff for each source.
+		"""
 
 		for idx, at in enumerate(self.acquisition_time):
 			self.distance_cutoff_laser[at] = self.distance_at_target(

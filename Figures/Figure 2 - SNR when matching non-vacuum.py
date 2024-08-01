@@ -7,7 +7,7 @@ from copy import deepcopy
 # *** SETUP ***
 
 param = SetupParameters(
-	fock_space_dim=10,
+	fock_space_dim=35,
 	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,

@@ -5,8 +5,7 @@ from typing import Optional
 import numpy as np
 import random
 from tqdm import tqdm
-import warnings
-import matplotlib.pyplot as plt
+from copy import deepcopy
 
 
 class RocAnalysis:
@@ -64,7 +63,7 @@ class RocAnalysis:
 		Create an array of threshold values.
 		:return: an array of threshold values. [np.array]
 		"""
-		threshold = np.linspace(0, int(self.threshold_limit), (self.precision*int(self.threshold_limit)) + 1)
+		threshold = np.linspace(0, int(self.threshold_limit), (self.precision * int(self.threshold_limit)) + 1)
 		return threshold
 
 	def compute_binomial_experiment(self, threshold, q):
@@ -77,10 +76,11 @@ class RocAnalysis:
 		n = int(self.trigger_rate * self.acquisition_time)
 		k = threshold
 
-		prob_mass_function_log = (gammaln(n + 1) - gammaln(k + 1) - gammaln(n - k + 1)) + (k * np.log(q)) + ((n - k) * np.log(1 - q))
+		prob_mass_function_log = (gammaln(n + 1) - gammaln(k + 1) - gammaln(n - k + 1)) + (k * np.log(q)) + (
+					(n - k) * np.log(1 - q))
 		prob_mass_function = np.exp(prob_mass_function_log)
 
-		distance_between_thresholds = 1/self.precision
+		distance_between_thresholds = 1 / self.precision
 
 		p = prob_mass_function * distance_between_thresholds
 
@@ -149,6 +149,7 @@ class HistogramAnalysis:
 		- Multiple noise photons in the same bin.
 		- Signal is not mapped to the correct idler photon.
 	"""
+
 	def __init__(self, params, signal_rate, noise_rate, acquisition_time, range_distance, effective_trigger_rate,
 	             jitter_std_dev: Optional[float] = 0, **kwargs):
 		"""
@@ -280,3 +281,215 @@ class HistogramAnalysis:
 		bin_edges = (np.arange(bins) * timing_window)
 		bin_edges_distance = (bin_edges * 299792458) / 2
 		return bin_edges, bin_edges_distance
+
+
+class RangeLimitation:
+
+	def __init__(
+			self,
+			params,
+			match_multi_photon_probability: bool,
+			range_interval: Optional[float],
+			distance: np.array,
+			acquisition_time: np.array,
+			target_false_positive: float,
+			target_true_positive: float,
+			precision_roc: int,
+			threshold_limit_factor_roc: int,
+	):
+		self.params = params
+		self.match_multi_photon_probability = match_multi_photon_probability
+		self.range_interval = range_interval
+		self.distance = distance
+		self.acquisition_time = acquisition_time
+		self.target_false_positive = target_false_positive
+		self.target_true_positive = target_true_positive
+		self.precision_roc = precision_roc
+		self.threshold_limit_factor_roc = threshold_limit_factor_roc
+
+		self.param_laser = deepcopy(self.params)
+		self.param_sps = deepcopy(self.params)
+		self.param_eps = deepcopy(self.params)
+
+		self.set_multi_or_non_vacuum_prob()
+
+		self.laser = PulsedLaser(self.param_laser)
+		self.sps = SinglePhoton(self.param_sps)
+		self.eps = EntangledPhotonSPDC(self.param_eps)
+
+		self.snr_laser = []
+		self.snr_sps = []
+		self.snr_eps = []
+
+		self.noise_laser_all = []
+		self.noise_sps_all = []
+		self.noise_eps_all = []
+
+		self.true_positive_at_target_false_value_laser = {}
+		self.true_positive_at_target_false_value_sps = {}
+		self.true_positive_at_target_false_value_eps = {}
+
+		self.prepare_dict_true_positive_at_target_false_value()
+
+		self.distance_cutoff_laser = {}
+		self.distance_cutoff_sps = {}
+		self.distance_cutoff_eps = {}
+
+	@staticmethod
+	def distance_at_target(distance, true_positive_at_target_false_value, target_true):
+		idx2keep = np.argmin(np.abs(true_positive_at_target_false_value - target_true))
+		return distance[idx2keep]
+
+	def set_multi_or_non_vacuum_prob(self):
+		sps = SinglePhoton(self.param_sps)
+		if self.match_multi_photon_probability:
+			multi_photon_probability = sps.multi_photon_probability
+			self.param_laser["multi_photon_probability"] = multi_photon_probability
+			self.param_eps["multi_photon_probability"] = multi_photon_probability
+		else:
+			no_vacuum_probability = sps.no_vacuum_probability
+			self.param_laser["no_vacuum_probability"] = no_vacuum_probability
+			self.param_eps["no_vacuum_probability"] = no_vacuum_probability
+
+	def prepare_dict_true_positive_at_target_false_value(self):
+		for at in self.acquisition_time:
+			self.true_positive_at_target_false_value_laser[at] = np.zeros_like(self.distance)
+			self.true_positive_at_target_false_value_sps[at] = np.zeros_like(self.distance)
+			self.true_positive_at_target_false_value_eps[at] = np.zeros_like(self.distance)
+
+	def compute(self):
+		for idx, d in enumerate(tqdm(self.distance)):
+			performance_sources = {}
+			self.param_laser["target_distance"] = d
+			self.param_sps["target_distance"] = d
+			self.param_eps["target_distance"] = d
+
+			self.laser = PulsedLaser(self.param_laser)
+			self.sps = SinglePhoton(self.param_sps)
+			self.eps = EntangledPhotonSPDC(self.param_eps)
+
+			signal_laser = self.laser.signal_rate()
+			noise_laser = self.laser.noise_rate()
+			trigger_rate_laser = self.laser.trigger_rate
+			snr_laser_current = (signal_laser - noise_laser) / noise_laser
+			self.snr_laser.append(snr_laser_current)
+
+			signal_sps = self.sps.signal_rate()
+			noise_sps = self.sps.noise_rate()
+			trigger_rate_sps = self.sps.trigger_rate
+			snr_sps_current = (signal_sps - noise_sps) / noise_sps
+			self.snr_sps.append(snr_sps_current)
+
+			signal_eps = self.eps.signal_rate()
+			noise_eps = self.eps.noise_rate()
+			trigger_rate_eps = self.eps.trigger_rate
+			snr_eps_current = (signal_eps - noise_eps) / noise_eps
+			self.snr_eps.append(snr_eps_current)
+
+			for at in self.acquisition_time:
+				true_positive_laser, false_positive_laser = self.compute_roc_curve(
+					signal=signal_laser,
+					noise=noise_laser,
+					trigger_rate=trigger_rate_laser,
+					distance=d,
+					acquisition_time=at
+				)
+
+				self.true_positive_at_target_false_value_laser[at][idx] = np.interp(
+					self.target_false_positive,
+					false_positive_laser,
+					true_positive_laser
+				)
+
+				true_positive_sps, false_positive_sps = self.compute_roc_curve(
+					signal=signal_sps,
+					noise=noise_sps,
+					trigger_rate=trigger_rate_sps,
+					distance=d,
+					acquisition_time=at
+				)
+
+				self.true_positive_at_target_false_value_sps[at][idx] = np.interp(
+					self.target_false_positive,
+					false_positive_sps,
+					true_positive_sps
+				)
+
+				true_positive_eps, false_positive_eps = self.compute_roc_curve(
+					signal=signal_eps,
+					noise=noise_eps,
+					trigger_rate=trigger_rate_eps,
+					distance=d,
+					acquisition_time=at
+				)
+
+				self.true_positive_at_target_false_value_eps[at][idx] = np.interp(
+					self.target_false_positive,
+					false_positive_eps,
+					true_positive_eps
+				)
+
+		results = self.prepare_results()
+
+		return results
+
+	def compute_roc_curve(self, signal, noise, trigger_rate, distance, acquisition_time):
+		true_positive, false_positive = RocAnalysis(
+			signal_rate=signal,
+			noise_rate=noise,
+			trigger_rate=trigger_rate,
+			threshold_limit=trigger_rate / self.threshold_limit_factor_roc,
+			range_interval=distance if self.range_interval is None else self.range_interval,
+			timing_window=self.params["timing_window"],
+			acquisition_time=acquisition_time,
+			precision=self.precision_roc
+		).compute_p_d_p_fa()
+
+		return true_positive, false_positive
+
+	def prepare_results(self):
+		self.snr_laser = np.array(self.snr_laser)
+		self.snr_sps = np.array(self.snr_sps)
+		self.snr_eps = np.array(self.snr_eps)
+
+		self.cutoff_distance()
+
+		results = {
+			"distance": self.distance,
+			"snr_laser": self.snr_laser,
+			"snr_sps": self.snr_sps,
+			"snr_eps": self.snr_eps,
+			"distance_cutoff_laser": self.distance_cutoff_laser,
+			"distance_cutoff_sps": self.distance_cutoff_sps,
+			"distance_cutoff_eps": self.distance_cutoff_eps,
+		}
+
+		return results
+
+	def cutoff_distance(self):
+
+		for idx, at in enumerate(self.acquisition_time):
+			self.distance_cutoff_laser[at] = self.distance_at_target(
+				self.distance,
+				self.true_positive_at_target_false_value_laser[at],
+				self.target_true_positive
+			)
+
+			self.distance_cutoff_sps[at] = self.distance_at_target(
+				self.distance,
+				self.true_positive_at_target_false_value_sps[at],
+				self.target_true_positive
+			)
+
+			self.distance_cutoff_eps[at] = self.distance_at_target(
+				self.distance,
+				self.true_positive_at_target_false_value_eps[at],
+				self.target_true_positive
+			)
+
+			key = "snr_at" + str(idx)
+
+			self.distance_cutoff_laser[key] = self.snr_laser[np.where(self.distance == self.distance_cutoff_laser[at])]
+			self.distance_cutoff_sps[key] = self.snr_sps[np.where(self.distance == self.distance_cutoff_sps[at])]
+			self.distance_cutoff_eps[key] = self.snr_eps[np.where(self.distance == self.distance_cutoff_eps[at])]
+

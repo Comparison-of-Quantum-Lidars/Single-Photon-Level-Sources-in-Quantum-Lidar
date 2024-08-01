@@ -29,12 +29,15 @@ class Source:
 		self.optics_transmitter_eff = params["optics_transmitter"]
 		self.optics_receiver_eff = params["optics_receiver"]
 		self.detection_efficiency = params["detection_efficiency"]
-		self.background = params["background"] * np.pi * ((self.receiver_diameter*100/2)**2)
+		self.background = params["background"]
 		self.detector_dark = params["detector_dark"]
 		self.timing_window = params["timing_window"]
 
 	def check_all_params(self):
 		pass
+
+	def background2loss(self):
+		return self.background * np.pi * ((self.receiver_diameter*100/2)**2)
 
 	def db2loss_atmosphere(self):
 		attenuation_meter = self.atmosphere / 1000
@@ -53,7 +56,8 @@ class Source:
 				atmosphere_loss ** 2)
 
 		# Overall noise detection
-		eta_noise = (self.background + self.detector_dark) * self.timing_window
+		background_loss = self.background2loss()
+		eta_noise = (background_loss + self.detector_dark) * self.timing_window
 
 		return eta_detector, eta_noise
 

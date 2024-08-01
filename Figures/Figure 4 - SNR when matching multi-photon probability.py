@@ -39,7 +39,7 @@ multi_photon_probability_sps = np.zeros_like(collection_efficiency)
 
 for idx, ce in enumerate(collection_efficiency):
 	param_sps["sp_collection"] = ce
-	param_sps["multi_photon_probability"] = param_sps["sp_p2"] * (ce*param["optics_transmitter"])**2
+	param_sps["multi_photon_probability"] = param_sps["sp_p2"] * (ce * param["optics_transmitter"]) ** 2
 	sps = SinglePhoton(param_sps)
 	snr_sps[idx] = sps.signal_to_noise_rate()
 	average_photon_per_pulse_sps[idx] = sps.average_photon_per_pulse
@@ -79,7 +79,6 @@ for idx_ce, ce in enumerate(collection_efficiency):
 		average_photon_per_pulse_eps[idx_mpp, idx_ce] = eps.epsilon
 		last_state[idx_mpp, idx_ce] = eps.prob_of_last_element_fock_space
 
-
 # INTERSECTION
 
 
@@ -88,7 +87,6 @@ for idx_ce, ce in enumerate(collection_efficiency):
 idx = np.argmin(np.abs(snr_laser - snr_sps[0]))
 match_mpp_laser_02 = multi_photon_probability[idx]
 match_snr_laser_02 = snr_laser[idx]
-
 
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
@@ -110,45 +108,51 @@ idx = np.argmin(np.abs(snr_laser - snr_sps[3]))
 match_mpp_laser_1 = multi_photon_probability[idx]
 match_snr_laser_1 = snr_laser[idx]
 
-fig = plt.figure(figsize=(16.2,10))
+fig = plt.figure(figsize=(16.2, 10))
 
 plt.semilogy(multi_photon_probability, snr_laser, "-", label="Pulsed Laser", linewidth=3, color="blue", zorder=2)
-plt.semilogy(multi_photon_probability, snr_eps[:, 0], "-.", label="Entangled Photon Source", linewidth=3, color="green", zorder=2)
-plt.text(-0.0285, snr_sps[0],"20%", fontsize=20, fontweight="bold")
+plt.semilogy(multi_photon_probability, snr_eps[:, 0], "-.", label="Entangled Photon Source", linewidth=3, color="green",
+             zorder=2)
+plt.text(-0.0285, snr_sps[0], "20%", fontsize=20, fontweight="bold")
 plt.semilogy(multi_photon_probability, snr_eps[:, 1], "-.", linewidth=3, color="green", zorder=2)
-plt.text(-0.0285, snr_sps[1],"57%", fontsize=20, fontweight="bold")
+plt.text(-0.0285, snr_sps[1], "57%", fontsize=20, fontweight="bold")
 plt.semilogy(multi_photon_probability, snr_eps[:, 2], "-.", linewidth=3, color="green", zorder=2)
-plt.text(-0.0285, snr_sps[2],"80%", fontsize=20, fontweight="bold")
+plt.text(-0.0285, snr_sps[2], "80%", fontsize=20, fontweight="bold")
 plt.semilogy(multi_photon_probability, snr_eps[:, 3], "-.", linewidth=3, color="green", zorder=2)
-plt.text(-0.0285, snr_sps[3]+5,"100%", fontsize=20, fontweight="bold")
-plt.text(-0.0285, snr_sps[3]+25,r"$\eta_{signal}$", fontsize=25, fontweight="bold")
-plt.scatter(multi_photon_probability_sps, snr_sps, label="Single Photon Source", linewidths=3, color="red", s=50, zorder=3)
+plt.text(-0.0285, snr_sps[3] + 5, "100%", fontsize=20, fontweight="bold")
+plt.text(-0.0285, snr_sps[3] + 25, r"$\eta_{signal}$", fontsize=25, fontweight="bold")
+plt.scatter(multi_photon_probability_sps, snr_sps, label="Single Photon Source", linewidths=3, color="red", s=50,
+            zorder=3)
 
-plt.hlines(match_snr_laser_02, multi_photon_probability_sps[0], match_mpp_laser_02, "k", linestyle="--", linewidth=3, zorder=1, alpha=0.75)
+plt.hlines(match_snr_laser_02, multi_photon_probability_sps[0], match_mpp_laser_02, "k", linestyle="--", linewidth=3,
+           zorder=1, alpha=0.75)
 plt.vlines(match_mpp_laser_02, 0, match_snr_laser_02, "k", linestyle="--", linewidth=3, zorder=1, alpha=0.75)
-str_title = r"$P_{multi}^{laser}: $"+f"{match_mpp_laser_02:.2f}"
-plt.text(match_mpp_laser_02+0.005, 2, str_title, fontsize=18)
+str_title = r"$P_{multi}^{laser}: $" + f"{match_mpp_laser_02:.2f}"
+plt.text(match_mpp_laser_02 + 0.005, 2, str_title, fontsize=18)
 
-plt.hlines(match_snr_laser_057, multi_photon_probability_sps[1], match_mpp_laser_057, "k", linestyle="--", linewidth=3, zorder=1, alpha=0.75)
+plt.hlines(match_snr_laser_057, multi_photon_probability_sps[1], match_mpp_laser_057, "k", linestyle="--", linewidth=3,
+           zorder=1, alpha=0.75)
 plt.vlines(match_mpp_laser_057, 0, match_snr_laser_057, "k", linestyle="--", linewidth=3, zorder=1, alpha=0.75)
-str_title = r"$P_{multi}^{laser}: $"+f"{match_mpp_laser_057:.2f}"
-plt.text(match_mpp_laser_057+0.002, 2, str_title, fontsize=18)
+str_title = r"$P_{multi}^{laser}: $" + f"{match_mpp_laser_057:.2f}"
+plt.text(match_mpp_laser_057 + 0.002, 2, str_title, fontsize=18)
 
-plt.hlines(match_snr_laser_08, multi_photon_probability_sps[2], match_mpp_laser_08, "k", linestyle="--", linewidth=3, zorder=1, alpha=0.75)
+plt.hlines(match_snr_laser_08, multi_photon_probability_sps[2], match_mpp_laser_08, "k", linestyle="--", linewidth=3,
+           zorder=1, alpha=0.75)
 plt.vlines(match_mpp_laser_08, 0, match_snr_laser_08, "k", linestyle="--", linewidth=3, zorder=1, alpha=0.75)
-str_title = r"$P_{multi}^{laser}: $"+f"{match_mpp_laser_08:.2f}"
-plt.text(match_mpp_laser_08+0.001, 2, str_title, fontsize=18)
+str_title = r"$P_{multi}^{laser}: $" + f"{match_mpp_laser_08:.2f}"
+plt.text(match_mpp_laser_08 + 0.001, 2, str_title, fontsize=18)
 
-plt.hlines(match_snr_laser_1, multi_photon_probability_sps[3], match_mpp_laser_1, "k", linestyle="--", linewidth=3, zorder=1, alpha=0.75)
+plt.hlines(match_snr_laser_1, multi_photon_probability_sps[3], match_mpp_laser_1, "k", linestyle="--", linewidth=3,
+           zorder=1, alpha=0.75)
 plt.vlines(match_mpp_laser_1, 0, match_snr_laser_1, "k", linestyle="--", linewidth=3, zorder=1, alpha=0.75)
-str_title = r"$P_{multi}^{laser}: $"+f"{match_mpp_laser_1:.2f}"
-plt.text(match_mpp_laser_1+0.004, 2, str_title, fontsize=18)
+str_title = r"$P_{multi}^{laser}: $" + f"{match_mpp_laser_1:.2f}"
+plt.text(match_mpp_laser_1 + 0.004, 2, str_title, fontsize=18)
 
 plt.xlabel("Multi-Photon Probability", fontsize=22)
 plt.ylabel("SNR", fontsize=22)
 plt.legend(frameon=False, fontsize=22, bbox_to_anchor=(1, 0.5))
 plt.tick_params(axis='both', which='major', labelsize=22)
 plt.tick_params(axis='both', which='minor', labelsize=22)
-plt.xlim([-0.035,0.4])
+plt.xlim([-0.035, 0.4])
 plt.ylim([1.4, None])
 plt.show()

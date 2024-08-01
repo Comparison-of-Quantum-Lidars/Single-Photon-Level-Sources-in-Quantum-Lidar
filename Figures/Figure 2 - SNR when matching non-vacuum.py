@@ -39,7 +39,8 @@ average_photon_per_pulse_sps = np.zeros_like(collection_efficiency)
 for idx, ce in enumerate(collection_efficiency):
 	param_sps["sp_collection"] = ce
 	extr_eff = ce * param["optics_transmitter"]
-	param_sps["no_vacuum_probability"] = param_sps["sp_p1"] * extr_eff + (param_sps["sp_p2"] * extr_eff * (2 - extr_eff))
+	param_sps["no_vacuum_probability"] = param_sps["sp_p1"] * extr_eff + (
+				param_sps["sp_p2"] * extr_eff * (2 - extr_eff))
 	sps = SinglePhoton(param_sps)
 	non_vacuum_probability_sps[idx] = sps.no_vacuum_probability
 	snr_sps[idx] = sps.signal_to_noise_rate()
@@ -69,9 +70,9 @@ average_photon_per_pulse_entangled = np.zeros((non_vacuum_probability.shape[0], 
 
 last_state = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
 
-def adjustable_fock_space(average_photon_per_pulse):
-	return round(average_photon_per_pulse)+48
 
+def adjustable_fock_space(average_photon_per_pulse):
+	return round(average_photon_per_pulse) + 48
 
 
 for idx_nvp, ce in enumerate(collection_efficiency):
@@ -86,27 +87,26 @@ for idx_nvp, ce in enumerate(collection_efficiency):
 		snr_entangled[idx_ce, idx_nvp] = eps.signal_to_noise_rate()
 		last_state[idx_ce, idx_nvp] = eps.prob_of_last_element_fock_space
 
-
-
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
 fig = plt.figure(figsize=(16.2, 10))
 
-plt.semilogy(non_vacuum_probability, snr_entangled[:, 0], "-.", label="Entangled Photon Source", color="green", linewidth=3, zorder=1)
+plt.semilogy(non_vacuum_probability, snr_entangled[:, 0], "-.", label="Entangled Photon Source", color="green",
+             linewidth=3, zorder=1)
 plt.semilogy(non_vacuum_probability, snr_entangled[:, 1], "-.", color="green", linewidth=3, zorder=1)
 plt.semilogy(non_vacuum_probability, snr_entangled[:, 2], "-.", color="green", linewidth=3, zorder=1)
 plt.semilogy(non_vacuum_probability, snr_entangled[:, 3], "-.", color="green", linewidth=3, zorder=1)
 plt.semilogy(non_vacuum_probability, snr_laser, "-", label="Pulsed Laser", color="blue", linewidth=3, zorder=1)
 plt.scatter(non_vacuum_probability_sps, snr_sps, label="Single Photon Source", color="red", s=100, zorder=2)
-plt.text(non_vacuum_probability_sps[0]-0.01, snr_sps[0]-3.5, "20%", fontsize=22, fontweight="bold")
-plt.text(non_vacuum_probability_sps[1]-0.01, snr_sps[1]-8, "57%", fontsize=22, fontweight="bold")
-plt.text(non_vacuum_probability_sps[2]-0.04, snr_sps[2]-11, "80%", fontsize=22, fontweight="bold")
-plt.text(non_vacuum_probability_sps[3]-0.053, snr_sps[3]-15, "100%", fontsize=22, fontweight="bold")
+plt.text(non_vacuum_probability_sps[0] - 0.01, snr_sps[0] - 3.5, "20%", fontsize=22, fontweight="bold")
+plt.text(non_vacuum_probability_sps[1] - 0.01, snr_sps[1] - 8, "57%", fontsize=22, fontweight="bold")
+plt.text(non_vacuum_probability_sps[2] - 0.04, snr_sps[2] - 11, "80%", fontsize=22, fontweight="bold")
+plt.text(non_vacuum_probability_sps[3] - 0.053, snr_sps[3] - 15, "100%", fontsize=22, fontweight="bold")
 plt.text(-0.055, snr_entangled[0, 0], "20%", fontsize=22, fontweight="bold")
-plt.text(-0.055, snr_entangled[0, 1]-5, "57%", fontsize=22, fontweight="bold")
-plt.text(-0.055, snr_entangled[0, 2]-5, "80%", fontsize=22, fontweight="bold")
-plt.text(-0.055, snr_entangled[0, 3]+2, "100%", fontsize=22, fontweight="bold")
-plt.text(-0.055, snr_entangled[0, 3]+30, r"$\eta_{signal}$", fontsize=28, fontweight="bold")
+plt.text(-0.055, snr_entangled[0, 1] - 5, "57%", fontsize=22, fontweight="bold")
+plt.text(-0.055, snr_entangled[0, 2] - 5, "80%", fontsize=22, fontweight="bold")
+plt.text(-0.055, snr_entangled[0, 3] + 2, "100%", fontsize=22, fontweight="bold")
+plt.text(-0.055, snr_entangled[0, 3] + 30, r"$\eta_{signal}$", fontsize=28, fontweight="bold")
 plt.xlim([-0.065, 0.81])
 plt.ylim([0.1, None])
 plt.xlabel("Non-Vacuum Probability", fontsize=22)

@@ -13,7 +13,7 @@ provide a fair and complete comparison of quantum illumination and classical ill
 The LiDAR systems that are modelled in this work are using a source and a detector operating in the quantum regime. No
 joint-measurement is performed in the lidar architectures studied since those systems requires either a prior knowledge
 of the target, or needs a sweep of the delay line which drastically reduces the speed of the system. Since robust
-Quantum Memory and Non-Destructive measurement device are not yet available, we are using lidar systems where the
+Quantum Memory and Non-Destructive measurement device are not yet reliable, we are using lidar systems where the
 coincidence measurement is post-processed on a _classical_ computer.
 
 To ensure a fair comparison between the different sources, time-correlation is performed for all. For the Entangled-photon source,
@@ -50,7 +50,6 @@ from Sources import SetupParameters, PulsedLaser, EntangledPhotonSPDC, SinglePho
 param_laser = SetupParameters(
 	fock_space_dim=5,
 	output_power=2e6,
-	trigger_rate=None,
 	multi_photon_probability=0.05,
 	no_vacuum_probability=None,
 	sp_collection=None,

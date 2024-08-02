@@ -1,16 +1,16 @@
-# Comparison and Limitations of Single-Photon Level Sources in Quantum LiDAR
+# Comparison and Limitations of Single-Photon Level Sources in Quantum Lidar
 
 ## Description
 
 This module is a simple Python package that is used to simulate the performance of different single-photon level 
-sources for quantum LiDAR applications. The source studied in this work are the following:
+sources for quantum lidar applications. The source studied in this work are the following:
 1) Single-photon sources based on quantum dots
 2) Entangled photon pair sources based on spontaneous parametric down-conversion
 3) Attenuated Pulsed Laser Sources
 
 The goal of this work is to compare fairly the performance of lidar systems based on these sources. The goal is to
-provide a fair and complete comparison of quantum illumination and classical illumination in the context of LiDAR.
-The LiDAR systems that are modelled in this work are using a source and a detector operating in the quantum regime. No
+provide a fair and complete comparison of quantum illumination and classical illumination in the context of lidar.
+The lidar systems that are modelled in this work are using a source and a detector operating in the quantum regime. No
 joint-measurement is performed in the lidar architectures studied since those systems requires either a prior knowledge
 of the target, or needs a sweep of the delay line which drastically reduces the speed of the system. Since robust
 Quantum Memory and Non-Destructive measurement device are not yet reliable, we are using lidar systems where the

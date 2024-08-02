@@ -107,6 +107,7 @@ Tutorials on how to use this module are available. They should be followed in th
 1) [Setting parameters](Tutorials/Setting%20parameters.ipynb)
 2) [ROC Curves](Tutorials/ROC%20Curves.ipynb)
 3) [Histogram simulation](Tutorials/Histogram%20simulation.ipynb)
+4) [Range limitation](Tutorials/Range%20limitation.ipynb)
 
 ## Paper
 
@@ -122,7 +123,7 @@ This work was supported by [...]
 
 ## License
 
-[...]
+[Apache License 2.0](LICENSE)
 
 ## Citation
 

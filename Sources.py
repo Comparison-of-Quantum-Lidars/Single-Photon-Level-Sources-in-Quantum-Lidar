@@ -23,7 +23,7 @@ class Source:
 		self.spdc_eps_heralding = params["spdc_eps_heralding"]
 		self.spdc_eps_collection = params["spdc_eps_collection"]
 		self.atmosphere = params["atmosphere"]
-		self.target_distance = params["target_distance"]
+		self.target_distance = params["target_distance"] if params["target_distance"] is not None else 1
 		self.receiver_diameter = params["receiver_diameter"]
 		self.target_albedo = params["target_albedo"]
 		self.optics_transmitter_eff = params["optics_transmitter"]

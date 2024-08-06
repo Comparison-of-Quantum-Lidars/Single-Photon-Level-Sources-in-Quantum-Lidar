@@ -84,6 +84,10 @@ class TestPulsedLaser(unittest.TestCase):
 		db2loss_laser = self.laser.db2loss_atmosphere()
 		self.assertEqual(db2loss_source, db2loss_laser)
 
+	def test_extraction_efficiency(self):
+		extr_efficiency = self.optics_transmitter
+		self.assertEqual(self.laser.fix_extraction_efficiency(), extr_efficiency)
+
 	def test_cant_fix_both_probabilities(self):
 		params = deepcopy(self.setup_params)
 		params["no_vacuum_probability"] = 0.1
@@ -95,13 +99,13 @@ class TestPulsedLaser(unittest.TestCase):
 	def test_assert_probabilities_are_realistic(self):
 		params = deepcopy(self.setup_params)
 		params["no_vacuum_probability"] = -0.1
-		params["multi_photon_probability"] = 0.1
+		params["multi_photon_probability"] = None
 
 		with self.assertRaises(AssertionError):
 			PulsedLaser(params)
 
 		params = deepcopy(self.setup_params)
-		params["no_vacuum_probability"] = 0.1
+		params["no_vacuum_probability"] = None
 		params["multi_photon_probability"] = 1.1
 
 		with self.assertRaises(AssertionError):
@@ -131,16 +135,19 @@ class TestPulsedLaser(unittest.TestCase):
 		prob_mpp_predicted = PulsedLaser(params).multi_photon_probability
 		alpha_predicted_nvp = PulsedLaser(params).alpha
 		trigger_rate_predicted_nvp = PulsedLaser(params).trigger_rate
+		average_photon_per_pulse_nvp = PulsedLaser(params).average_photon_per_pulse
 
 		params["no_vacuum_probability"] = None
 		params["multi_photon_probability"] = prob_mpp_predicted
 		prob_nvp_predicted = PulsedLaser(params).no_vacuum_probability
 		alpha_predicted_mpp = PulsedLaser(params).alpha
 		trigger_rate_predicted_mpp = PulsedLaser(params).trigger_rate
+		average_photon_per_pulse_mpp = PulsedLaser(params).average_photon_per_pulse
 
 		self.assertAlmostEquals(prob_nvp, prob_nvp_predicted, places=5)
 		self.assertAlmostEquals(alpha_predicted_nvp, alpha_predicted_mpp, places=5)
 		self.assertAlmostEquals(trigger_rate_predicted_nvp, trigger_rate_predicted_mpp, places=5)
+		self.assertAlmostEquals(average_photon_per_pulse_nvp, average_photon_per_pulse_mpp, places=5)
 
 		params = deepcopy(self.setup_params)
 		prob_mpp = np.random.rand()
@@ -149,16 +156,26 @@ class TestPulsedLaser(unittest.TestCase):
 		prob_nvp_predicted = PulsedLaser(params).no_vacuum_probability
 		alpha_predicted_nvp = PulsedLaser(params).alpha
 		trigger_rate_predicted_nvp = PulsedLaser(params).trigger_rate
+		average_photon_per_pulse_nvp = PulsedLaser(params).average_photon_per_pulse
 
 		params["no_vacuum_probability"] = prob_nvp_predicted
 		params["multi_photon_probability"] = None
 		prob_mpp_predicted = PulsedLaser(params).multi_photon_probability
 		alpha_predicted_mpp = PulsedLaser(params).alpha
 		trigger_rate_predicted_mpp = PulsedLaser(params).trigger_rate
+		average_photon_per_pulse_mpp = PulsedLaser(params).average_photon_per_pulse
 
 		self.assertAlmostEquals(prob_mpp, prob_mpp_predicted, places=5)
 		self.assertAlmostEquals(alpha_predicted_nvp, alpha_predicted_mpp, places=5)
 		self.assertAlmostEquals(trigger_rate_predicted_nvp, trigger_rate_predicted_mpp, places=5)
+		self.assertAlmostEquals(average_photon_per_pulse_nvp, average_photon_per_pulse_mpp, places=5)
+
+	def test_overall_detection_probability(self):
+		eta_detector, eta_noise = self.laser.overall_detection_probability()
+		eta_detector_source, eta_noise_source = self.source.overall_detection_probability()
+
+		self.assertEqual(eta_detector, eta_detector_source)
+		self.assertEqual(eta_noise, eta_noise_source)
 
 	def test_detector2observable(self):
 		def create_observable(efficiency, noise, fock_space_dim):
@@ -174,6 +191,40 @@ class TestPulsedLaser(unittest.TestCase):
 		observable_model = self.laser.detector2observable()
 
 		self.assertTrue(observable == observable_model)
+
+	def test_average_photon_per_pulse(self):
+		params = deepcopy(self.setup_params)
+		prob = np.random.rand()
+
+		params["no_vacuum_probability"] = prob
+		params["multi_photon_probability"] = None
+
+		laser = PulsedLaser(params)
+
+		self.assertEqual(laser.alpha**2, laser.average_photon_per_pulse)
+
+		extr_efficiency = laser.fix_extraction_efficiency()
+
+		average_photon_per_pulse_nvp = -np.log(-prob + 1)/extr_efficiency
+		average_photon_per_pulse_model = laser.average_photon_per_pulse
+
+		self.assertAlmostEquals(average_photon_per_pulse_nvp, average_photon_per_pulse_model, places=5)
+
+		params["no_vacuum_probability"] = None
+		params["multi_photon_probability"] = prob
+
+		laser = PulsedLaser(params)
+
+		extr_efficiency = laser.fix_extraction_efficiency()
+
+		self.assertEqual(laser.alpha**2, laser.average_photon_per_pulse)
+
+		from scipy.special import lambertw
+
+		average_photon_per_pulse_mpp = (-lambertw((prob - 1)*np.exp(-1), -1) - 1)/extr_efficiency
+		average_photon_per_pulse_model = laser.average_photon_per_pulse
+
+		self.assertAlmostEquals(average_photon_per_pulse_mpp, average_photon_per_pulse_model, places=5)
 
 	def test_triggering_rate(self):
 		params = deepcopy(self.setup_params)

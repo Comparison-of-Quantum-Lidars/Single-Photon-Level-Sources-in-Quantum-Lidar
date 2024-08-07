@@ -43,7 +43,7 @@ adversary with a non-number resolving detector. By matching the multi-photon pro
 sources when they are all as detectable for an adversary with a number-resolving detector.
 
 ## Quick Usage Preview
-### Calculating the SNR when the non-vacuum probability is matched across sources
+### Calculating the SNR when the mutli-photon probability is matched across sources
 ```python
 from Sources import SetupParameters, PulsedLaser, EntangledPhotonSPDC, SinglePhoton
 

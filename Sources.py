@@ -616,6 +616,7 @@ class SetupParameters:
 		print("--- Sources ---")
 		print("output_power: optical output power of the source in photon per second [s^-1]")
 		print("multi_photon_probability: Probability of the laser source emitting more than 1 photon [-]")
+		print("no_vacuum_probability: Probability of the laser source not emitting a photon [-]")
 		print(
 			"sp_collection: Efficiency of the single photon source collection, does not include detector efficiency [-]")
 		print("sp_p1: Probability that the single photon source emits 1 photons [-]")

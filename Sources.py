@@ -33,9 +33,6 @@ class Source:
 		self.detector_dark = params["detector_dark"]
 		self.timing_window = params["timing_window"]
 
-	def check_all_params(self):
-		pass
-
 	def background2loss(self):
 		return self.background * np.pi * ((self.receiver_diameter*100/2)**2)
 
@@ -410,7 +407,7 @@ class EntangledPhotonSPDC(Source):
 
 			self.multi_photon_probability = self.compute_multi_photon_probability()
 		else:
-			raise ValueError("The trigger rate, multi-photon probability or no-vacuum probability must be fixed")
+			raise ValueError("The multi-photon probability or no-vacuum probability must be fixed")
 
 	def compute_multi_photon_probability(self):
 		"""
@@ -455,7 +452,6 @@ class EntangledPhotonSPDC(Source):
 		a = destroy(self.fock_space_dim)
 		a_dagger = create(self.fock_space_dim)
 		spdc_epsilon = np.arcsinh(np.sqrt(self.epsilon))
-		#argument = -1j * (tensor(a, a) + tensor(a_dagger, a_dagger)) * spdc_epsilon
 		argument = (tensor(a, a) - tensor(a_dagger, a_dagger)) * spdc_epsilon
 		squeezed_operator = argument.expm()
 		return squeezed_operator

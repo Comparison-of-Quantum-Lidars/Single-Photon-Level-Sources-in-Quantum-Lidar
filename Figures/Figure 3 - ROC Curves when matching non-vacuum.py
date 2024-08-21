@@ -24,7 +24,7 @@ param = SetupParameters(
 	optics_transmitter=0.8,
 	optics_receiver=0.5,
 	detection_efficiency=0.7,
-	background=25,
+	background=250000,
 	detector_dark=25,
 	timing_window=0.5e-9,
 )

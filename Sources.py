@@ -12,7 +12,6 @@ class Source:
 
 	def __init__(self, params):
 		self.params = params
-		self.check_all_params()
 		self.fock_space_dim = params["fock_space_dim"]
 		self.output_power = params["output_power"]
 		self.multi_photon_probability = params["multi_photon_probability"]
@@ -34,7 +33,7 @@ class Source:
 		self.timing_window = params["timing_window"]
 
 	def background2loss(self):
-		return self.background * np.pi * ((self.receiver_diameter*100/2)**2)
+		return self.background * np.pi * ((self.receiver_diameter/2)**2)
 
 	def db2loss_atmosphere(self):
 		attenuation_meter = self.atmosphere / 1000
@@ -631,7 +630,7 @@ class SetupParameters:
 		print("optics_transmitter: Optical efficiency of the transmitter [-]")
 		print("optics_receiver: Optical efficiency of the receiver [-]")
 		print("detection_efficiency: Detection efficiency of single photon detector [-]")
-		print("background: Background noise detection rate [Hz]")
+		print("background: Background noise detection rate [Hz/m^2]")
 		print("detector_dark: Dark count rate of the detector [Hz]")
 		print("timing_window: Time window for detection -> Must be larger than all timing jitters [s]")
 

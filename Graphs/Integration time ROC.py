@@ -346,7 +346,7 @@ if scenario=="ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_mpp":
 		optics_transmitter=0.8,
 		optics_receiver=0.5,
 		detection_efficiency=0.7,
-		background=500,
+		background=250000,
 		detector_dark=25,
 		timing_window=0.5e-9,
 	)
@@ -495,7 +495,7 @@ if scenario=="ROC_Comparison_Acquisition_Time_and_Noise_all_Sources_match_nvp":
 		optics_transmitter=0.8,
 		optics_receiver=0.5,
 		detection_efficiency=0.5,
-		background=400,
+		background=203718,
 		detector_dark=200,
 		timing_window=0.5e-9,
 	)

@@ -24,7 +24,7 @@ class TestRangeLimitation(unittest.TestCase):
 		self.optics_transmitter = 0.8
 		self.optics_receiver = 0.8
 		self.detection_efficiency = 0.5
-		self.background = 10
+		self.background = 100000
 		self.detector_dark = 15
 		self.timing_window = 1e-9
 		self.setup_params = SetupParameters(

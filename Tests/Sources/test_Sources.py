@@ -25,7 +25,7 @@ class TestSource(unittest.TestCase):
 		self.optics_transmitter = 0.8
 		self.optics_receiver = 0.8
 		self.detection_efficiency = 0.5
-		self.background = 10
+		self.background = 100000
 		self.detector_dark = 15
 		self.timing_window = 1e-9
 		self.setup_params = SetupParameters(
@@ -80,7 +80,7 @@ class TestSource(unittest.TestCase):
 		self.assertEqual(source.target_distance, 1)
 
 	def test_background2loss(self):
-		receiver_diameter_in_cm = self.receiver_diameter * 100
+		receiver_diameter_in_cm = self.receiver_diameter
 		receiver_radius_in_cm = receiver_diameter_in_cm / 2
 		receiver_area_in_cm_squared = np.pi * receiver_radius_in_cm ** 2
 		photons_per_second_received_background = self.background * receiver_area_in_cm_squared
@@ -120,7 +120,7 @@ class TestSource(unittest.TestCase):
 		self.assertEqual(source.background, 1000)
 
 		background_loss_model = source.background2loss()
-		background_loss = 1000 * np.pi * ((source.receiver_diameter * 100 / 2) ** 2)
+		background_loss = 1000 * np.pi * ((source.receiver_diameter/ 2) ** 2)
 
 		self.assertAlmostEquals(background_loss, background_loss_model, places=5)
 

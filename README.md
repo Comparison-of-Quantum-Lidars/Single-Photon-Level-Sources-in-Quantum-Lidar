@@ -110,7 +110,7 @@ TODO: ADD LINK TO PAPER AND ADD THE FACT THAT PEOPLE CAN REPRODUCE THE GRAPH
 
 This work was carried out by Anthony Drouin (IQC/UWaterloo), Dr. Jean-Philippe Bourgoin (Single Quantum System), Dr. Sara Hosseini (IQC/UWaterloo/NRC), Prof. François Sfigakis (IQC/UWaterloo), Prof. Jonathan Baugh (IQC/UWaterloo), and Prof. Michael E. Reimer (IQC/UWaterloo/Single Quantum System). Prof. Michael E. Reimer is the corresponding author for this work (michael.reimer@uwaterloo.ca).
 
-The implementation of the theoretical model was performed by Anthony Drouin (anthony.drouin@uwaterloo.ca).
+The implementation of the theoretical model was done by Anthony Drouin (anthony.drouin@uwaterloo.ca).
 
 ## License
 

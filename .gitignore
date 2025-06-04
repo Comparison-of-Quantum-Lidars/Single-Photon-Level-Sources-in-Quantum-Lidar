@@ -1,8 +1,15 @@
+# Removing .idea and Pycache files
 .idea
-testing.py
 __pycache__
-To Delete/Statistical_analysis.py
+
+# Removing testing files
+testing.py
 testingv2.py
 testingv3.py
+
+### Removing irrelevant directories for a user
 Graphs/data/match_mpp_June13.npz
 Graphs/data
+Graphs/
+Pre-Analysis Graphs/
+old_version/

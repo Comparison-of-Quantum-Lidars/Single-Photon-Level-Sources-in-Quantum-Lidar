@@ -40,7 +40,7 @@ precision = 25
 threshold_limit_factor = 100
 
 results = RangeLimitation(
-	params = param,
+	params=param,
 	match_multi_photon_probability=match_multi_photon_probability,
 	range_interval=range_interval,
 	distance=distance,

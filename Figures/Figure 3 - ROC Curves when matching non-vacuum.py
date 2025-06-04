@@ -85,9 +85,12 @@ for idx, ce in enumerate(tqdm(collection_efficiency)):
 
 # *** ROC Curves ***
 
+# Maximum distance considered. Increasing the distance results in a higher number of bins which increases the
+# probability of a false positive detection.
+
 range_distance = 50
 
-# 0.2
+# Collection efficiency: 0.2
 
 true_positive_sps_020, false_positive_sps_020 = RocAnalysis(
 	signal_rate=signal_sps[0],
@@ -116,7 +119,7 @@ true_positive_eps_020, false_positive_eps_020 = RocAnalysis(
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
 
-# 0.57
+# Collection efficiency: 0.57
 
 true_positive_sps_057, false_positive_sps_057 = RocAnalysis(
 	signal_rate=signal_sps[1],
@@ -148,9 +151,7 @@ true_positive_eps_057, false_positive_eps_057 = RocAnalysis(
 print(f"Signal Rate laser: {signal_laser[1]}, Noise Rate laser: {noise_laser[1]}, Trigger Rate laser: {trigger_rate_laser[1]}")
 print(f"Signal Rate eps: {signal_eps[1]}, Noise Rate eps: {noise_eps[1]}, Trigger Rate eps: {trigger_rate_eps[1]}")
 
-
-
-# 0.8
+# Collection efficiency: 0.8
 
 true_positive_sps_08, false_positive_sps_08 = RocAnalysis(
 	signal_rate=signal_sps[2],
@@ -179,7 +180,7 @@ true_positive_eps_08, false_positive_eps_08 = RocAnalysis(
 	timing_window=param["timing_window"],
 ).compute_p_d_p_fa()
 
-# 1.0
+# Collection efficiency: 1.0
 
 true_positive_sps_100, false_positive_sps_100 = RocAnalysis(
 	signal_rate=signal_sps[3],

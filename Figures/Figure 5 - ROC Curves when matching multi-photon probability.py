@@ -213,7 +213,7 @@ plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/
 
 fig, axs = plt.subplots(2, 2, figsize=(10, 10))
 
-# 0.2
+# Collection efficiency: 0.2
 
 axs[0, 0].plot(false_positive_sps_02, true_positive_sps_02, "--", label="Single Photon Source", color="red", linewidth=2.5)
 axs[0, 0].plot(false_positive_laser_02, true_positive_laser_02, "-", label="Pulsed Laser", color="blue", linewidth=2.5)
@@ -223,7 +223,7 @@ axs[0, 0].set_title(str_title, fontsize=18)
 axs[0, 0].tick_params(axis='both', which='major', labelsize=22)
 
 
-# 0.57
+# Collection efficiency: 0.57
 
 axs[0, 1].plot(false_positive_sps_057, true_positive_sps_057, "--", label="Single Photon Source", color="red", linewidth=2.5)
 axs[0, 1].plot(false_positive_laser_057, true_positive_laser_057, "-", label="Pulsed Laser", color="blue", linewidth=2.5)
@@ -232,7 +232,7 @@ str_title = r"$\eta_{signal}$ = 57%, $P_{multi}$= " + f"{multi_photon_probabilit
 axs[0, 1].set_title(str_title, fontsize=18)
 axs[0, 1].tick_params(axis='both', which='major', labelsize=22)
 
-# 0.8
+# Collection efficiency: 0.8
 
 axs[1, 0].plot(false_positive_sps_08, true_positive_sps_08, "--", label="Single Photon Source", color="red", linewidth=2.5)
 axs[1, 0].plot(false_positive_laser_08, true_positive_laser_08, "-", label="Pulsed Laser", color="blue", linewidth=2.5)
@@ -241,7 +241,7 @@ str_title = r"$\eta_{signal}$ = 80%, $P_{multi}$= " + f"{multi_photon_probabilit
 axs[1, 0].set_title(str_title, fontsize=18)
 axs[1, 0].tick_params(axis='both', which='major', labelsize=22)
 
-# 1
+# Collection efficiency: 1
 
 axs[1, 1].plot(false_positive_sps_1, true_positive_sps_1, "--", label="Single Photon Source", color="red", linewidth=2.5)
 axs[1, 1].plot(false_positive_laser_1, true_positive_laser_1, "-", label="Pulsed Laser", color="blue", linewidth=2.5)

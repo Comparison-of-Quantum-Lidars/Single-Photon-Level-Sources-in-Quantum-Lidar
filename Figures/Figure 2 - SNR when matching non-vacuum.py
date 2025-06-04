@@ -70,6 +70,10 @@ average_photon_per_pulse_entangled = np.zeros((non_vacuum_probability.shape[0], 
 
 last_state = np.zeros((non_vacuum_probability.shape[0], collection_efficiency.shape[0]))
 
+# Assert that the fock space dimension is large enough to accommodate the average photon per pulse.
+# This allows for a more progressive increase in the fock space dimension as the average photon per pulse increases.
+# This adhoc function allows that the vector |n> does not truncate information.
+
 
 def adjustable_fock_space(average_photon_per_pulse):
 	return round(average_photon_per_pulse) + 48

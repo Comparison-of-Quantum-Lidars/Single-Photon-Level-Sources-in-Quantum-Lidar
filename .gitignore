@@ -1,8 +1,9 @@
 .idea
 testing.py
 __pycache__
-To Delete/Statistical_analysis.py
+old_version/Statistical_analysis.py
 testingv2.py
 testingv3.py
 Graphs/data/match_mpp_June13.npz
 Graphs/data
+old_version/

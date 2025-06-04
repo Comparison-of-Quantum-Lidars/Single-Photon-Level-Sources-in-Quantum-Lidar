@@ -2,48 +2,33 @@
 
 ## Description
 
-This module is a simple Python package that is used to simulate the performance of different single-photon level 
-sources for quantum lidar applications. The source studied in this work are the following:
+This module is a simple Python package used to compute the performance of different single-photon-level sources for quantum lidar applications. The sources studied in this work are:
 1) Single-photon sources based on quantum dots
-2) Entangled photon pair sources based on spontaneous parametric down-conversion
-3) Attenuated Pulsed Laser Sources
+2) Entangled photon-pair sources based on spontaneous parametric down-conversion (SPDC)
+3) Attenuated pulsed lasers
 
-The goal of this work is to compare fairly the performance of lidar systems based on these sources. The goal is to
-provide a fair and complete comparison of quantum illumination and classical illumination in the context of lidar.
-The lidar systems that are modelled in this work are using a source and a detector operating in the quantum regime. No
-joint-measurement is performed in the lidar architectures studied since those systems requires either a prior knowledge
-of the target, or needs a sweep of the delay line which drastically reduces the speed of the system. Since robust
-Quantum Memory and Non-Destructive measurement device are not yet reliable, we are using lidar systems where the
-coincidence measurement is post-processed on a _classical_ computer.
+The goal of this work is to provide a fair comparison of the performance of lidar systems for stealth applications. The lidar systems modeled in this work use a source and a detector operating in the single-photon regime. No joint measurement is performed.
+To ensure a fair comparison between the different sources, time correlation is employ for all. For the entangled-photon source, the detection of an idler photon is used to trigger the start of the time-correlation window, and coincidence detection is performed. For the single-photon sources and the attenuated pulsed laser, the triggering electrical signal is used for coincidence detection.
+In order to perform a fair comparison, one must fix the optical power leaving the system and one of the following:
 
-To ensure a fair comparison between the different sources, time-correlation is performed for all. For the Entangled-photon source,
-the detection of an idler photon is used to trigger the start of the time-correlation window and coincidence is performed.
-For the single-photon sources and the attenuated pulsed laser, the triggering electrical signal is used to do the coincidence.
+1) The non-vacuum probability: the probability that at least one photon is emitted and leaves the lidar system.
+2) The multi-photon probability: the probability that more than one photon is emitted and leaves the lidar system
 
-In order to perform a fair comparison, one needs to fix some parameters across the different sources. Obviously, the
-optical power leaving the system is the same for all sources. From there, one of the following parameters can be fixed:
-1) The Non-Vacuum Probability: This is the probability that at least one photon is emitted and is leaving the lidar system.
-2) The Multi-Photon Probability: This is the probability that more than one photon is emitted and is leaving the lidar system.
 
 ##### Why those parameters ?
 
-Quantum lidar is a broad term that includes multiple architecture. Technically, as long as one part of a lidar uses the
-quantization of light, it can be considered a quantum lidar. For many applications, using a classical source with a
-single-photon detector is the best option: this approach enhances detection without compromising output power,
-allowing for long-range applications while maintaining a high precision.
+A quantum lidar system with single-photon-level sources allows for enhanced stealthiness, which is defined as the ability to detect an adversary without being detected. This application is considered the primary use case for quantum lidar systems operating in the single-photon regime.
 
-When transitioning to quantum sources, one loses the ability to operate at long range, since the probability of a photon
-being reflected within the solid angle of the detector decreases as $1/L^2$ where $L$ is the distance lidar-target.
-The reason someone might consider going to a quantum source is to increase stealthiness, which is the ability to detect
-without being detected. If the target possesses a _classical_ photodetector, then it cannot detect the quantum lidar.
-However, if it possesses a single-photon detector, it might be able to detect the quantum lidar.
+If the target possesses a classical photodetector, then it cannot detect the quantum lidar. However, if it possesses a single-photon detector, it might be able to detect it.
 
-By matching the non-vacuum probability, one can compare the different sources when they are all as detectable for an
-adversary with a non-number resolving detector. By matching the multi-photon probability, one can compare the different
-sources when they are all as detectable for an adversary with a number-resolving detector.
+By matching the non-vacuum probability, one can compare different sources when they are equally detectable by an adversary with a non-number-resolving detector. By matching the multi-photon probability, one can compare the sources when they are equally detectable by an adversary with a number-resolving detector.
+
+The metrics used are the signal-to-noise ratio (SNR) as well as the receiver operating characteristic (ROC) curves.
+
+The details are presented in the paper [add reference]. The paper should be read before diving into the code and the tutorials.
 
 ## Quick Usage Preview
-### Calculating the SNR when the mutli-photon probability is matched across sources
+### Calculating the SNR When the Multi-Photon Probability Is Matched Across Sources
 ```python
 from Sources import SetupParameters, PulsedLaser, EntangledPhotonSPDC, SinglePhoton
 
@@ -74,7 +59,7 @@ laser = PulsedLaser(param_laser)
 snr_laser = laser.signal_to_noise_rate()
 ```
 
-### Producing a ROC Curves for the different sources
+### Producing ROC Curves for the Various Sources
 ```python
 
 signal_rate_laser = laser.signal_rate()
@@ -102,11 +87,11 @@ true_positive_laser, false_positive_laser = RocAnalysis(
 
 ## Important files
 
-The file ```Sources.py``` contains the implementation of the three sources considered; the attenuated pulse laser, the quantum dot single-photon source and the SPDC entangled photon source. The file ```Analysis.py``` contains the algorithms to calculate the ROC curves or the range limitation of a given system. Furthermore, this file allows for the simulation of a typical histogram detection. 
+The file ```Sources.py``` contains the implementation of the three sources considered. The file  ```Analysis.py``` contains algorithms to calculate the ROC curves and the range limitation of a given system. Furthermore, this file allows simulation of a typical histogram detection.
 
 ## Tutorial
 
-Tutorials on how to use this module are available. They should be followed in that order:
+Tutorials on using this module are available and should be followed in order:
 
 1) [Setting parameters](Tutorials/Setting%20parameters.ipynb)
 2) [ROC Curves](Tutorials/ROC%20Curves.ipynb)
@@ -123,7 +108,7 @@ TODO: ADD LINK TO PAPER AND ADD THE FACT THAT PEOPLE CAN REPRODUCE THE GRAPH
 
 ## Authors
 
-The work was done by Anthony Drouin (IQC/UWaterloo), Dr. Jean-Philippe Bourgoin (Single Quantum System), Dr. Sara Hosseini (IQC/UWaterloo/NRC), Pr. François Sfigakis (IQC/UWaterloo), Pr. Jonathan Baugh (IQC/UWaterloo) & Pr. Michael E. Reimer (IQC/UWaterloo/Single Quantum System). Pr. Michael E. Reimer is the corresponding author for this work (michael.reimer@uwaterloo.ca).
+This work was carried out by Anthony Drouin (IQC/UWaterloo), Dr. Jean-Philippe Bourgoin (Single Quantum System), Dr. Sara Hosseini (IQC/UWaterloo/NRC), Prof. François Sfigakis (IQC/UWaterloo), Prof. Jonathan Baugh (IQC/UWaterloo), and Prof. Michael E. Reimer (IQC/UWaterloo/Single Quantum System). Prof. Michael E. Reimer is the corresponding author for this work (michael.reimer@uwaterloo.ca).
 
 The implementation of the theoretical model was performed by Anthony Drouin (anthony.drouin@uwaterloo.ca).
 

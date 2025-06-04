@@ -100,6 +100,10 @@ true_positive_laser, false_positive_laser = RocAnalysis(
 
 ```
 
+## Important files
+
+The file ```Sources.py``` contains the implementation of the three sources considered; the attenuated pulse laser, the quantum dot single-photon source and the SPDC entangled photon source. The file ```Analysis.py``` contains the algorithms to calculate the ROC curves or the range limitation of a given system. Furthermore, this file allows for the simulation of a typical histogram detection. 
+
 ## Tutorial
 
 Tutorials on how to use this module are available. They should be followed in that order:
@@ -113,18 +117,16 @@ Tutorials on how to use this module are available. They should be followed in th
 
 TODO: ADD LINK TO PAPER AND ADD THE FACT THAT PEOPLE CAN REPRODUCE THE GRAPH
 
-## About
-
-This work was supported by [...]
-
-## Thanks
+## Citation
 
 [...]
+
+## Authors
+
+The work was done by Anthony Drouin (IQC/UWaterloo), Dr. Jean-Philippe Bourgoin (Single Quantum System), Dr. Sara Hosseini (IQC/UWaterloo/NRC), Pr. François Sfigakis (IQC/UWaterloo), Pr. Jonathan Baugh (IQC/UWaterloo) & Pr. Michael E. Reimer (IQC/UWaterloo/Single Quantum System). Pr. Michael E. Reimer is the corresponding author for this work (michael.reimer@uwaterloo.ca).
+
+The implementation of the theoretical model was performed by Anthony Drouin (anthony.drouin@uwaterloo.ca).
 
 ## License
 
 [Apache License 2.0](LICENSE)
-
-## Citation
-
-[...]

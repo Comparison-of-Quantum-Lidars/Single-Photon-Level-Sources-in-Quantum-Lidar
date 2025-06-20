@@ -13,6 +13,8 @@ class TestSource(unittest.TestCase):
 		self.output_power = 1e6
 		self.multi_photon_probability = 0.1
 		self.no_vacuum_probability = 0.2
+		self.number_nv_pulse = 0.5 * self.output_power
+		self.number_mp_pulse = None
 		self.sp_collection = 0.2
 		self.sp_p1 = 0.99
 		self.sp_p2 = 0.01
@@ -33,6 +35,8 @@ class TestSource(unittest.TestCase):
 			output_power=self.output_power,
 			multi_photon_probability=self.multi_photon_probability,
 			no_vacuum_probability=self.no_vacuum_probability,
+			number_nv_pulse=self.number_nv_pulse,
+			number_mp_pulse=self.number_mp_pulse,
 			sp_collection=self.sp_collection,
 			sp_p1=self.sp_p1,
 			sp_p2=self.sp_p2,
@@ -57,6 +61,7 @@ class TestSource(unittest.TestCase):
 		self.assertEqual(self.source.output_power, self.output_power)
 		self.assertEqual(self.source.multi_photon_probability, self.multi_photon_probability)
 		self.assertEqual(self.source.no_vacuum_probability, self.no_vacuum_probability)
+		self.assertEqual(self.source.number_nv_pulse, self.number_nv_pulse)
 		self.assertEqual(self.source.sp_collection, self.sp_collection)
 		self.assertEqual(self.source.sp_p1, self.sp_p1)
 		self.assertEqual(self.source.sp_p2, self.sp_p2)

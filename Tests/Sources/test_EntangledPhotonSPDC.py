@@ -12,6 +12,8 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 		self.output_power = 1e6
 		self.multi_photon_probability = 0.1
 		self.no_vacuum_probability = None
+		self.number_nv_pulse = None
+		self.number_mp_pulse = None
 		self.sp_collection = 0.2
 		self.sp_p1 = 0.99
 		self.sp_p2 = 0.01
@@ -32,6 +34,8 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 			output_power=self.output_power,
 			multi_photon_probability=self.multi_photon_probability,
 			no_vacuum_probability=self.no_vacuum_probability,
+			number_nv_pulse=self.number_nv_pulse,
+			number_mp_pulse=self.number_mp_pulse,
 			sp_collection=self.sp_collection,
 			sp_p1=self.sp_p1,
 			sp_p2=self.sp_p2,
@@ -76,6 +80,12 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 		eps.no_vacuum_probability = 0.1
 		self.assertEqual(eps.no_vacuum_probability, 0.1)
 
+		eps = deepcopy(self.eps)
+		eps.multi_photon_probability = None,
+		eps.no_vacuum_probability = None
+		eps.number_nv_pulse = self.output_power * 0.9
+		self.assertEqual(eps.number_nv_pulse, self.output_power * 0.9)
+
 		background_source = self.source.background2loss()
 		background_eps = self.eps.background2loss()
 		self.assertEqual(background_eps, background_source)
@@ -92,6 +102,7 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 		params = deepcopy(self.setup_params)
 		params["no_vacuum_probability"] = 0.1
 		params["multi_photon_probability"] = 0.1
+		params["number_nv_pulse"] = 100
 
 		with self.assertRaises(AssertionError):
 			EntangledPhotonSPDC(params)
@@ -107,6 +118,14 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 		params = deepcopy(self.setup_params)
 		params["no_vacuum_probability"] = None
 		params["multi_photon_probability"] = 1.1
+
+		with self.assertRaises(AssertionError):
+			EntangledPhotonSPDC(params)
+
+		params = deepcopy(self.setup_params)
+		params["no_vacuum_probability"] = None
+		params["multi_photon_probability"] = None
+		params["number_nv_pulse"] = 1.1 * self.output_power
 
 		with self.assertRaises(AssertionError):
 			EntangledPhotonSPDC(params)
@@ -127,6 +146,15 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 		eps = EntangledPhotonSPDC(params)
 		self.assertEqual(eps.no_vacuum_probability, prob)
 
+	def test_match_number_nv_pulse(self):
+		params = deepcopy(self.setup_params)
+		number_nv_pulse = np.random.randint(1, 1000)
+		params["no_vacuum_probability"] = None
+		params["multi_photon_probability"] = None
+		params["number_nv_pulse"] = number_nv_pulse
+		eps = EntangledPhotonSPDC(params)
+		self.assertEqual(eps.number_nv_pulse, number_nv_pulse)
+
 	def test_reciprocal_probabilities(self):
 		params = deepcopy(self.setup_params)
 		prob_nvp = np.random.rand()
@@ -135,6 +163,7 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 		prob_mpp_predicted = EntangledPhotonSPDC(params).multi_photon_probability
 		average_photon_per_pulse_predicted_nvp = EntangledPhotonSPDC(params).average_photon_per_pulse
 		trigger_rate_predicted_nvp = EntangledPhotonSPDC(params).trigger_rate
+		number_nv_pulse_nvp_fixed = EntangledPhotonSPDC(params).number_nv_pulse
 
 		params["no_vacuum_probability"] = None
 		params["multi_photon_probability"] = prob_mpp_predicted
@@ -153,6 +182,7 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 		prob_nvp_predicted = EntangledPhotonSPDC(params).no_vacuum_probability
 		average_photon_per_pulse_predicted_mpp = EntangledPhotonSPDC(params).average_photon_per_pulse
 		trigger_rate_predicted_mpp = EntangledPhotonSPDC(params).trigger_rate
+		number_nv_pulse_mpp_fixed = EntangledPhotonSPDC(params).number_nv_pulse
 
 		params["no_vacuum_probability"] = prob_nvp_predicted
 		params["multi_photon_probability"] = None
@@ -163,6 +193,24 @@ class TestEntangledPhotonSPDC(unittest.TestCase):
 		self.assertAlmostEquals(prob_mpp, prob_mpp_predicted, places=5)
 		self.assertAlmostEquals(average_photon_per_pulse_predicted_nvp, average_photon_per_pulse_predicted_mpp, places=5)
 		self.assertAlmostEquals(trigger_rate_predicted_nvp, trigger_rate_predicted_mpp, places=5)
+
+		params = deepcopy(self.setup_params)
+		params["no_vacuum_probability"] = None
+		params["multi_photon_probability"] = None
+		params["number_nv_pulse"] = number_nv_pulse_nvp_fixed
+
+		eps = EntangledPhotonSPDC(params)
+
+		self.assertAlmostEquals(eps.no_vacuum_probability, prob_nvp, places=5)
+
+		params = deepcopy(self.setup_params)
+		params["no_vacuum_probability"] = None
+		params["multi_photon_probability"] = None
+		params["number_nv_pulse"] = number_nv_pulse_mpp_fixed
+
+		eps = EntangledPhotonSPDC(params)
+
+		self.assertAlmostEquals(eps.multi_photon_probability, prob_mpp, places=5)
 
 	def test_overall_detection_probability(self):
 		eta_detector, eta_noise = self.eps.overall_detection_probability()

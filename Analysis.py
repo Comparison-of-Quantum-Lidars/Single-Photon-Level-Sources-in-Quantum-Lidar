@@ -292,7 +292,7 @@ class RangeLimitation:
 	def __init__(
 			self,
 			params,
-			match_multi_photon_probability: bool,
+			parameter_to_match: str,
 			range_interval: Optional[float],
 			distance: np.array,
 			acquisition_time: np.array,
@@ -300,11 +300,12 @@ class RangeLimitation:
 			target_true_positive: float,
 			precision_roc: int,
 			threshold_limit_factor_roc: int,
+			number_nv_pulse_for_match: Optional[float] = None
 	):
 		"""
 		:param params: SetupParams object containing the parameters of the LiDAR system.
-		:param match_multi_photon_probability: If true, the multi-photon probability is matched based on the SPS. If
-		set to false, then the non-vacuum probability is matched based on the SPS.
+		:param parameter_to_match: Specify parameters to match for the comparison. The options are: "number_nv_pulse",
+		"multi_photon_probability" or "no_vacuum_probability". Another input will yield an error.
 		:param range_interval: Maximum distance that can be resolved by the LiDAR system. The greater is the range interval,
 		the more bins will be considered in the histogram which increase the probability that noise surpass the threshold.
 		If set to None, the range interval is computed based on the current distance considered: it is therefore the best
@@ -321,7 +322,7 @@ class RangeLimitation:
 		using trigger_rate/threshold_limit_factor_roc.
 		"""
 		self.params = params
-		self.match_multi_photon_probability = match_multi_photon_probability
+		self.parameter_to_match = parameter_to_match
 		self.range_interval = range_interval
 		self.distance = distance
 		self.acquisition_time = acquisition_time
@@ -330,14 +331,25 @@ class RangeLimitation:
 		self.precision_roc = precision_roc
 		self.threshold_limit_factor_roc = threshold_limit_factor_roc
 
+		self.number_nv_pulse_for_match = number_nv_pulse_for_match if number_nv_pulse_for_match is not None else params["number_nv_pulse"]
+
 		self.param_laser = deepcopy(self.params)
 		self.param_sps = deepcopy(self.params)
 		self.param_eps = deepcopy(self.params)
 
-		self.set_multi_or_non_vacuum_prob()
+		try:
+			self.sps = SinglePhoton(self.param_sps)
+			if self.parameter_to_match == "number_nv_pulse" and number_nv_pulse_for_match is not None:
+				nv_pulse_sps = self.sps.number_nv_pulse
+				assert nv_pulse_sps == self.number_nv_pulse_for_match, "The number of NV pulse for the SPS does not match the one for the laser and the SPDC."
+			self.number_nv_pulse_for_match = self.sps.number_nv_pulse
+			self.keep_sps = True
+		except AssertionError:
+			self.keep_sps = False
+
+		self.set_param_to_fix()
 
 		self.laser = PulsedLaser(self.param_laser)
-		self.sps = SinglePhoton(self.param_sps)
 		self.eps = EntangledPhotonSPDC(self.param_eps)
 
 		self.snr_laser = []
@@ -370,19 +382,29 @@ class RangeLimitation:
 		idx2keep = np.argmin(np.abs(true_positive_at_target_false_value - target_true))
 		return distance[idx2keep]
 
-	def set_multi_or_non_vacuum_prob(self):
+	def set_param_to_fix(self):
 		"""
 		Set the multi-photon probability or the non-vacuum probability based on the SPS.
 		"""
-		sps = SinglePhoton(self.param_sps)
-		if self.match_multi_photon_probability:
+		assert self.parameter_to_match in ["number_nv_pulse", "multi_photon_probability", "no_vacuum_probability"], "The parameters to match is not valid. The three options are: number_nv_pulse, multi_photon_probability, no_vacuum_probability"
+
+		if self.parameter_to_match == "multi_photon_probability":
+			sps = SinglePhoton(self.param_sps)
 			multi_photon_probability = sps.multi_photon_probability
 			self.param_laser["multi_photon_probability"] = multi_photon_probability
 			self.param_eps["multi_photon_probability"] = multi_photon_probability
-		else:
+		elif self.parameter_to_match == "no_vacuum_probability":
+			sps = SinglePhoton(self.param_sps)
 			no_vacuum_probability = sps.no_vacuum_probability
 			self.param_laser["no_vacuum_probability"] = no_vacuum_probability
 			self.param_eps["no_vacuum_probability"] = no_vacuum_probability
+		elif self.parameter_to_match == "number_nv_pulse":
+			self.param_laser["number_nv_pulse"] = self.number_nv_pulse_for_match
+			self.param_eps["number_nv_pulse"] = self.number_nv_pulse_for_match
+			if self.keep_sps:
+				self.param_sps["number_nv_pulse"] = self.number_nv_pulse_for_match
+		else:
+			raise ValueError("Parameters to match not valid.")
 
 	def prepare_dict_true_positive_at_target_false_value(self):
 		"""
@@ -412,7 +434,8 @@ class RangeLimitation:
 			self.param_eps["target_distance"] = d
 
 			self.laser = PulsedLaser(self.param_laser)
-			self.sps = SinglePhoton(self.param_sps)
+			if self.keep_sps:
+				self.sps = SinglePhoton(self.param_sps)
 			self.eps = EntangledPhotonSPDC(self.param_eps)
 
 			signal_laser = self.laser.signal_rate()
@@ -421,11 +444,12 @@ class RangeLimitation:
 			snr_laser_current = (signal_laser - noise_laser) / noise_laser
 			self.snr_laser.append(snr_laser_current)
 
-			signal_sps = self.sps.signal_rate()
-			noise_sps = self.sps.noise_rate()
-			trigger_rate_sps = self.sps.trigger_rate
-			snr_sps_current = (signal_sps - noise_sps) / noise_sps
-			self.snr_sps.append(snr_sps_current)
+			if self.keep_sps:
+				signal_sps = self.sps.signal_rate()
+				noise_sps = self.sps.noise_rate()
+				trigger_rate_sps = self.sps.trigger_rate
+				snr_sps_current = (signal_sps - noise_sps) / noise_sps
+				self.snr_sps.append(snr_sps_current)
 
 			signal_eps = self.eps.signal_rate()
 			noise_eps = self.eps.noise_rate()
@@ -448,19 +472,20 @@ class RangeLimitation:
 					true_positive_laser
 				)
 
-				true_positive_sps, false_positive_sps = self.compute_roc_curve(
-					signal=signal_sps,
-					noise=noise_sps,
-					trigger_rate=trigger_rate_sps,
-					distance=d,
-					acquisition_time=at
-				)
+				if self.keep_sps:
+					true_positive_sps, false_positive_sps = self.compute_roc_curve(
+						signal=signal_sps,
+						noise=noise_sps,
+						trigger_rate=trigger_rate_sps,
+						distance=d,
+						acquisition_time=at
+					)
 
-				self.true_positive_at_target_false_value_sps[at][idx] = np.interp(
-					self.target_false_positive,
-					false_positive_sps,
-					true_positive_sps
-				)
+					self.true_positive_at_target_false_value_sps[at][idx] = np.interp(
+						self.target_false_positive,
+						false_positive_sps,
+						true_positive_sps
+					)
 
 				true_positive_eps, false_positive_eps = self.compute_roc_curve(
 					signal=signal_eps,
@@ -539,11 +564,12 @@ class RangeLimitation:
 				self.target_true_positive
 			)
 
-			self.distance_cutoff_sps[at] = self.distance_at_target(
-				self.distance,
-				self.true_positive_at_target_false_value_sps[at],
-				self.target_true_positive
-			)
+			if self.keep_sps:
+				self.distance_cutoff_sps[at] = self.distance_at_target(
+					self.distance,
+					self.true_positive_at_target_false_value_sps[at],
+					self.target_true_positive
+				)
 
 			self.distance_cutoff_eps[at] = self.distance_at_target(
 				self.distance,
@@ -554,6 +580,7 @@ class RangeLimitation:
 			key = "snr_at" + str(idx)
 
 			self.distance_cutoff_laser[key] = self.snr_laser[np.where(self.distance == self.distance_cutoff_laser[at])]
-			self.distance_cutoff_sps[key] = self.snr_sps[np.where(self.distance == self.distance_cutoff_sps[at])]
+			if self.keep_sps:
+				self.distance_cutoff_sps[key] = self.snr_sps[np.where(self.distance == self.distance_cutoff_sps[at])]
 			self.distance_cutoff_eps[key] = self.snr_eps[np.where(self.distance == self.distance_cutoff_eps[at])]
 

@@ -2,22 +2,19 @@ import numpy as np
 from Sources import SinglePhoton, PulsedLaser, EntangledPhotonSPDC, SetupParameters
 from Analysis import RangeLimitation
 import matplotlib.pyplot as plt
-from tqdm import tqdm
-from copy import deepcopy
-
 
 param = SetupParameters(
-	fock_space_dim=35,
+	fock_space_dim=5,
 	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	number_nv_pulse=None,
 	number_mp_pulse=None,
-	sp_collection=0.57,
+	sp_collection=0.8,
 	sp_p1=0.99,
 	sp_p2=5e-3,
-	spdc_eps_heralding=0.57*0.7,
-	spdc_eps_collection=0.57,
+	spdc_eps_heralding=0.8*0.7,
+	spdc_eps_collection=0.8,
 	atmosphere=0.5,
 	target_distance=None,
 	receiver_diameter=0.05,
@@ -30,10 +27,12 @@ param = SetupParameters(
 	timing_window=0.5e-9,
 )
 
+sps = SinglePhoton(param)
+number_nv_pulse_sps = sps.number_nv_pulse
+param["number_nv_pulse"] = number_nv_pulse_sps
 
-parameter_to_match = "no_vacuum_probability"
 range_interval = None
-distance = np.linspace(0.5, 40, 300)
+distance = np.linspace(0.5, 50, 200)
 acquisition_time = np.array([1, 60, 3600])
 target_false_positive = 0.2
 target_true_positive = 0.8
@@ -43,15 +42,21 @@ threshold_limit_factor = 100
 
 results = RangeLimitation(
 	params=param,
-	parameter_to_match=parameter_to_match,
-	range_interval=range_interval,
+	parameter_to_match="number_nv_pulse",
+	range_interval=None,
 	distance=distance,
 	acquisition_time=acquisition_time,
 	target_false_positive=target_false_positive,
 	target_true_positive=target_true_positive,
 	precision_roc=precision,
 	threshold_limit_factor_roc=threshold_limit_factor,
-).compute()
+	number_nv_pulse_for_match=number_nv_pulse_sps,
+)
+
+results = np.load("Range_limitation_NRD_ce_80_2025_06_23.npy", allow_pickle=True).item()
+
+#np.save("Range_limitation_NRD_ce_80_2025_06_23.npy", results)
+
 
 distance = results["distance"]
 snr_laser = results["snr_laser"]

@@ -11,6 +11,8 @@ param = SetupParameters(
 	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
+	number_nv_pulse=None,
+	number_mp_pulse=None,
 	sp_collection=None,
 	sp_p1=0.99,
 	sp_p2=5e-3,
@@ -46,7 +48,7 @@ for idx, ce in enumerate(collection_efficiency):
 	snr_sps[idx] = sps.signal_to_noise_rate()
 	average_photon_per_pulse_sps[idx] = sps.average_photon_per_pulse
 
-non_vacuum_probability = np.linspace(0.0001, 0.8, 96)
+non_vacuum_probability = np.linspace(0.0001, 0.8, 8)
 non_vacuum_probability = np.concatenate((non_vacuum_probability, non_vacuum_probability_sps))
 non_vacuum_probability = np.sort(non_vacuum_probability)
 

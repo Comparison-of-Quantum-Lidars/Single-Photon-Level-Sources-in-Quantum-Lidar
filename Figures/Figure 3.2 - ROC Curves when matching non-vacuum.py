@@ -1,0 +1,284 @@
+import numpy as np
+from Sources import SinglePhoton, PulsedLaser, EntangledPhotonSPDC, SetupParameters
+import matplotlib.pyplot as plt
+from tqdm import tqdm
+from copy import deepcopy
+from Analysis import *
+
+# *** SETUP ***
+
+param = SetupParameters(
+	fock_space_dim=45,
+	output_power=400000,
+	multi_photon_probability=None,
+	no_vacuum_probability=None,
+	number_nv_pulse=None,
+	number_mp_pulse=None,
+	sp_collection=None,
+	sp_p1=0.99,
+	sp_p2=5e-3,
+	spdc_eps_heralding=None,
+	spdc_eps_collection=None,
+	atmosphere=0.5,
+	target_distance=2,
+	receiver_diameter=0.05,
+	target_albedo=0.5,
+	optics_transmitter=0.8,
+	optics_receiver=0.5,
+	detection_efficiency=0.7,
+	background=250000,
+	detector_dark=25,
+	timing_window=0.5e-9,
+)
+
+collection_efficiency = np.array([0.2, 0.57, 0.8, 1])
+
+non_vacuum_probability = np.zeros_like(collection_efficiency)
+
+# *** Single Photon Source ***
+
+param_sps = deepcopy(param)
+signal_sps = np.zeros_like(collection_efficiency)
+noise_sps = np.zeros_like(collection_efficiency)
+trigger_rate_sps = np.zeros_like(collection_efficiency)
+average_photon_per_pulse_sps = np.zeros_like(collection_efficiency)
+
+print("Single Photon Source")
+for idx, ce in enumerate(collection_efficiency):
+	param_sps["sp_collection"] = ce
+	extr_eff = param_sps["optics_transmitter"] * ce
+	param_sps["no_vacuum_probability"] = param_sps["sp_p1"] * extr_eff + (
+				param_sps["sp_p2"] * extr_eff * (2 - extr_eff))
+	sps = SinglePhoton(param_sps)
+	non_vacuum_probability[idx] = sps.no_vacuum_probability
+	signal_sps[idx] = sps.signal_rate()
+	noise_sps[idx] = sps.noise_rate()
+	trigger_rate_sps[idx] = sps.trigger_rate
+	average_photon_per_pulse_sps[idx] = sps.average_photon_per_pulse
+	print(sps.compute_number_nv_pulse(), 4e5 / sps.compute_number_nv_pulse())
+exit()
+# *** Pulsed Laser ***
+
+param_laser = deepcopy(param)
+signal_laser = np.zeros_like(collection_efficiency)
+noise_laser = np.zeros_like(collection_efficiency)
+trigger_rate_laser = np.zeros_like(collection_efficiency)
+
+print("Pulsed Laser")
+for idx, nvp in enumerate(non_vacuum_probability):
+	param_laser["no_vacuum_probability"] = nvp
+	laser = PulsedLaser(param_laser)
+	signal_laser[idx] = laser.signal_rate()
+	noise_laser[idx] = laser.noise_rate()
+	trigger_rate_laser[idx] = laser.trigger_rate
+	print(laser.compute_number_nv_pulse(), 4e5 / laser.compute_number_nv_pulse(), laser.trigger_rate)
+	print(laser.no_vacuum_probability)
+
+param_laser = deepcopy(param)
+param_laser["no_vacuum_probability"] = None
+param_laser["number_nv_pulse"] = 81280.0
+laser = PulsedLaser(param_laser)
+print(laser.no_vacuum_probability, laser.average_photon_per_pulse)
+
+
+
+exit()
+# *** Entangled Photon Source ***
+
+param_eps = deepcopy(param)
+signal_eps = np.zeros_like(collection_efficiency)
+noise_eps = np.zeros_like(collection_efficiency)
+trigger_rate_eps = np.zeros_like(collection_efficiency)
+
+print("Entangled Photon Source")
+for idx, ce in enumerate(collection_efficiency):
+	param_eps["spdc_eps_heralding"] = ce * param_eps["detection_efficiency"]
+	param_eps["spdc_eps_collection"] = ce
+	param_eps["no_vacuum_probability"] = non_vacuum_probability[idx]
+	eps = EntangledPhotonSPDC(param_eps)
+	signal_eps[idx] = eps.signal_rate()
+	noise_eps[idx] = eps.noise_rate()
+	trigger_rate_eps[idx] = eps.trigger_rate
+	print(eps.compute_number_nv_pulse(), 4e5 / eps.compute_number_nv_pulse())
+
+param_eps = deepcopy(param)
+param_eps["number_nv_pulse"] = 200004.44747869097
+param_eps["spdc_eps_collection"] = 0.8
+param_eps["spdc_eps_heralding"] = 0.8 * param_eps["detection_efficiency"]
+
+eps = EntangledPhotonSPDC(param_eps)
+print(eps.compute_number_nv_pulse(), 4e5 / eps.compute_number_nv_pulse(), eps.trigger_rate)
+exit()
+
+
+# *** ROC Curves ***
+
+# Maximum distance considered. Increasing the distance results in a higher number of bins which increases the
+# probability of a false positive detection.
+
+range_distance = 50
+
+# Collection efficiency: 0.2
+
+true_positive_sps_020, false_positive_sps_020 = RocAnalysis(
+	signal_rate=signal_sps[0],
+	noise_rate=noise_sps[0],
+	trigger_rate=trigger_rate_sps[0],
+	threshold_limit=trigger_rate_sps[0] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+true_positive_laser_020, false_positive_laser_020 = RocAnalysis(
+	signal_rate=signal_laser[0],
+	noise_rate=noise_laser[0],
+	trigger_rate=trigger_rate_laser[0],
+	threshold_limit=trigger_rate_laser[0] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+true_positive_eps_020, false_positive_eps_020 = RocAnalysis(
+	signal_rate=signal_eps[0],
+	noise_rate=noise_eps[0],
+	trigger_rate=trigger_rate_eps[0],
+	threshold_limit=trigger_rate_eps[0] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+# Collection efficiency: 0.57
+
+true_positive_sps_057, false_positive_sps_057 = RocAnalysis(
+	signal_rate=signal_sps[1],
+	noise_rate=noise_sps[1],
+	trigger_rate=trigger_rate_sps[1],
+	threshold_limit=trigger_rate_sps[1] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+true_positive_laser_057, false_positive_laser_057 = RocAnalysis(
+	signal_rate=signal_laser[1],
+	noise_rate=noise_laser[1],
+	trigger_rate=trigger_rate_laser[1],
+	threshold_limit=trigger_rate_laser[1] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+true_positive_eps_057, false_positive_eps_057 = RocAnalysis(
+	signal_rate=signal_eps[1],
+	noise_rate=noise_eps[1],
+	trigger_rate=trigger_rate_eps[1],
+	threshold_limit=trigger_rate_eps[1] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+print(f"Signal Rate laser: {signal_laser[1]}, Noise Rate laser: {noise_laser[1]}, Trigger Rate laser: {trigger_rate_laser[1]}")
+print(f"Signal Rate eps: {signal_eps[1]}, Noise Rate eps: {noise_eps[1]}, Trigger Rate eps: {trigger_rate_eps[1]}")
+
+# Collection efficiency: 0.8
+
+true_positive_sps_08, false_positive_sps_08 = RocAnalysis(
+	signal_rate=signal_sps[2],
+	noise_rate=noise_sps[2],
+	trigger_rate=trigger_rate_sps[2],
+	threshold_limit=trigger_rate_sps[2] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+true_positive_laser_08, false_positive_laser_08 = RocAnalysis(
+	signal_rate=signal_laser[2],
+	noise_rate=noise_laser[2],
+	trigger_rate=trigger_rate_laser[2],
+	threshold_limit=trigger_rate_laser[2] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+true_positive_eps_08, false_positive_eps_08 = RocAnalysis(
+	signal_rate=signal_eps[2],
+	noise_rate=noise_eps[2],
+	trigger_rate=trigger_rate_eps[2],
+	threshold_limit=trigger_rate_eps[2] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+# Collection efficiency: 1.0
+
+true_positive_sps_100, false_positive_sps_100 = RocAnalysis(
+	signal_rate=signal_sps[3],
+	noise_rate=noise_sps[3],
+	trigger_rate=trigger_rate_sps[3],
+	threshold_limit=trigger_rate_sps[3] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+true_positive_laser_100, false_positive_laser_100 = RocAnalysis(
+	signal_rate=signal_laser[3],
+	noise_rate=noise_laser[3],
+	trigger_rate=trigger_rate_laser[3],
+	threshold_limit=trigger_rate_laser[3] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+true_positive_eps_100, false_positive_eps_100 = RocAnalysis(
+	signal_rate=signal_eps[3],
+	noise_rate=noise_eps[3],
+	trigger_rate=trigger_rate_eps[3],
+	threshold_limit=trigger_rate_eps[3] / 1000,
+	range_interval=range_distance,
+	timing_window=param["timing_window"],
+).compute_p_d_p_fa()
+
+# *** PLOT ***
+
+plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
+
+fig, axs = plt.subplots(2, 2, figsize=(10, 10))
+
+axs[0, 0].plot(false_positive_sps_020, true_positive_sps_020, "--", label="Single Photon Source", color="red", linewidth=2.5, zorder=2)
+axs[0, 0].plot(false_positive_laser_020, true_positive_laser_020, "-", label="Pulsed Laser", color="blue", linewidth=2.5,
+            zorder=1)
+axs[0, 0].plot(false_positive_eps_020, true_positive_eps_020, "-.", label="Entangled Photon Source", color="green",
+            linewidth=2.5, zorder=3)
+str_title = r"$\eta_{signal} = 0.2$, $P_{nv} = $" + f"{non_vacuum_probability[0] * 100:.2f}%"
+axs[0, 0].set_title(str_title, fontsize=21)
+axs[0, 0].tick_params(axis='both', which='major', labelsize=22)
+
+axs[0, 1].plot(false_positive_sps_057, true_positive_sps_057, "--", color="red", linewidth=2.5, zorder=2)
+axs[0, 1].plot(false_positive_laser_057, true_positive_laser_057, "-", color="blue", linewidth=2.5, zorder=1)
+axs[0, 1].plot(false_positive_eps_057, true_positive_eps_057, "-.", color="green", linewidth=2.5, zorder=3)
+str_title = r"$\eta_{signal} = 0.57$, $P_{nv} = $" + f"{non_vacuum_probability[1] * 100:.2f}%"
+axs[0, 1].set_title(str_title, fontsize=21)
+axs[0, 1].tick_params(axis='both', which='major', labelsize=22)
+
+axs[1, 0].plot(false_positive_sps_08, true_positive_sps_08, "--", color="red", linewidth=2.5, zorder=2)
+axs[1, 0].plot(false_positive_laser_08, true_positive_laser_08, "-", color="blue", linewidth=2.5, zorder=1)
+axs[1, 0].plot(false_positive_eps_08, true_positive_eps_08, "-.", color="green", linewidth=2.5, zorder=3)
+str_title = r"$\eta_{signal} = 0.8$, $P_{nv} = $" + f"{non_vacuum_probability[2] * 100:.2f}%"
+axs[1, 0].set_title(str_title, fontsize=22)
+axs[1, 0].tick_params(axis='both', which='major', labelsize=22)
+
+axs[1, 1].plot(false_positive_sps_100, true_positive_sps_100, "--", color="red", linewidth=2.5, zorder=2)
+axs[1, 1].plot(false_positive_laser_100, true_positive_laser_100, "-", color="blue", linewidth=2.5, zorder=1)
+axs[1, 1].plot(false_positive_eps_100, true_positive_eps_100, "-.", color="green", linewidth=2.5, zorder=3)
+str_title = r"$\eta_{signal} = 1.0$, $P_{nv} = $" + f"{non_vacuum_probability[3] * 100:.2f}%"
+axs[1, 1].set_title(str_title, fontsize=22)
+axs[1, 1].tick_params(axis='both', which='major', labelsize=22)
+
+plt.subplots_adjust(wspace=0.3, hspace=0.3)
+
+fig.text(0.5, 0.04, 'False Positive', ha='center', fontsize=25)
+fig.text(0.04, 0.5, 'True Positive', va='center', rotation='vertical', fontsize=25)
+
+handles, labels = axs[0, 0].get_legend_handles_labels()
+fig.legend(handles, labels, loc='upper center', fontsize=20, ncol=3)
+
+plt.show()

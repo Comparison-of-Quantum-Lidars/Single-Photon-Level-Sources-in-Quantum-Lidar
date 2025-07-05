@@ -1,5 +1,6 @@
 # Removing .idea and Pycache files
 .idea
+.npy
 __pycache__
 
 # Removing testing files

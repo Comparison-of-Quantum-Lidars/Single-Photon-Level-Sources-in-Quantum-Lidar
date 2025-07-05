@@ -1,6 +1,5 @@
 # Removing .idea and Pycache files
 .idea
-.npy
 __pycache__
 
 # Removing testing files
@@ -15,3 +14,4 @@ Graphs/data
 Graphs/
 Pre-Analysis Graphs/
 old_version/
+*.npy

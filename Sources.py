@@ -268,6 +268,7 @@ class SinglePhoton(Source):
 		"""
 		if params["fock_space_dim"] != 2 * number_sps + 1 and not kwargs.get("warning_off", False):
 			warnings.warn(f"Fock space dimension should be set to {2 * number_sps + 1}. This will be corrected.")
+		params = deepcopy(params)
 		params["fock_space_dim"] = 2 * number_sps + 1
 		super().__init__(params)
 		self.number_sps = number_sps

@@ -300,7 +300,8 @@ class RangeLimitation:
 			target_true_positive: float,
 			precision_roc: int,
 			threshold_limit_factor_roc: int,
-			number_nv_pulse_for_match: Optional[float] = None
+			number_nv_pulse_for_match: Optional[float] = None,
+			number_sps_array: int = 1,
 	):
 		"""
 		:param params: SetupParams object containing the parameters of the LiDAR system.
@@ -320,6 +321,7 @@ class RangeLimitation:
 		is the maximum threshold value considered for the ROC Curve. It should big enough such that it is statistically
 		impossible to cross it. The better is the system, the lower should be this parameter. The threshold is computed
 		using trigger_rate/threshold_limit_factor_roc.
+		:param number_sps_array: Number of Single Photon sources to consider in the analysis.
 		"""
 		self.params = params
 		self.parameter_to_match = parameter_to_match
@@ -330,6 +332,7 @@ class RangeLimitation:
 		self.target_true_positive = target_true_positive
 		self.precision_roc = precision_roc
 		self.threshold_limit_factor_roc = threshold_limit_factor_roc
+		self.number_sps_array = number_sps_array
 
 		self.number_nv_pulse_for_match = number_nv_pulse_for_match if number_nv_pulse_for_match is not None else params["number_nv_pulse"]
 
@@ -338,7 +341,7 @@ class RangeLimitation:
 		self.param_eps = deepcopy(self.params)
 
 		try:
-			self.sps = SinglePhoton(self.param_sps)
+			self.sps = SinglePhoton(self.param_sps, number_sps=self.number_sps_array)
 			if self.parameter_to_match == "number_nv_pulse" and number_nv_pulse_for_match is not None:
 				nv_pulse_sps = self.sps.number_nv_pulse
 				assert nv_pulse_sps == self.number_nv_pulse_for_match, "The number of NV pulse for the SPS does not match the one for the laser and the SPDC."
@@ -389,12 +392,12 @@ class RangeLimitation:
 		assert self.parameter_to_match in ["number_nv_pulse", "multi_photon_probability", "no_vacuum_probability"], "The parameters to match is not valid. The three options are: number_nv_pulse, multi_photon_probability, no_vacuum_probability"
 
 		if self.parameter_to_match == "multi_photon_probability":
-			sps = SinglePhoton(self.param_sps)
+			sps = SinglePhoton(self.param_sps, number_sps=self.number_sps_array)
 			multi_photon_probability = sps.multi_photon_probability
 			self.param_laser["multi_photon_probability"] = multi_photon_probability
 			self.param_eps["multi_photon_probability"] = multi_photon_probability
 		elif self.parameter_to_match == "no_vacuum_probability":
-			sps = SinglePhoton(self.param_sps)
+			sps = SinglePhoton(self.param_sps, number_sps=self.number_sps_array)
 			no_vacuum_probability = sps.no_vacuum_probability
 			self.param_laser["no_vacuum_probability"] = no_vacuum_probability
 			self.param_eps["no_vacuum_probability"] = no_vacuum_probability
@@ -435,7 +438,7 @@ class RangeLimitation:
 
 			self.laser = PulsedLaser(self.param_laser)
 			if self.keep_sps:
-				self.sps = SinglePhoton(self.param_sps)
+				self.sps = SinglePhoton(self.param_sps, number_sps=self.number_sps_array)
 			self.eps = EntangledPhotonSPDC(self.param_eps)
 
 			signal_laser = self.laser.signal_rate()

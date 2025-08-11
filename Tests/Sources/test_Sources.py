@@ -14,7 +14,6 @@ class TestSource(unittest.TestCase):
 		self.multi_photon_probability = 0.1
 		self.no_vacuum_probability = 0.2
 		self.number_nv_pulse = 0.5 * self.output_power
-		self.number_mp_pulse = None
 		self.sp_collection = 0.2
 		self.sp_p1 = 0.99
 		self.sp_p2 = 0.01
@@ -36,7 +35,6 @@ class TestSource(unittest.TestCase):
 			multi_photon_probability=self.multi_photon_probability,
 			no_vacuum_probability=self.no_vacuum_probability,
 			number_nv_pulse=self.number_nv_pulse,
-			number_mp_pulse=self.number_mp_pulse,
 			sp_collection=self.sp_collection,
 			sp_p1=self.sp_p1,
 			sp_p2=self.sp_p2,

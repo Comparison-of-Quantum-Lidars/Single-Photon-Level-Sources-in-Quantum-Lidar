@@ -118,8 +118,6 @@ class PulsedLaser(Source):
 		Only two of those parameters can be fixed. Since P_{out} is always fixed, it is only possible to fix the
 		trigger rate, the multi-photon probability or the no-vacuum probability.
 		"""
-		# TODO: Correct sequence
-		# TODO: Remove try-except
 
 		assert sum(x is not None for x in
 		           self.params_to_fix) == 1, "Only one of the multi-photon probability, no-vacuum probability or number of non-vacuum pulses has to be fixed"

@@ -12,6 +12,7 @@ class TestRocAnalysis(unittest.TestCase):
 		self.output_power = 1e6
 		self.multi_photon_probability = 0.1
 		self.no_vacuum_probability = None
+		self.number_nv_pulse = None
 		self.sp_collection = 0.2
 		self.sp_p1 = 0.99
 		self.sp_p2 = 0.01
@@ -32,6 +33,7 @@ class TestRocAnalysis(unittest.TestCase):
 			output_power=self.output_power,
 			multi_photon_probability=self.multi_photon_probability,
 			no_vacuum_probability=self.no_vacuum_probability,
+			number_nv_pulse=self.number_nv_pulse,
 			sp_collection=self.sp_collection,
 			sp_p1=self.sp_p1,
 			sp_p2=self.sp_p2,

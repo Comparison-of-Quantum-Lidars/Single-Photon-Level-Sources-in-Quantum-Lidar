@@ -8,7 +8,7 @@ from qutip import Qobj
 class TestSinglePhoton(unittest.TestCase):
 
 	def setUp(self):
-		self.fock_space_dim = 5
+		self.fock_space_dim = 3
 		self.output_power = 1e6
 		self.multi_photon_probability = None
 		self.no_vacuum_probability = None

@@ -35,7 +35,6 @@ class Source:
 		self.detector_dark = params["detector_dark"]
 		self.timing_window = params["timing_window"]
 		self.number_nv_pulse = params["number_nv_pulse"]
-		self.number_mp_pulse = params["number_mp_pulse"]
 
 		self.params_to_fix = [self.no_vacuum_probability, self.multi_photon_probability, self.number_nv_pulse]
 
@@ -153,7 +152,6 @@ class PulsedLaser(Source):
 			self.alpha = np.sqrt(alpha_squared.real)
 			self.no_vacuum_probability = self.compute_no_vacuum_probability()
 			self.multi_photon_probability = self.compute_multi_photon_probability()
-			self.number_mp_pulse = self.compute_number_mp_pulse()
 		else:
 			raise ValueError(
 				"The non-vacuum probability, thr multi-photon probability or the number of non-vacuum pulses must be fixed")
@@ -177,9 +175,6 @@ class PulsedLaser(Source):
 
 	def compute_number_nv_pulse(self):
 		return (self.output_power * self.no_vacuum_probability) / ((self.alpha ** 2) * self.extr_efficiency)
-
-	def compute_number_mp_pulse(self):
-		return (self.output_power * self.multi_photon_probability) / ((self.alpha ** 2) * self.extr_efficiency)
 
 	def compute_effective_trigger_rate(self):
 		"""
@@ -306,7 +301,6 @@ class SinglePhoton(Source):
 		self.multi_photon_probability = self.compute_multi_photon_probability()
 		self.no_vacuum_probability = self.compute_no_vacuum_probability()
 		self.number_nv_pulse = self.compute_number_nv_pulse()
-		self.number_mp_pulse = self.compute_number_mp_pulse()
 
 	def compute_multi_photon_probability(self):
 		"""
@@ -326,11 +320,6 @@ class SinglePhoton(Source):
 
 	def compute_number_nv_pulse(self):
 		return (self.output_power * self.no_vacuum_probability) / ((self.sp_p1 + 2 * self.sp_p2) * self.extr_efficiency * self.number_sps)
-
-	def compute_number_mp_pulse(self):
-		# TODO: REMOVE
-		return (self.output_power * self.multi_photon_probability) / (
-					(self.sp_p1 + 2 * self.sp_p2) * self.extr_efficiency)
 
 	def compute_effective_trigger_rate(self):
 		"""
@@ -604,9 +593,6 @@ class EntangledPhotonSPDC(Source):
 	def compute_number_nv_pulse(self):
 		return (self.no_vacuum_probability * self.output_power) / (self.epsilon * self.extr_efficiency)
 
-	def compute_number_mp_pulse(self):
-		return (self.multi_photon_probability * self.output_power) / (self.epsilon * self.extr_efficiency)
-
 	def compute_effective_trigger_rate(self):
 		"""
 		Compute the effective trigger rate of the SPDC source
@@ -848,7 +834,6 @@ if __name__ == "__main__":
 		multi_photon_probability=None,
 		no_vacuum_probability=None,
 		number_nv_pulse=None,
-		number_mp_pulse=None,
 		sp_collection=1,
 		sp_p1=0.99,
 		sp_p2=5e-3,

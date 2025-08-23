@@ -80,41 +80,41 @@ plt.semilogy(distance, snr_eps, "-", label="Entangled Photon", linewidth=3, colo
 
 plt.scatter(0, 0, label=f"{target_true_positive * 100}% true detection\n{target_false_positive * 100}% false detection:", alpha=0)
 
-plt.scatter(distance_cutoff_laser[acquisition_time[0]], distance_cutoff_laser["snr_at0"], color="k", marker="o", s=100,
+plt.scatter(distance_cutoff_laser[acquisition_time[0]], distance_cutoff_laser["snr_at0"], color="k", marker="o", s=300,
             label="1s", zorder=1)
-plt.scatter(distance_cutoff_laser[acquisition_time[1]], distance_cutoff_laser["snr_at1"], color="k", marker="s", s=100,
+plt.scatter(distance_cutoff_laser[acquisition_time[1]], distance_cutoff_laser["snr_at1"], color="k", marker="s", s=300,
             label="1min", zorder=1)
-plt.scatter(distance_cutoff_laser[acquisition_time[2]], distance_cutoff_laser["snr_at2"], color="k", marker="^", s=100,
+plt.scatter(distance_cutoff_laser[acquisition_time[2]], distance_cutoff_laser["snr_at2"], color="k", marker="^", s=300,
             label="1h", zorder=1)
 
 str_maker_laser = "blue" if colored_marker else "k"
 plt.scatter(distance_cutoff_laser[acquisition_time[0]], distance_cutoff_laser["snr_at0"], color=str_maker_laser,
-            marker="o", s=100, zorder=5)
+            marker="o", s=300, zorder=5)
 plt.scatter(distance_cutoff_laser[acquisition_time[1]], distance_cutoff_laser["snr_at1"], color=str_maker_laser,
-            marker="s", s=100, zorder=5)
+            marker="s", s=300, zorder=5)
 plt.scatter(distance_cutoff_laser[acquisition_time[2]], distance_cutoff_laser["snr_at2"], color=str_maker_laser,
-            marker="^", s=100, zorder=5)
+            marker="^", s=300, zorder=5)
 
 str_maker_sps = "red" if colored_marker else "k"
 plt.scatter(distance_cutoff_sps[acquisition_time[0]], distance_cutoff_sps["snr_at0"], color=str_maker_sps, marker="o",
-            s=100, zorder=6)
+            s=300, zorder=6)
 plt.scatter(distance_cutoff_sps[acquisition_time[1]], distance_cutoff_sps["snr_at1"], color=str_maker_sps, marker="s",
-            s=100, zorder=6)
+            s=300, zorder=6)
 plt.scatter(distance_cutoff_sps[acquisition_time[2]], distance_cutoff_sps["snr_at2"], color=str_maker_sps, marker="^",
-            s=100, zorder=6)
+            s=300, zorder=6)
 
 str_maker_eps = "green" if colored_marker else "k"
 plt.scatter(distance_cutoff_eps[acquisition_time[0]], distance_cutoff_eps["snr_at0"], color=str_maker_eps, marker="o",
-            s=100, zorder=4)
+            s=300, zorder=4)
 plt.scatter(distance_cutoff_eps[acquisition_time[1]], distance_cutoff_eps["snr_at1"], color=str_maker_eps, marker="s",
-            s=100, zorder=4)
+            s=300, zorder=4)
 plt.scatter(distance_cutoff_eps[acquisition_time[2]], distance_cutoff_eps["snr_at2"], color=str_maker_eps, marker="^",
-            s=100, zorder=4)
+            s=300, zorder=4)
 
-plt.xlabel("Distance [m]", fontsize=22)
-plt.ylabel("SNR [-]", fontsize=22)
+plt.xlabel("Distance [m]", fontsize=25)
+plt.ylabel("SNR", fontsize=25)
 plt.legend(fontsize=22, frameon=False)
-plt.tick_params(axis='both', which='major', labelsize=22)
+plt.tick_params(axis='both', which='major', labelsize=25)
 plt.xlim([0, 50])
 plt.show()
 
@@ -179,11 +179,11 @@ tp_eps, fp_eps = RocAnalysis(
 plt.plot(fp_laser, tp_laser, "-", label="Pulsed Laser", color="blue", linewidth=2.5, zorder=1)
 plt.plot(fp_sps, tp_sps, "--", label="Single Photon", color="red", linewidth=2.5, zorder=2)
 plt.plot(fp_eps, tp_eps, "-.", label="Entangled Photon", color="green", linewidth=2.5, zorder=3)
-plt.xlabel("False Positive Rate", fontsize=22)
-plt.ylabel("True Positive Rate", fontsize=22)
+plt.xlabel("False Positive Rate", fontsize=25)
+plt.ylabel("True Positive Rate", fontsize=25)
 plt.title("ROC Curves for Different Sources at 14.18 m", fontsize=22)
 plt.legend(fontsize=22, frameon=False)
-plt.tick_params(axis='both', which='major', labelsize=22)
+plt.tick_params(axis='both', which='major', labelsize=25)
 plt.xlim([0, 1])
 plt.ylim([0, 1])
 plt.show()

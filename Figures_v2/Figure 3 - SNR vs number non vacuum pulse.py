@@ -51,45 +51,44 @@ plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/
 
 fig, ax1 = plt.subplots(figsize=(16.2, 10))
 
-ax1.semilogy(non_vacuum_number, snr_entangled_35, "-", label="Entangled Photon Source", color="green",
+ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_35, "-", label="Entangled Photon Source", color="green",
              linewidth=3, zorder=1)
-ax1.semilogy(non_vacuum_number, snr_entangled_57, "-", color="green", linewidth=3, zorder=1)
-ax1.semilogy(non_vacuum_number, snr_entangled_80, "-", color="green", linewidth=3, zorder=1)
-ax1.semilogy(non_vacuum_number, snr_entangled_100, "-", color="green", linewidth=3, zorder=1)
-ax1.semilogy(non_vacuum_number, snr_laser, "-.", label="Pulsed Laser", color="blue", linewidth=3, zorder=2)
-ax1.scatter(number_nv_pulse_sps, snr_sps, label="Single Photon Source", color="red", s=100, zorder=3)
-ax1.scatter(number_nv_pulse_sps_array_10, snr_sps_array_10, label="Array of 10 Single Photon Sources", color="red", s=75, marker="s", zorder=3, alpha=0.7)
+ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_57, "-", color="green", linewidth=3, zorder=1)
+ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_80, "-", color="green", linewidth=3, zorder=1)
+ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_100, "-", color="green", linewidth=3, zorder=1)
+ax1.semilogy(non_vacuum_number / 1e3, snr_laser, "-.", label="Pulsed Laser", color="blue", linewidth=3, zorder=2)
+ax1.scatter(number_nv_pulse_sps / 1e3, snr_sps, label="Single Photon Source", color="red", s=100, zorder=3)
+ax1.scatter(number_nv_pulse_sps_array_10 / 1e3, snr_sps_array_10, label="Array of 10 Single Photon Sources", color="red", s=75, marker="s", zorder=3, alpha=0.7)
 
-ax1.axvspan(50000, 100000, color="lightblue", alpha=0.35, label="Preferred regime against a NNRD", zorder=0)
-ax1.axvspan(350000, 400000, color="lightcoral", alpha=0.35, label="Preferred regime against a NRD", zorder=0)
+ax1.axvspan(50000 / 1e3, 100000 / 1e3, color="dodgerblue", alpha=0.35, label="Preferred regime against a NNRD", zorder=0)
+ax1.axvspan(350000 / 1e3, 400000 / 1e3, color="lightcoral", alpha=0.35, label="Preferred regime against a NRD", zorder=0)
 
-ax1.set_xlabel("Number of non-vacuum pulse", fontsize=22)
-ax1.set_ylabel("SNR", fontsize=22)
-ax1.set_xlim([None, 450000])
+ax1.set_xlabel(r"Number of non-vacuum pulses $(\times 10^3)$", fontsize=25)
+ax1.set_ylabel("SNR", fontsize=25)
+ax1.set_xlim([None, 450000 / 1e3])
 ax1.legend(frameon=False, fontsize=22)
-ax1.tick_params(axis="x", labelsize=22)
-ax1.tick_params(axis="y", labelsize=22)
+ax1.tick_params(axis="x", labelsize=25)
+ax1.tick_params(axis="y", labelsize=25)
 xticks = ax1.get_xticks()
-xticks = [x for x in xticks if x <= 400000]
+xticks = [x for x in xticks if x <= 400000 / 1e3]
 ax1.set_xticks(xticks)
 
-
 x_pos = 4e5 + 0.05e5
-ax1.text(x_pos, snr_sps_35 - 1, "35%", fontsize=22, fontweight="bold")
-ax1.text(x_pos, snr_sps_57 - 2, "57%", fontsize=22, fontweight="bold")
-ax1.text(x_pos, snr_sps_80 - 2, "80%", fontsize=22, fontweight="bold")
-ax1.text(x_pos, snr_sps_100, "100%", fontsize=22, fontweight="bold")
-ax1.text(x_pos, snr_sps_100 + 20, r"$\eta_{signal}$", fontsize=28, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_35 - 1, "35%", fontsize=22, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_57 - 2, "57%", fontsize=22, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_80 - 2, "80%", fontsize=22, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_100, "100%", fontsize=22, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_100 + 20, r"$\eta_{signal}$", fontsize=28, fontweight="bold")
 
-ax1.text(number_nv_pulse_sps_array_10[-1] - 40000, snr_sps_array_10[-1] - 20, "100%", fontsize=22, fontweight="bold")
-ax1.text(number_nv_pulse_sps_array_10[-2] - 20000, snr_sps_array_10[-2] - 60, r"80%", fontsize=22, fontweight="bold")
-ax1.text(number_nv_pulse_sps_array_10[-3] - 10000, snr_sps_array_10[-3] - 45, r"57%", fontsize=22, fontweight="bold")
-ax1.text(number_nv_pulse_sps_array_10[-4] - 7500, snr_sps_array_10[-4] - 25, r"35%", fontsize=22, fontweight="bold")
+ax1.text((number_nv_pulse_sps_array_10[-1] - 40000) / 1e3, snr_sps_array_10[-1] - 20, "100%", fontsize=22, fontweight="bold")
+ax1.text((number_nv_pulse_sps_array_10[-2] - 20000) / 1e3, snr_sps_array_10[-2] - 60, r"80%", fontsize=22, fontweight="bold")
+ax1.text((number_nv_pulse_sps_array_10[-3] - 10000) / 1e3, snr_sps_array_10[-3] - 45, r"57%", fontsize=22, fontweight="bold")
+ax1.text((number_nv_pulse_sps_array_10[-4] - 7500) / 1e3, snr_sps_array_10[-4] - 25, r"35%", fontsize=22, fontweight="bold")
 
 
 
 def top_axis_transform(x):
-    x = np.array(x)
+    x = np.array(x) * 1e3
     with np.errstate(divide='ignore', invalid='ignore'):
         result = np.where(x != 0, param["output_power"] / x, 0)
     return result
@@ -101,13 +100,13 @@ def top_axis_inverse(x):
     return result
 
 xticks = ax1.get_xticks()
-xticks_second = top_axis_transform(xticks)[::-1]
+xticks_second = np.round(top_axis_transform(xticks)[::-1], 1)
 xticks_second = xticks_second[:-1]
 
 
 secax = ax1.secondary_xaxis('top', functions=(top_axis_transform, top_axis_inverse))
-secax.set_xlabel("Average photon number per non-vacuum pulse", fontsize=22)
+secax.set_xlabel("Average photon number per non-vacuum pulse", fontsize=25)
 secax.set_ticks(xticks_second)
-secax.tick_params(axis="x", labelsize=22)
+secax.tick_params(axis="x", labelsize=25)
 
 plt.show()

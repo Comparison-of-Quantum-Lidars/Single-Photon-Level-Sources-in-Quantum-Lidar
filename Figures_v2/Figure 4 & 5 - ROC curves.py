@@ -6,7 +6,7 @@ from copy import deepcopy
 
 ### SETUP ###
 
-number_sps = 10
+number_sps = 1
 
 result = np.load("3m_snr_matching_non_vacuum_pulse_sps_array_2025_07_01.npy", allow_pickle=True).item()
 
@@ -235,7 +235,7 @@ axs[0, 0].plot(fp_laser_35, tp_laser_35, "-.", label="Pulsed Laser", color="blue
 axs[0, 0].plot(fp_eps_35, tp_eps_35, "-", label="Entangled Photon Source", color="green", linewidth=2.5, zorder=2)
 str_title = r"$\eta_{signal}$ = 35%, $\mathcal{N}_{nv}$= " + f"{int(number_nv_pulse_sps_35)}"
 axs[0, 0].set_title(str_title, fontsize=18)
-axs[0, 0].tick_params(axis='both', which='major', labelsize=22)
+axs[0, 0].tick_params(axis='both', which='major', labelsize=25)
 
 
 # Collection efficiency: 0.57
@@ -245,7 +245,7 @@ axs[0, 1].plot(fp_laser_57, tp_laser_57, "-.", label="Pulsed Laser", color="blue
 axs[0, 1].plot(fp_eps_57, tp_eps_57, "-", label="Entangled Photon Source", color="green", linewidth=2.5, zorder=2)
 str_title = r"$\eta_{signal}$ = 57%, $\mathcal{N}_{nv}$= " + f"{int(number_nv_pulse_sps_57)}"
 axs[0, 1].set_title(str_title, fontsize=18)
-axs[0, 1].tick_params(axis='both', which='major', labelsize=22)
+axs[0, 1].tick_params(axis='both', which='major', labelsize=25)
 
 # Collection efficiency: 0.8
 
@@ -253,8 +253,8 @@ axs[1, 0].plot(fp_sps_80, tp_sps_80, "--", label="Single Photon Source", color="
 axs[1, 0].plot(fp_laser_80, tp_laser_80, "-.", label="Pulsed Laser", color="blue", linewidth=2.5, zorder=1)
 axs[1, 0].plot(fp_eps_80, tp_eps_80, "-", label="Entangled Photon Source", color="green", linewidth=2.5, zorder=2)
 str_title = r"$\eta_{signal}$ = 80%, $\mathcal{N}_{nv}$= " + f"{int(number_nv_pulse_sps_80)}"
-axs[1, 0].set_title(str_title, fontsize=18)
-axs[1, 0].tick_params(axis='both', which='major', labelsize=22)
+axs[1, 0].set_title(str_title, fontsize=20)
+axs[1, 0].tick_params(axis='both', which='major', labelsize=25)
 
 # Collection efficiency: 1
 
@@ -262,15 +262,15 @@ axs[1, 1].plot(fp_sps_100, tp_sps_100, "--", label="Single Photon Source", color
 axs[1, 1].plot(fp_laser_100, tp_laser_100, "-.", label="Pulsed Laser", color="blue", linewidth=2.5, zorder=1)
 axs[1, 1].plot(fp_eps_100, tp_eps_100, "-", label="Entangled Photon Source", color="green", linewidth=2.5, zorder=2)
 str_title = r"$\eta_{signal}$ = 100%, $\mathcal{N}_{nv}$= " + f"{int(number_nv_pulse_sps_100)}"
-axs[1, 1].set_title(str_title, fontsize=18)
-axs[1, 1].tick_params(axis='both', which='major', labelsize=22)
+axs[1, 1].set_title(str_title, fontsize=20)
+axs[1, 1].tick_params(axis='both', which='major', labelsize=25)
 
 plt.subplots_adjust(wspace=0.3, hspace=0.3)
 
-fig.text(0.5, 0.04, 'False Positive', ha='center', fontsize=24)
-fig.text(0.05, 0.5, 'True Positive', va='center', rotation='vertical', fontsize=24)
+fig.text(0.5, 0.04, 'False Positive', ha='center', fontsize=26)
+fig.text(0.075, 0.5, 'True Positive', va='center', rotation='vertical', fontsize=26)
 
 handles, labels = axs[0, 0].get_legend_handles_labels()
-fig.legend(handles, labels, loc='upper center', fontsize=20, ncol=3)
+fig.legend(handles, labels, loc='upper center', fontsize=22, ncol=3)
 
 plt.show()

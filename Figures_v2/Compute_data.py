@@ -11,7 +11,6 @@ param = SetupParameters(
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	number_nv_pulse=None,
-	number_mp_pulse=None,
 	sp_collection=None,
 	sp_p1=0.99,
 	sp_p2=5e-3,
@@ -30,7 +29,7 @@ param = SetupParameters(
 )
 
 collection_efficiency = np.array([0.35, 0.57, 0.8, 1])
-#collection_efficiency = np.array([0.57, 0.8, 1])
+
 # *** Single Photon Source ***
 
 param_sps = deepcopy(param)
@@ -196,4 +195,4 @@ result = {
 	"non_vacuum_number_sps": number_nv_pulse_sps,
 }
 
-np.save("3m_snr_matching_non_vacuum_pulse_2025_06_26.npy", result)
+np.save("3m_snr_matching_non_vacuum_pulse_2025_07_05.npy", result)

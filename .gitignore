@@ -7,6 +7,7 @@ testing.py
 testingv2.py
 testingv3.py
 Experiments.py
+Figures/test.py
 
 ### Removing irrelevant directories for a user
 Graphs/data/match_mpp_June13.npz

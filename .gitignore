@@ -14,4 +14,5 @@ Graphs/data
 Graphs/
 Pre-Analysis Graphs/
 old_version/
+Figures_to_del/
 *.npy

@@ -1,6 +1,9 @@
-from qutip import Qobj, basis, displace, qeye, expect, destroy, create, tensor
+from qutip import Qobj, basis, displace, qeye, expect, destroy, create, tensor, ket2dm
 import numpy as np
 from scipy.special import lambertw
+from typing import Optional
+from copy import deepcopy
+import warnings
 
 
 class Source:
@@ -31,9 +34,12 @@ class Source:
 		self.background = params["background"]
 		self.detector_dark = params["detector_dark"]
 		self.timing_window = params["timing_window"]
+		self.number_nv_pulse = params["number_nv_pulse"]
+
+		self.params_to_fix = [self.no_vacuum_probability, self.multi_photon_probability, self.number_nv_pulse]
 
 	def background2loss(self):
-		return self.background * np.pi * ((self.receiver_diameter/2)**2)
+		return self.background * np.pi * ((self.receiver_diameter / 2) ** 2)
 
 	def db2loss_atmosphere(self):
 		attenuation_meter = self.atmosphere / 1000
@@ -111,7 +117,9 @@ class PulsedLaser(Source):
 		Only two of those parameters can be fixed. Since P_{out} is always fixed, it is only possible to fix the
 		trigger rate, the multi-photon probability or the no-vacuum probability.
 		"""
-		assert self.multi_photon_probability is not None or self.no_vacuum_probability is not None, "Multi-photon probability or no-vacuum probability must be fixed"
+
+		assert sum(x is not None for x in
+		           self.params_to_fix) == 1, "Only one of the multi-photon probability, no-vacuum probability or number of non-vacuum pulses has to be fixed"
 
 		if self.multi_photon_probability is not None:
 			assert self.no_vacuum_probability is None, "No-vacuum probability can't be fixed if multi-photon probability is fixed"
@@ -123,6 +131,7 @@ class PulsedLaser(Source):
 			assert self.alpha.imag == 0, "The multi-photon probability is not valid: alpha is complex"
 			self.alpha = self.alpha.real
 			self.no_vacuum_probability = self.compute_no_vacuum_probability()
+			self.number_nv_pulse = self.compute_number_nv_pulse()
 
 		elif self.no_vacuum_probability is not None:
 			assert self.multi_photon_probability is None, "Multi-photon probability can't be fixed if no-vacuum probability is fixed"
@@ -132,8 +141,20 @@ class PulsedLaser(Source):
 			self.alpha = np.sqrt(-np.log(log_argument) / self.extr_efficiency)
 
 			self.multi_photon_probability = self.compute_multi_photon_probability()
+			self.number_nv_pulse = self.compute_number_nv_pulse()
+		elif self.number_nv_pulse is not None:
+
+			assert self.number_nv_pulse <= self.output_power, "The number of no-vacuum pulses must be less than or equal to the output power"
+			ratio = (self.number_nv_pulse * self.extr_efficiency) / self.output_power
+			alpha_squared = (1 / ratio) + ((1 / self.extr_efficiency) * lambertw(
+				z=((-self.extr_efficiency / ratio) * np.exp(-self.extr_efficiency / ratio)), k=0))
+			assert alpha_squared.imag == 0, "The number of no-vacuum pulses is not valid: alpha is complex"
+			self.alpha = np.sqrt(alpha_squared.real)
+			self.no_vacuum_probability = self.compute_no_vacuum_probability()
+			self.multi_photon_probability = self.compute_multi_photon_probability()
 		else:
-			raise ValueError("The trigger rate, multi-photon probability or no-vacuum probability must be fixed")
+			raise ValueError(
+				"The non-vacuum probability, thr multi-photon probability or the number of non-vacuum pulses must be fixed")
 
 		assert self.alpha is not None, "The alpha parameter must be computed at this point"
 
@@ -151,6 +172,9 @@ class PulsedLaser(Source):
 		:return: Non-vacuum probability [float]
 		"""
 		return 1 - np.exp(-self.extr_efficiency * (self.alpha ** 2))
+
+	def compute_number_nv_pulse(self):
+		return (self.output_power * self.no_vacuum_probability) / ((self.alpha ** 2) * self.extr_efficiency)
 
 	def compute_effective_trigger_rate(self):
 		"""
@@ -230,17 +254,23 @@ class SinglePhoton(Source):
 	be the correct value or an error will be raised.
 	"""
 
-	def __init__(self, params, **kwargs):
+	def __init__(self, params, number_sps: int = 1, **kwargs):
 		"""
 		:param params: Parameters of the source using the object SetupParameters
 		:param kwargs: N/A
 		"""
+		if params["fock_space_dim"] != 2 * number_sps + 1 and not kwargs.get("warning_off", False):
+			warnings.warn(f"Fock space dimension should be set to {2 * number_sps + 1}. This will be corrected.")
+		params = deepcopy(params)
+		params["fock_space_dim"] = 2 * number_sps + 1
 		super().__init__(params)
+		self.number_sps = number_sps
+		assert (self.number_sps > 0 and (self.number_sps & (self.number_sps - 1)) == 0) or self.number_sps == 10, "Number of single photon sources must be a power of 2 or 10"
 		self.extr_efficiency = self.fix_extraction_efficiency()
 		self.kwargs = kwargs
 		self.fix_parameters()
 		self.apd_detector = self.detector2observable()
-		self.vacuum = basis(self.fock_space_dim, 0)
+		self.vacuum = basis(3, 0)
 
 	def fix_extraction_efficiency(self):
 		"""
@@ -263,9 +293,14 @@ class SinglePhoton(Source):
 		if self.no_vacuum_probability is not None:
 			aimed_no_vacuum_probability = self.compute_no_vacuum_probability()
 			assert self.no_vacuum_probability == aimed_no_vacuum_probability, f"The no-vacuum probability is not valid it should be {aimed_no_vacuum_probability} but is {self.no_vacuum_probability}"
+		if self.number_nv_pulse is not None:
+			self.no_vacuum_probability = self.compute_no_vacuum_probability()
+			aimed_number_nv_pulse = self.compute_number_nv_pulse()
+			assert self.number_nv_pulse == aimed_number_nv_pulse, f"The number of non-vacuum pulses is not valid it should be {aimed_number_nv_pulse} but is {self.number_nv_pulse}"
 
 		self.multi_photon_probability = self.compute_multi_photon_probability()
 		self.no_vacuum_probability = self.compute_no_vacuum_probability()
+		self.number_nv_pulse = self.compute_number_nv_pulse()
 
 	def compute_multi_photon_probability(self):
 		"""
@@ -279,14 +314,19 @@ class SinglePhoton(Source):
 		Compute the no-vacuum probability of the single photon source
 		:return: No-vacuum probability [float]
 		"""
-		return self.sp_p1 * self.extr_efficiency + self.sp_p2 * self.extr_efficiency * (2 - self.extr_efficiency)
+
+		nv_prob_one_sps = self.sp_p1 * self.extr_efficiency + self.sp_p2 * self.extr_efficiency * (2 - self.extr_efficiency)
+		return 1 - ((1 - nv_prob_one_sps) ** self.number_sps)
+
+	def compute_number_nv_pulse(self):
+		return (self.output_power * self.no_vacuum_probability) / ((self.sp_p1 + 2 * self.sp_p2) * self.extr_efficiency * self.number_sps)
 
 	def compute_effective_trigger_rate(self):
 		"""
 		Compute the effective trigger rate of the single photon source
 		:return: Effective trigger rate [float]
 		"""
-		return self.output_power / ((self.sp_p1 + 2 * self.sp_p2) * self.extr_efficiency)
+		return self.output_power / ((self.sp_p1 + 2 * self.sp_p2) * self.extr_efficiency * self.number_sps)
 
 	def single_photon_state(self):
 		"""
@@ -294,9 +334,59 @@ class SinglePhoton(Source):
 		:return: State of the single photon source [Qobj]
 		"""
 		vacuum = np.sqrt(1 - (self.sp_p1 + self.sp_p2)) * self.vacuum
-		single_photon = np.sqrt(self.sp_p1) * basis(self.fock_space_dim, 1)
-		two_photon = np.sqrt(self.sp_p2) * basis(self.fock_space_dim, 2)
-		return vacuum + single_photon + two_photon
+		single_photon = np.sqrt(self.sp_p1) * basis(3, 1)
+		two_photon = np.sqrt(self.sp_p2) * basis(3, 2)
+		single_photon_state = vacuum + single_photon + two_photon
+
+		state_2 = None
+
+		n = int(np.log2(self.number_sps))
+
+		if n == 0:
+			return single_photon_state
+
+		if self.number_sps == 10:
+			# Special case for 10 single photon sources
+			n = 3
+
+		for power in range(1, n+1):
+			rho = ket2dm(single_photon_state).full()
+			probability_matrix = rho ** 2
+			m = rho.shape[0]
+			shape_sps_state = 2*(m-1) + 1
+			single_photon_state = np.zeros(shape_sps_state, dtype=rho.dtype)
+
+			for i in range(m):
+				for j in range(m):
+					single_photon_state[i + j] += probability_matrix[i, j]
+
+			single_photon_state = np.sqrt(single_photon_state)
+
+			single_photon_state = Qobj(single_photon_state)
+
+			assert single_photon_state == single_photon_state.unit()
+
+			if self.number_sps == 10 and power == 1:
+				state_2 = single_photon_state
+
+		if self.number_sps == 10:
+			assert state_2 is not None, "State 2 should not be None for 10 single photon sources"
+
+			rho = (state_2 * Qobj(single_photon_state).dag()).full()
+			probability_matrix = rho ** 2
+			single_photon_state = np.zeros(21, dtype=rho.dtype)
+
+			for i in range(rho.shape[0]):
+				for j in range(rho.shape[-1]):
+					single_photon_state[i + j] += probability_matrix[i, j]
+
+			single_photon_state = np.sqrt(single_photon_state)
+
+			single_photon_state = Qobj(single_photon_state)
+
+			assert single_photon_state == single_photon_state.unit(), "Single photon state is not normalized"
+
+		return single_photon_state
 
 	def detector2observable(self):
 		"""
@@ -321,7 +411,8 @@ class SinglePhoton(Source):
 		Compute the noise rate of the single photon source
 		:return: Noise rate [float]
 		"""
-		noise = self.compute_effective_trigger_rate() * expect(self.apd_detector, self.vacuum)
+		vacuum = basis(self.fock_space_dim, 0)
+		noise = self.compute_effective_trigger_rate() * expect(self.apd_detector, vacuum)
 		return noise
 
 	def signal_to_noise_rate(self):
@@ -347,6 +438,71 @@ class SinglePhoton(Source):
 		:return: Trigger rate [float]
 		"""
 		return self.compute_effective_trigger_rate()
+
+
+class ArraysSinglePhoton(SinglePhoton):
+
+	def __init__(self, params, number_sps: int, **kwargs):
+		params["fock_space_dim"] = 2 * number_sps + 1
+		super().__init__(params)
+		self.number_sps = number_sps
+
+		self.assert_params()
+
+	def assert_params(self):
+		assert self.number_sps > 0 and (self.number_sps & (self.number_sps - 1)) == 0
+
+	def compute_effective_no_vacuum_probability(self):
+		return 1 - ((1 - self.no_vacuum_probability) ** self.number_sps)
+
+	def compute_number_nv_pulse(self):
+		return self.trigger_rate * self.compute_effective_no_vacuum_probability()
+
+	def compute_trigger_rate_arrays(self):
+		return self.output_power / (self.average_photon_per_pulse * self.extr_efficiency * self.number_sps)
+
+	def arrays_single_photon_state(self):
+		# TODO: Confirm algorithm
+
+		three_fock_dim_param = deepcopy(self.params)
+		three_fock_dim_param["fock_space_dim"] = 3
+		single_photon_state = SinglePhoton(three_fock_dim_param).single_photon_state()
+
+		n = int(np.log2(self.number_sps))
+
+		if n == 0:
+			return single_photon_state
+
+		for _ in range(n):
+			rho = tensor(single_photon_state, single_photon_state).full()
+			m = rho.shape[0]
+			single_photon_state = np.zeros(2 * n - 1, dtype=rho.dtype)
+
+			for i in range(m):
+				for j in range(m):
+					single_photon_state[i+j] += rho[i, j]
+
+			single_photon_state = Qobj(single_photon_state)
+
+		return single_photon_state
+
+	def signal_rate(self):
+		single_photon_state = self.arrays_single_photon_state()
+		signal_rate = self.compute_trigger_rate_arrays() * (
+					1 - ((1 - expect(self.apd_detector, single_photon_state)) ** self.number_sps))
+		return signal_rate
+
+	def noise_rate(self):
+		return self.compute_trigger_rate_arrays() * expect(self.apd_detector, self.vacuum)
+
+	def signal_to_noise_rate(self):
+		signal = self.signal_rate()
+		noise = self.noise_rate()
+		return (signal - noise) / noise
+
+	@property
+	def trigger_rate(self):
+		return self.compute_trigger_rate_arrays()
 
 
 class EntangledPhotonSPDC(Source):
@@ -387,7 +543,9 @@ class EntangledPhotonSPDC(Source):
 		"""
 		Fix the parameters of the SPDC requested by the user. The other parameters are then computed.
 		"""
-		assert self.multi_photon_probability is not None or self.no_vacuum_probability is not None, "The Multi-photon probability or no-vacuum probability must be fixed"
+
+		assert sum(x is not None for x in
+		           self.params_to_fix) == 1, "Only one of the multi-photon probability, no-vacuum probability, number of non-vacuum pulses or number of multi-photon pulses can be fixed"
 
 		if self.multi_photon_probability is not None:
 			assert self.no_vacuum_probability is None, "No-vacuum probability can't be fixed if multi-photon probability is fixed"
@@ -397,6 +555,7 @@ class EntangledPhotonSPDC(Source):
 					(1 - np.sqrt(self.multi_photon_probability)) * self.extr_efficiency)
 
 			self.no_vacuum_probability = self.compute_no_vacuum_probability()
+			self.number_nv_pulse = self.compute_number_nv_pulse()
 
 		elif self.no_vacuum_probability is not None:
 			assert self.multi_photon_probability is None, "Multi-photon probability can't be fixed if no-vacuum probability is fixed"
@@ -405,8 +564,17 @@ class EntangledPhotonSPDC(Source):
 			self.epsilon = self.no_vacuum_probability / (self.extr_efficiency * (1 - self.no_vacuum_probability))
 
 			self.multi_photon_probability = self.compute_multi_photon_probability()
+			self.number_nv_pulse = self.compute_number_nv_pulse()
+		elif self.number_nv_pulse is not None:
+			assert self.number_nv_pulse <= self.output_power, "The number of non-vacuum pulses must be less than or equal to the output power"
+
+			ratio = self.number_nv_pulse / self.output_power
+			self.epsilon = (1 / self.extr_efficiency) * ((1 / ratio) - 1)
+			self.no_vacuum_probability = self.compute_no_vacuum_probability()
+			self.multi_photon_probability = self.compute_multi_photon_probability()
 		else:
-			raise ValueError("The multi-photon probability or no-vacuum probability must be fixed")
+			raise ValueError(
+				"The multi-photon probability, no-vacuum probability or number of non-vacuum pulses must be fixed")
 
 	def compute_multi_photon_probability(self):
 		"""
@@ -421,6 +589,9 @@ class EntangledPhotonSPDC(Source):
 		:return: No-vacuum probability [float]
 		"""
 		return self.extr_efficiency * self.epsilon / (self.extr_efficiency * self.epsilon + 1)
+
+	def compute_number_nv_pulse(self):
+		return (self.no_vacuum_probability * self.output_power) / (self.epsilon * self.extr_efficiency)
 
 	def compute_effective_trigger_rate(self):
 		"""
@@ -612,6 +783,7 @@ class SetupParameters:
 		print("output_power: optical output power of the source in photon per second [s^-1]")
 		print("multi_photon_probability: Probability of the laser source emitting more than 1 photon [-]")
 		print("no_vacuum_probability: Probability of the laser source not emitting a photon [-]")
+		print("number_nv_pulse: Number of non-vacuum pulses per second [s^-1]")
 		print(
 			"sp_collection: Efficiency of the single photon source collection, does not include detector efficiency [-]")
 		print("sp_p1: Probability that the single photon source emits 1 photons [-]")
@@ -654,3 +826,34 @@ class SetupParameters:
 
 	def __deepcopy__(self, memodict={}):
 		return SetupParameters(**self.__dict__)
+
+if __name__ == "__main__":
+	param = SetupParameters(
+		fock_space_dim=35,
+		output_power=400000,
+		multi_photon_probability=None,
+		no_vacuum_probability=None,
+		number_nv_pulse=None,
+		sp_collection=1,
+		sp_p1=0.99,
+		sp_p2=5e-3,
+		spdc_eps_heralding=1,
+		spdc_eps_collection=1,
+		atmosphere=0.5,
+		target_distance=3,
+		receiver_diameter=0.05,
+		target_albedo=0.5,
+		optics_transmitter=0.8,
+		optics_receiver=0.5,
+		detection_efficiency=0.7,
+		background=250000,
+		detector_dark=25,
+		timing_window=0.5e-9,
+	)
+
+	print(SinglePhoton(param, number_sps=1).signal_to_noise_rate())
+	print(SinglePhoton(param, number_sps=2).signal_to_noise_rate())
+	print(SinglePhoton(param, number_sps=4).signal_to_noise_rate())
+	print(SinglePhoton(param, number_sps=8).signal_to_noise_rate())
+	print(SinglePhoton(param, number_sps=10).signal_to_noise_rate())
+	print(SinglePhoton(param, number_sps=16).signal_to_noise_rate())

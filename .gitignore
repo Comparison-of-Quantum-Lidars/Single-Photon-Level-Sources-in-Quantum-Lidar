@@ -7,6 +7,8 @@ testing.py
 testingv2.py
 testingv3.py
 Experiments.py
+Figures/test.py
+Figures/Extra_graph_snr.py
 
 ### Removing irrelevant directories for a user
 Graphs/data/match_mpp_June13.npz
@@ -14,3 +16,5 @@ Graphs/data
 Graphs/
 Pre-Analysis Graphs/
 old_version/
+Figures_to_del/
+*.npy

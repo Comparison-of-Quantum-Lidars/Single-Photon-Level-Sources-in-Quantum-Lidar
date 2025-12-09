@@ -11,6 +11,8 @@ param = SetupParameters(
 	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
+	number_nv_pulse=None,
+	number_mp_pulse=None,
 	sp_collection=0.57,
 	sp_p1=0.99,
 	sp_p2=5e-3,
@@ -29,7 +31,7 @@ param = SetupParameters(
 )
 
 
-match_multi_photon_probability = False
+parameter_to_match = "no_vacuum_probability"
 range_interval = None
 distance = np.linspace(0.5, 40, 300)
 acquisition_time = np.array([1, 60, 3600])
@@ -40,8 +42,8 @@ precision = 25
 threshold_limit_factor = 100
 
 results = RangeLimitation(
-	params = param,
-	match_multi_photon_probability=match_multi_photon_probability,
+	params=param,
+	parameter_to_match=parameter_to_match,
 	range_interval=range_interval,
 	distance=distance,
 	acquisition_time=acquisition_time,

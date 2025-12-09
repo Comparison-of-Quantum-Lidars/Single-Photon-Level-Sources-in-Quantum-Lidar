@@ -10,6 +10,7 @@ class TestSetupParameters(unittest.TestCase):
 		self.output_power = 1e6
 		self.multi_photon_probability = 0.1
 		self.no_vacuum_probability = 0.2
+		self.number_nv_pulse = self.output_power * 0.9
 		self.sp_collection = 0.2
 		self.sp_p1 = 0.99
 		self.sp_p2 = 0.01
@@ -30,6 +31,7 @@ class TestSetupParameters(unittest.TestCase):
 			output_power=self.output_power,
 			multi_photon_probability=self.multi_photon_probability,
 			no_vacuum_probability=self.no_vacuum_probability,
+			number_nv_pulse=self.number_nv_pulse,
 			sp_collection=self.sp_collection,
 			sp_p1=self.sp_p1,
 			sp_p2=self.sp_p2,
@@ -58,6 +60,9 @@ class TestSetupParameters(unittest.TestCase):
 
 	def test_no_vacuum_probability(self):
 		self.assertEqual(self.setup_params["no_vacuum_probability"], self.no_vacuum_probability)
+
+	def test_number_nv_pulse(self):
+		self.assertEqual(self.setup_params["number_nv_pulse"], self.number_nv_pulse)
 
 	def test_sp_collection(self):
 		self.assertEqual(self.setup_params["sp_collection"], self.sp_collection)

@@ -8,10 +8,11 @@ from qutip import Qobj
 class TestSinglePhoton(unittest.TestCase):
 
 	def setUp(self):
-		self.fock_space_dim = 5
+		self.fock_space_dim = 3
 		self.output_power = 1e6
 		self.multi_photon_probability = None
 		self.no_vacuum_probability = None
+		self.number_nv_pulse = None
 		self.sp_collection = 0.2
 		self.sp_p1 = 0.99
 		self.sp_p2 = 0.01
@@ -32,6 +33,7 @@ class TestSinglePhoton(unittest.TestCase):
 			output_power=self.output_power,
 			multi_photon_probability=self.multi_photon_probability,
 			no_vacuum_probability=self.no_vacuum_probability,
+			number_nv_pulse=self.number_nv_pulse,
 			sp_collection=self.sp_collection,
 			sp_p1=self.sp_p1,
 			sp_p2=self.sp_p2,
@@ -104,6 +106,7 @@ class TestSinglePhoton(unittest.TestCase):
 		params = deepcopy(self.setup_params)
 		params["multi_photon_probability"] = 0.2
 		params["no_vacuum_probability"] = 0.25
+		params["number_nv_pulse"] = 100
 
 		with self.assertRaises(AssertionError):
 			SinglePhoton(params)
@@ -117,10 +120,13 @@ class TestSinglePhoton(unittest.TestCase):
 		prob = np.random.rand()
 		params["multi_photon_probability"] = prob
 		params["no_vacuum_probability"] = None
+		params["number_nv_pulse"] = None
 
 		with self.assertRaises(AssertionError):
 			SinglePhoton(params)
+
 		params["multi_photon_probability"] = None
+		params["number_nv_pulse"] = None
 		params["no_vacuum_probability"] = prob
 
 		with self.assertRaises(AssertionError):
@@ -128,6 +134,14 @@ class TestSinglePhoton(unittest.TestCase):
 
 		params["multi_photon_probability"] = None
 		params["no_vacuum_probability"] = None
+		params["number_nv_pulse"] = prob * self.output_power
+
+		with self.assertRaises(AssertionError):
+			SinglePhoton(params)
+
+		params["multi_photon_probability"] = None
+		params["no_vacuum_probability"] = None
+		params["number_nv_pulse"] = None
 		sps = SinglePhoton(params)
 
 		extr_eff = self.optics_transmitter * self.sp_collection

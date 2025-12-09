@@ -1,5 +1,5 @@
 from Sources import EntangledPhotonSPDC, SinglePhoton, PulsedLaser
-from scipy.special import gammaln
+from scipy.special import gammaln, betainc
 from scipy.stats import binom
 from typing import Optional
 import numpy as np
@@ -25,7 +25,7 @@ class RocAnalysis:
 			range_interval,
 			timing_window,
 			acquisition_time=1,
-			precision=20
+			precision=20,
 	):
 		"""
 		:param signal_rate: Detection of photons in one second when the target is present.
@@ -81,7 +81,6 @@ class RocAnalysis:
 		prob_mass_function = np.exp(prob_mass_function_log)
 
 		distance_between_thresholds = 1 / self.precision
-
 		p = prob_mass_function * distance_between_thresholds
 
 		return p
@@ -103,13 +102,23 @@ class RocAnalysis:
 		"""
 		threshold = self.create_threshold_array()
 		q0, q1 = self.compute_q0_q1()
-		p_0 = self.compute_binomial_experiment(threshold, q0)
-		p_1 = self.compute_binomial_experiment(threshold, q1)
 
-		false_positive = 1 - ((1 - np.cumsum(np.flip(p_0))) ** self.number_of_bins())
-		true_positive = np.cumsum(np.flip(p_1))
+		p_0 = self.alternative_binomial_experiment(threshold, q0)
+		p_1 = self.alternative_binomial_experiment(threshold, q1)
+
+		false_positive = 1 - ((1 - p_0) ** self.number_of_bins())
+		true_positive = p_1
 
 		return true_positive, false_positive
+
+	def alternative_binomial_experiment(self, threshold, q):
+		n = int(self.trigger_rate * self.acquisition_time)
+		k = threshold
+
+		cumulative_sum_p = (1 - betainc(k, n+1-k, q)) / (1 - betainc(k, n+1-k, 0))  #Prob of being between 0 and k
+		cumulative_sum_p[np.isnan(cumulative_sum_p)] = 0  # Handle k=0
+
+		return 1 - cumulative_sum_p  #Prob of being above k
 
 	@staticmethod
 	def compute_discrete_binomial_experiment(threshold, n, q):
@@ -471,9 +480,10 @@ class RangeLimitation:
 
 				self.true_positive_at_target_false_value_laser[at][idx] = np.interp(
 					self.target_false_positive,
-					false_positive_laser,
-					true_positive_laser
+					np.flip(false_positive_laser),
+					np.flip(true_positive_laser)
 				)
+				# Flip the arrays to have an increasing false/true positive array for the interpolation
 
 				if self.keep_sps:
 					true_positive_sps, false_positive_sps = self.compute_roc_curve(
@@ -486,8 +496,8 @@ class RangeLimitation:
 
 					self.true_positive_at_target_false_value_sps[at][idx] = np.interp(
 						self.target_false_positive,
-						false_positive_sps,
-						true_positive_sps
+						np.flip(false_positive_sps),
+						np.flip(true_positive_sps)
 					)
 
 				true_positive_eps, false_positive_eps = self.compute_roc_curve(
@@ -500,8 +510,8 @@ class RangeLimitation:
 
 				self.true_positive_at_target_false_value_eps[at][idx] = np.interp(
 					self.target_false_positive,
-					false_positive_eps,
-					true_positive_eps
+					np.flip(false_positive_eps),
+					np.flip(true_positive_eps)
 				)
 
 		results = self.prepare_results()

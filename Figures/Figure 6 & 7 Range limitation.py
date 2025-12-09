@@ -120,7 +120,10 @@ plt.legend(fontsize=22, frameon=False)
 plt.tick_params(axis='both', which='major', labelsize=25)
 plt.xlim([0, 50])
 plt.show()
-#plt.close()
+
+
+
+### Option to check the ROC curves at a given distance ###
 
 distance = 28
 at = 3600.0
@@ -179,17 +182,12 @@ tp_eps, fp_eps = RocAnalysis(
 	acquisition_time=at,
 ).compute_p_d_p_fa()
 
-print(fp_laser, tp_laser)
-
-
 plt.plot(fp_laser, tp_laser, "-", label="Pulsed Laser", color="blue", linewidth=2.5, zorder=1)
 plt.plot(fp_sps, tp_sps, "--", label="Single Photon", color="red", linewidth=2.5, zorder=2)
 plt.plot(fp_eps, tp_eps, "-.", label="Entangled Photon", color="green", linewidth=2.5, zorder=3)
 plt.xlabel("False Positive Rate", fontsize=25)
 plt.ylabel("True Positive Rate", fontsize=25)
-plt.title("ROC Curves for Different Sources at 14.18 m", fontsize=22)
+plt.title(f"ROC Curves for Different Sources at {distance} m", fontsize=22)
 plt.legend(fontsize=22, frameon=False)
 plt.tick_params(axis='both', which='major', labelsize=25)
-#plt.xlim([0, 1])
-#plt.ylim([0, 1])
 plt.show()

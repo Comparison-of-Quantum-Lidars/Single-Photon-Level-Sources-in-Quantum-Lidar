@@ -33,13 +33,13 @@ number_nv_pulse_sps = sps.number_nv_pulse
 param["number_nv_pulse"] = number_nv_pulse_sps
 
 range_interval = None
-distance = np.linspace(0.5, 50, 2000)
+distance = np.linspace(0.5, 50, 200)
 acquisition_time = np.array([1, 60, 3600])
 target_false_positive = 0.2
 target_true_positive = 0.8
 colored_marker = True
 precision = 25
-threshold_limit_factor = 100
+threshold_limit_factor = 500
 
 results = RangeLimitation(
 	params=param,
@@ -53,12 +53,15 @@ results = RangeLimitation(
 	threshold_limit_factor_roc=threshold_limit_factor,
 	number_nv_pulse_for_match=number_nv_pulse_sps,
 	number_sps_array=number_sps_array
-)
+)#.compute()
+# Uncomment to generate new data
 
-results = np.load("Range_limitation_NRD_ce_80_2025_07_05_10sps_35_fock_dim.npy", allow_pickle=True).item()
 
-#np.save("Range_limitation_NRD_ce_80_2025_07_05_1sps_4_fock_dim.npy", results)
+### LOAD PREVIOUS DATA ###
 
+results = np.load("Range_limitation_NRD_ce_80_2025_09_01_1sps_9_fock_dim.npy", allow_pickle=True).item()
+
+#np.save("Range_limitation_NRD_ce_80_2025_09_01_1sps_9_fock_dim.npy", results)
 
 distance = results["distance"]
 snr_laser = results["snr_laser"]
@@ -78,7 +81,7 @@ plt.semilogy(distance, snr_laser, "-.", label="Pulsed Laser", linewidth=3, color
 plt.semilogy(distance, snr_sps, "--", label="Single Photon", linewidth=3, color="red", zorder=3)
 plt.semilogy(distance, snr_eps, "-", label="Entangled Photon", linewidth=3, color="green", zorder=1)
 
-plt.scatter(0, 0, label=f"{target_true_positive * 100}% true detection\n{target_false_positive * 100}% false detection:", alpha=0)
+plt.scatter(0, 0, label=f"{target_true_positive * 100}% true detection\n{target_false_positive * 100}% false detection", alpha=0)
 
 plt.scatter(distance_cutoff_laser[acquisition_time[0]], distance_cutoff_laser["snr_at0"], color="k", marker="o", s=300,
             label="1s", zorder=1)
@@ -117,18 +120,18 @@ plt.legend(fontsize=22, frameon=False)
 plt.tick_params(axis='both', which='major', labelsize=25)
 plt.xlim([0, 50])
 plt.show()
+#plt.close()
 
-
-exit()
-distance = 2.739
-at = 1
+distance = 28
+at = 3600.0
 range_interval = distance
+threshold_limit_factor = 500
 
 param_test = deepcopy(param)
 param_test["number_nv_pulse"] = None
 param_test["target_distance"] = distance
 
-sps = SinglePhoton(param_test, number_sps=4)
+sps = SinglePhoton(param_test, number_sps=1)
 param_test["number_nv_pulse"] = sps.number_nv_pulse
 
 laser = PulsedLaser(param_test)
@@ -150,7 +153,7 @@ tp_laser, fp_laser = RocAnalysis(
 	signal_rate=signal_laser,
 	noise_rate=noise_laser,
 	trigger_rate=trigger_rate_laser,
-	threshold_limit=trigger_rate_laser / 100,
+	threshold_limit=trigger_rate_laser / threshold_limit_factor,
 	range_interval=range_interval,
 	timing_window=param["timing_window"],
 	acquisition_time=at,
@@ -160,7 +163,7 @@ tp_sps, fp_sps = RocAnalysis(
 	signal_rate=signal_sps,
 	noise_rate=noise_sps,
 	trigger_rate=trigger_rate_sps,
-	threshold_limit=trigger_rate_sps / 100,
+	threshold_limit=trigger_rate_sps / threshold_limit_factor,
 	range_interval=range_interval,
 	timing_window=param["timing_window"],
 	acquisition_time=at,
@@ -170,11 +173,14 @@ tp_eps, fp_eps = RocAnalysis(
 	signal_rate=signal_eps,
 	noise_rate=noise_eps,
 	trigger_rate=trigger_rate_eps,
-	threshold_limit=trigger_rate_eps / 100,
+	threshold_limit=trigger_rate_eps / threshold_limit_factor,
 	range_interval=range_interval,
 	timing_window=param["timing_window"],
 	acquisition_time=at,
 ).compute_p_d_p_fa()
+
+print(fp_laser, tp_laser)
+
 
 plt.plot(fp_laser, tp_laser, "-", label="Pulsed Laser", color="blue", linewidth=2.5, zorder=1)
 plt.plot(fp_sps, tp_sps, "--", label="Single Photon", color="red", linewidth=2.5, zorder=2)
@@ -184,6 +190,6 @@ plt.ylabel("True Positive Rate", fontsize=25)
 plt.title("ROC Curves for Different Sources at 14.18 m", fontsize=22)
 plt.legend(fontsize=22, frameon=False)
 plt.tick_params(axis='both', which='major', labelsize=25)
-plt.xlim([0, 1])
-plt.ylim([0, 1])
+#plt.xlim([0, 1])
+#plt.ylim([0, 1])
 plt.show()

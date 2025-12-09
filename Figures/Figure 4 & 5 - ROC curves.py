@@ -6,9 +6,9 @@ from copy import deepcopy
 
 ### SETUP ###
 
-number_sps = 1
+number_sps = 10
 
-result = np.load("3m_snr_matching_non_vacuum_pulse_sps_array_2025_07_01.npy", allow_pickle=True).item()
+result = np.load("data/fig_3_4_5_matching_number_non_vacuum_pulses.npy", allow_pickle=True).item()
 
 param = result["param"]
 

@@ -12,7 +12,6 @@ param = SetupParameters(
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	number_nv_pulse=None,
-	number_mp_pulse=None,
 	sp_collection=None,
 	sp_p1=0.99,
 	sp_p2=5e-3,

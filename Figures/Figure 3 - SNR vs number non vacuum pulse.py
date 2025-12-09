@@ -3,7 +3,7 @@ import matplotlib.pyplot as plt
 from Sources import SinglePhoton
 from copy import deepcopy
 
-result = np.load("3m_snr_matching_non_vacuum_pulse_sps_array_2025_07_01.npy", allow_pickle=True).item()
+result = np.load("data/fig_3_4_5_matching_number_non_vacuum_pulses.npy", allow_pickle=True).item()
 
 non_vacuum_number = result["non_vacuum_number"]
 snr_entangled_35 = result["eps"]['0.35']['snr']
@@ -60,13 +60,13 @@ ax1.semilogy(non_vacuum_number / 1e3, snr_laser, "-.", label="Pulsed Laser", col
 ax1.scatter(number_nv_pulse_sps / 1e3, snr_sps, label="Single Photon Source", color="red", s=100, zorder=3)
 ax1.scatter(number_nv_pulse_sps_array_10 / 1e3, snr_sps_array_10, label="Array of 10 Single Photon Sources", color="red", s=75, marker="s", zorder=3, alpha=0.7)
 
-ax1.axvspan(50000 / 1e3, 100000 / 1e3, color="dodgerblue", alpha=0.35, label="Preferred regime against a NNRD", zorder=0)
-ax1.axvspan(350000 / 1e3, 400000 / 1e3, color="lightcoral", alpha=0.35, label="Preferred regime against a NRD", zorder=0)
+ax1.axvspan(50000 / 1e3, 100000 / 1e3, color="dodgerblue", alpha=0.35, label="Preferred regime against a non-PNR det.", zorder=0)
+ax1.axvspan(350000 / 1e3, 400000 / 1e3, color="lightcoral", alpha=0.35, label="Preferred regime against a PNR det.", zorder=0)
 
 ax1.set_xlabel(r"Number of non-vacuum pulses $(\times 10^3)$", fontsize=25)
 ax1.set_ylabel("SNR", fontsize=25)
 ax1.set_xlim([None, 450000 / 1e3])
-ax1.legend(frameon=False, fontsize=22)
+ax1.legend(frameon=False, fontsize=20, loc="lower center")
 ax1.tick_params(axis="x", labelsize=25)
 ax1.tick_params(axis="y", labelsize=25)
 xticks = ax1.get_xticks()

@@ -8,12 +8,11 @@ from Analysis import *
 # *** SETUP ***
 
 param = SetupParameters(
-	fock_space_dim=None,
+	fock_space_dim=45,
 	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
 	number_nv_pulse=None,
-	number_mp_pulse=None,
 	sp_collection=None,
 	sp_p1=0.99,
 	sp_p2=5e-3,
@@ -31,15 +30,30 @@ param = SetupParameters(
 	timing_window=0.5e-9,
 )
 
-collection_efficiency = [0.2, 0.57, 0.8, 1]
-nv_pulse_number_nnrd = 0.5e5
+collection_efficiency = 1
+nv_pulse_number = [1e5, 2e5, 3e5, None]
+
+
+# *** Single Photon Source ***
+
+param_sps = deepcopy(param)
+
+param_sps["sp_collection"] = collection_efficiency
+extr_efficiency = param_sps["optics_transmitter"] * collection_efficiency
+sps = SinglePhoton(param_sps)
+nv_pulse_number_sps = sps.compute_number_nv_pulse()
+signal_sps = sps.signal_rate()
+noise_sps = sps.noise_rate()
+trigger_rate_sps = sps.trigger_rate
+
+nv_pulse_number[-1] = nv_pulse_number_sps
 
 # *** Pulsed Laser ***
 
 param_laser = deepcopy(param)
-signal_laser = np.zeros_like(nv_pulse_number_nnrd)
-noise_laser = np.zeros_like(nv_pulse_number_nnrd)
-trigger_rate_laser = np.zeros_like(nv_pulse_number_nnrd)
+signal_laser = np.zeros_like(nv_pulse_number)
+noise_laser = np.zeros_like(nv_pulse_number)
+trigger_rate_laser = np.zeros_like(nv_pulse_number)
 
 print("Pulsed Laser")
 for idx, nvp in enumerate(nv_pulse_number):

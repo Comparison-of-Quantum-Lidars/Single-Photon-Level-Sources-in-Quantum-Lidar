@@ -343,4 +343,4 @@ result = {
 	"non_vacuum_number_sps": number_nv_pulse_sps,
 }
 
-np.save("data/3m_snr_matching_non_vacuum_pulse_sps_array_2025_12_09_b10000.npy", result)
+np.save("data/Figure_3_4_5.npy", result)

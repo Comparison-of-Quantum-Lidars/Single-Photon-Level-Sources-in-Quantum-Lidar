@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 from copy import deepcopy
 
 param = SetupParameters(
-	fock_space_dim=9,
+	fock_space_dim=35,
 	output_power=400000,
 	multi_photon_probability=None,
 	no_vacuum_probability=None,
@@ -13,7 +13,7 @@ param = SetupParameters(
 	sp_collection=0.8,
 	sp_p1=0.99,
 	sp_p2=5e-3,
-	spdc_eps_heralding=0.8*0.7,
+	spdc_eps_heralding=0.99*0.7,
 	spdc_eps_collection=0.8,
 	atmosphere=0.5,
 	target_distance=None,
@@ -27,7 +27,11 @@ param = SetupParameters(
 	timing_window=0.5e-9,
 )
 
-number_sps_array = 1
+# Figure 6
+# Use Fock space dimension of 35 and number_sps_array = 10
+# Figure 7
+# Use Fock space dimension of 9 and number_sps_array = 1
+number_sps_array = 10
 sps = SinglePhoton(param, number_sps=number_sps_array)
 number_nv_pulse_sps = sps.number_nv_pulse
 param["number_nv_pulse"] = number_nv_pulse_sps
@@ -56,12 +60,11 @@ results = RangeLimitation(
 )#.compute()
 # Uncomment to generate new data
 
-
 ### LOAD PREVIOUS DATA ###
 
-results = np.load("Range_limitation_NRD_ce_80_2025_09_01_1sps_9_fock_dim.npy", allow_pickle=True).item()
+results = np.load("data/Figure_7.npy", allow_pickle=True).item()
 
-#np.save("Range_limitation_NRD_ce_80_2025_09_01_1sps_9_fock_dim.npy", results)
+#np.save("Range_limitation_NNRD_ce_80_2025_12_10_10sps_35_fock_dim.npy", results)
 
 distance = results["distance"]
 snr_laser = results["snr_laser"]
@@ -78,8 +81,8 @@ fig = plt.figure(figsize=(16.2, 10))
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
 plt.semilogy(distance, snr_laser, "-.", label="Pulsed Laser", linewidth=3, color="blue", zorder=2)
-plt.semilogy(distance, snr_sps, "--", label="Single Photon", linewidth=3, color="red", zorder=3)
-plt.semilogy(distance, snr_eps, "-", label="Entangled Photon", linewidth=3, color="green", zorder=1)
+plt.semilogy(distance, snr_sps, "--", label="Single-Photon Source", linewidth=3, color="red", zorder=3)
+plt.semilogy(distance, snr_eps, "-", label="Correlated Photon Pair Source", linewidth=3, color="green", zorder=1)
 
 plt.scatter(0, 0, label=f"{target_true_positive * 100}% true detection\n{target_false_positive * 100}% false detection", alpha=0)
 
@@ -121,7 +124,7 @@ plt.tick_params(axis='both', which='major', labelsize=25)
 plt.xlim([0, 50])
 plt.show()
 
-
+exit()
 
 ### Option to check the ROC curves at a given distance ###
 

@@ -9,6 +9,7 @@ testingv3.py
 Experiments.py
 Figures/test.py
 Figures/Extra_graph_snr.py
+Figures/photonics_north.py
 
 ### Removing irrelevant directories for a user
 Graphs/data/match_mpp_June13.npz

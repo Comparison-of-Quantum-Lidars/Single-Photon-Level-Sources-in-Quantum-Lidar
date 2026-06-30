@@ -3,7 +3,11 @@ import matplotlib.pyplot as plt
 from Sources import SinglePhoton
 from copy import deepcopy
 
-result = np.load("data/fig_3_4_5_matching_number_non_vacuum_pulses.npy", allow_pickle=True).item()
+#result = np.load("data/fig_3_4_5_matching_number_non_vacuum_pulses.npy", allow_pickle=True).item()
+#result = np.load("data/3m_snr_matching_non_vacuum_pulse_sps_array_2025_12_09.npy", allow_pickle=True).item()
+#result = np.load("data/3m_snr_matching_non_vacuum_pulse_sps_array_2025_12_09_b100.npy", allow_pickle=True).item()
+#result = np.load("data/3m_snr_matching_non_vacuum_pulse_sps_array_2025_12_09_b10000.npy", allow_pickle=True).item()
+result = np.load("data/Figure_3_4_5.npy", allow_pickle=True).item()
 
 non_vacuum_number = result["non_vacuum_number"]
 snr_entangled_35 = result["eps"]['0.35']['snr']
@@ -46,19 +50,18 @@ snr_sps = np.array([snr_sps_35, snr_sps_57, snr_sps_80, snr_sps_100])
 
 snr_laser = result["laser"]["snr"]
 
-
 plt.style.use("https://raw.githubusercontent.com/dccote/Enseignement/master/SRC/dccote-errorbars.mplstyle")
 
 fig, ax1 = plt.subplots(figsize=(16.2, 10))
 
-ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_35, "-", label="Entangled Photon Source", color="green",
+ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_35, "-", label="Correlated Photon Pair Source", color="green",
              linewidth=3, zorder=1)
 ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_57, "-", color="green", linewidth=3, zorder=1)
 ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_80, "-", color="green", linewidth=3, zorder=1)
 ax1.semilogy(non_vacuum_number / 1e3, snr_entangled_100, "-", color="green", linewidth=3, zorder=1)
 ax1.semilogy(non_vacuum_number / 1e3, snr_laser, "-.", label="Pulsed Laser", color="blue", linewidth=3, zorder=2)
-ax1.scatter(number_nv_pulse_sps / 1e3, snr_sps, label="Single Photon Source", color="red", s=100, zorder=3)
-ax1.scatter(number_nv_pulse_sps_array_10 / 1e3, snr_sps_array_10, label="Array of 10 Single Photon Sources", color="red", s=75, marker="s", zorder=3, alpha=0.7)
+ax1.scatter(number_nv_pulse_sps / 1e3, snr_sps, label="Single-Photon Source", color="red", s=100, zorder=3)
+ax1.scatter(number_nv_pulse_sps_array_10 / 1e3, snr_sps_array_10, label="Array of 10 Single-Photon Sources", color="red", s=75, marker="s", zorder=3, alpha=0.7)
 
 ax1.axvspan(50000 / 1e3, 100000 / 1e3, color="dodgerblue", alpha=0.35, label="Preferred regime against a non-PNR det.", zorder=0)
 ax1.axvspan(350000 / 1e3, 400000 / 1e3, color="lightcoral", alpha=0.35, label="Preferred regime against a PNR det.", zorder=0)
@@ -74,16 +77,19 @@ xticks = [x for x in xticks if x <= 400000 / 1e3]
 ax1.set_xticks(xticks)
 
 x_pos = 4e5 + 0.05e5
-ax1.text(x_pos / 1e3, snr_sps_35 - 1, "35%", fontsize=22, fontweight="bold")
-ax1.text(x_pos / 1e3, snr_sps_57 - 2, "57%", fontsize=22, fontweight="bold")
-ax1.text(x_pos / 1e3, snr_sps_80 - 2, "80%", fontsize=22, fontweight="bold")
-ax1.text(x_pos / 1e3, snr_sps_100, "100%", fontsize=22, fontweight="bold")
-ax1.text(x_pos / 1e3, snr_sps_100 + 20, r"$\eta_{signal}$", fontsize=28, fontweight="bold")
+y_factor = 1
+text_fontsize = 22
+ax1.text(x_pos / 1e3, snr_sps_35 - 1/y_factor, "35%", fontsize=text_fontsize, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_57 - 2/y_factor, "57%", fontsize=text_fontsize, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_80 - 2/y_factor, "80%", fontsize=text_fontsize, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_100, "100%", fontsize=text_fontsize, fontweight="bold")
+ax1.text(x_pos / 1e3, snr_sps_100 + 20/y_factor, r"$\eta_{signal}$", fontsize=28, fontweight="bold")
 
-ax1.text((number_nv_pulse_sps_array_10[-1] - 40000) / 1e3, snr_sps_array_10[-1] - 20, "100%", fontsize=22, fontweight="bold")
-ax1.text((number_nv_pulse_sps_array_10[-2] - 20000) / 1e3, snr_sps_array_10[-2] - 60, r"80%", fontsize=22, fontweight="bold")
-ax1.text((number_nv_pulse_sps_array_10[-3] - 10000) / 1e3, snr_sps_array_10[-3] - 45, r"57%", fontsize=22, fontweight="bold")
-ax1.text((number_nv_pulse_sps_array_10[-4] - 7500) / 1e3, snr_sps_array_10[-4] - 25, r"35%", fontsize=22, fontweight="bold")
+offset_x_axis_100p = 40000  # Normally 40000
+ax1.text((number_nv_pulse_sps_array_10[-1] - offset_x_axis_100p) / 1e3, snr_sps_array_10[-1] - 20/y_factor, "100%", fontsize=text_fontsize, fontweight="bold")
+ax1.text((number_nv_pulse_sps_array_10[-2] - 20000) / 1e3, snr_sps_array_10[-2] - 65/y_factor, r"80%", fontsize=text_fontsize, fontweight="bold")
+ax1.text((number_nv_pulse_sps_array_10[-3] - 10000) / 1e3, snr_sps_array_10[-3] - 55/y_factor, r"57%", fontsize=text_fontsize, fontweight="bold")
+ax1.text((number_nv_pulse_sps_array_10[-4] - 7500) / 1e3, snr_sps_array_10[-4] - 30/y_factor, r"35%", fontsize=text_fontsize, fontweight="bold")
 
 
 

@@ -4,28 +4,15 @@
 
 This module is a simple Python package used to compute the performance of different single-photon-level sources for quantum lidar applications. The sources studied in this work are:
 1) Single-photon sources based on quantum dots
-2) Entangled photon-pair sources based on spontaneous parametric down-conversion (SPDC)
-3) Attenuated pulsed lasers
+2) Correlated photon pair source based on spontaneous parametric down-conversion (SPDC)
+3) Attenuated pulsed laser
 
-The goal of this work is to provide a fair comparison of the performance of lidar systems for stealth applications. The lidar systems modeled in this work use a source and a detector operating in the single-photon regime. No joint measurement is performed.
-To ensure a fair comparison between the different sources, time correlation is employ for all. For the entangled-photon source, the detection of an idler photon is used to trigger the start of the time-correlation window, and coincidence detection is performed. For the single-photon sources and the attenuated pulsed laser, the triggering electrical signal is used for coincidence detection.
-In order to perform a fair comparison, one must fix the optical power leaving the system and one of the following:
+The goal of this work is to provide a fair comparison of the performance of lidar systems for stealth applications. The lidar systems modeled in this work use a source and a detector operating in the single-photon regime.
+To ensure a fair comparison between the different sources, time correlation is employed for all. For the correlated photon pair source, the detection of an idler photon is used to trigger the start of the time-correlation window, and coincidence detection is performed. For the single-photon sources and the attenuated pulsed laser, the triggering electrical signal is used for coincidence detection.
 
-1) The non-vacuum probability: the probability that at least one photon is emitted and leaves the lidar system.
-2) The multi-photon probability: the probability that more than one photon is emitted and leaves the lidar system
+Two parameters are of interest to ensure a fair comparison for each source: the optical power leaving the lidar system ($P_{out}$) in photons per second and how the optical power is distributed. While the former is straightforward to apply (i.e. all source must be equalized in term of optical power), the latter is remarkably subtle to determine and requires careful consideration. Indeed, once the optical power is fixed, one may instead choose to equalize the source triggering rate, the mean photon number per pulse, the probability of emitting at least one photon per pulse, or other quantities. Consequently, there are many ways to distribute the same optical power, each leading to different performance because the sources exhibit fundamentally different photon-number statistics. To address this, we revert back to the main application of quantum lidar with sources at the single-photon level: covert ranging. Therefore, in addition to equalizing the optical power, we equalize the average photon number per non-vacuum pulse ($\mathcal{N}_{nv}$) for each source. This quantity corresponds to the mean photon number conditioned on a non-vacuum emission and can be interpreted as the mean photon number measured by an adversary equipped with an ideal detector. This choice anchors the comparison in the primary application of quantum lidar. Under this criterion, all sources present the adversary with the same optical power and the same mean photon number per detected pulse, thereby equalizing their detectability.
 
-
-##### Why those parameters ?
-
-A quantum lidar system with single-photon-level sources allows for enhanced stealthiness, which is defined as the ability to detect an adversary without being detected. This application is considered the primary use case for quantum lidar systems operating in the single-photon regime.
-
-If the target possesses a classical photodetector, then it cannot detect the quantum lidar. However, if it possesses a single-photon detector, it might be able to detect it.
-
-By matching the non-vacuum probability, one can compare different sources when they are equally detectable by an adversary with a non-number-resolving detector. By matching the multi-photon probability, one can compare the sources when they are equally detectable by an adversary with a number-resolving detector.
-
-The metrics used are the signal-to-noise ratio (SNR) as well as the receiver operating characteristic (ROC) curves.
-
-The details are presented in the paper [add reference]. The paper should be read before diving into the code and the tutorials.
+The details are presented in the paper [reference to be added soon]. We recommend that interested readers read the paper before diving into the code and tutorials.
 
 ## Quick Usage Preview
 ### Calculating the SNR When the Multi-Photon Probability Is Matched Across Sources
@@ -108,9 +95,7 @@ TODO: ADD LINK TO PAPER AND ADD THE FACT THAT PEOPLE CAN REPRODUCE THE GRAPH
 
 ## Authors
 
-This work was carried out by Anthony Drouin (IQC/UWaterloo), Dr. Jean-Philippe Bourgoin (Single Quantum System), Dr. Sara Hosseini (IQC/UWaterloo/NRC), Prof. François Sfigakis (IQC/UWaterloo), Prof. Jonathan Baugh (IQC/UWaterloo), and Prof. Michael E. Reimer (IQC/UWaterloo/Single Quantum System). Prof. Michael E. Reimer is the corresponding author for this work (michael.reimer@uwaterloo.ca).
-
-The implementation of the theoretical model was done by Anthony Drouin (anthony.drouin@uwaterloo.ca).
+This work was carried out by Anthony Drouin (IQC/UWaterloo), Dr. Jean-Philippe Bourgoin (Single Quantum System), Dr. Sara Hosseini (IQC/UWaterloo/NRC), Prof. François Sfigakis (IQC/UWaterloo), Prof. Jonathan Baugh (IQC/UWaterloo), and Prof. Michael E. Reimer (IQC/UWaterloo/Single Quantum System). Anthony Drouin is the corresponding author for this work (anthony.drouin@uwaterloo.ca).
 
 ## License
 

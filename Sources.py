@@ -330,8 +330,47 @@ class SinglePhoton(Source):
 
 	def single_photon_state(self):
 		"""
-		Compute the state of the single photon source
-		:return: State of the single photon source [Qobj]
+	    Compute the photon-number state of multiple identical single-photon sources.
+
+	    The single-photon source is initially described as a superposition of vacuum,
+	    single-photon, and two-photon emission events:
+
+	        |psi> = sqrt(P0)|0> + sqrt(P1)|1> + sqrt(P2)|2>
+
+	    where P1 and P2 are the probabilities of emitting one and two photons,
+	    respectively. The state of multiple independent sources is obtained by
+	    repeatedly combining identical source states. Since independent sources add
+	    their photon numbers, the photon-number probability distribution is computed
+	    through successive convolutions.
+
+	    For a number of sources equal to a power of two, the algorithm recursively
+	    doubles the number of sources at each iteration:
+
+	        1 SPS -> 2 SPS -> 4 SPS -> 8 SPS -> ...
+
+	    At each step, the current photon-number distribution is combined with an
+	    identical copy of itself. The resulting probability for a total photon number
+	    N is obtained by summing all combinations satisfying:
+
+	        N = i + j
+
+	    where i and j are photon numbers emitted by the two independent source groups.
+
+	    A special case is implemented for 10 sources. The state of 8 sources is first
+	    generated using the recursive doubling method, and then combined with the
+	    stored state of 2 sources to obtain the final 10-source state.
+
+	    :return:
+	        QuTiP quantum object containing the normalized photon-number state
+	        of all single-photon sources. The basis corresponds to the total
+	        number of emitted photons.
+
+	    Notes:
+	        The implementation assumes that the initial source state has real,
+	        positive amplitudes, such that squaring the density matrix elements
+	        is equivalent to computing the product of photon-number probabilities
+	        during the convolution process. The final state models the correct photon
+	        number statistic but should not be used for phase-sensitive calculations.
 		"""
 		vacuum = np.sqrt(1 - (self.sp_p1 + self.sp_p2)) * self.vacuum
 		single_photon = np.sqrt(self.sp_p1) * basis(3, 1)
@@ -439,72 +478,6 @@ class SinglePhoton(Source):
 		"""
 		return self.compute_effective_trigger_rate()
 
-
-class ArraysSinglePhoton(SinglePhoton):
-
-	def __init__(self, params, number_sps: int, **kwargs):
-		params["fock_space_dim"] = 2 * number_sps + 1
-		super().__init__(params)
-		self.number_sps = number_sps
-
-		self.assert_params()
-
-	def assert_params(self):
-		assert self.number_sps > 0 and (self.number_sps & (self.number_sps - 1)) == 0
-
-	def compute_effective_no_vacuum_probability(self):
-		return 1 - ((1 - self.no_vacuum_probability) ** self.number_sps)
-
-	def compute_number_nv_pulse(self):
-		return self.trigger_rate * self.compute_effective_no_vacuum_probability()
-
-	def compute_trigger_rate_arrays(self):
-		return self.output_power / (self.average_photon_per_pulse * self.extr_efficiency * self.number_sps)
-
-	def arrays_single_photon_state(self):
-		# TODO: Confirm algorithm
-
-		three_fock_dim_param = deepcopy(self.params)
-		three_fock_dim_param["fock_space_dim"] = 3
-		single_photon_state = SinglePhoton(three_fock_dim_param).single_photon_state()
-
-		n = int(np.log2(self.number_sps))
-
-		if n == 0:
-			return single_photon_state
-
-		for _ in range(n):
-			rho = tensor(single_photon_state, single_photon_state).full()
-			m = rho.shape[0]
-			single_photon_state = np.zeros(2 * n - 1, dtype=rho.dtype)
-
-			for i in range(m):
-				for j in range(m):
-					single_photon_state[i+j] += rho[i, j]
-
-			single_photon_state = Qobj(single_photon_state)
-
-		return single_photon_state
-
-	def signal_rate(self):
-		single_photon_state = self.arrays_single_photon_state()
-		signal_rate = self.compute_trigger_rate_arrays() * (
-					1 - ((1 - expect(self.apd_detector, single_photon_state)) ** self.number_sps))
-		return signal_rate
-
-	def noise_rate(self):
-		return self.compute_trigger_rate_arrays() * expect(self.apd_detector, self.vacuum)
-
-	def signal_to_noise_rate(self):
-		signal = self.signal_rate()
-		noise = self.noise_rate()
-		return (signal - noise) / noise
-
-	@property
-	def trigger_rate(self):
-		return self.compute_trigger_rate_arrays()
-
-
 class EntangledPhotonSPDC(Source):
 	"""
 	This class models an entangled photon source using SPDC. The output power is always fixed by the user. From there,
@@ -601,9 +574,9 @@ class EntangledPhotonSPDC(Source):
 		operator_idler_only = tensor(self.apd_detector_idler, qeye(self.fock_space_dim))
 		joint_vacuum_state = tensor(self.vacuum, self.vacuum)
 		prob_detecting_idler = expect(operator_idler_only, self.eps_state)
-		prob_dark_count = expect(operator_idler_only, joint_vacuum_state)
 		eps_rate = self.compute_eps_rate()
-		return eps_rate * (prob_detecting_idler + prob_dark_count * ((1 / (eps_rate * self.timing_window)) - 1))
+		return eps_rate * prob_detecting_idler
+
 
 	def compute_eps_rate(self):
 		"""
@@ -662,9 +635,8 @@ class EntangledPhotonSPDC(Source):
 		joint_vacuum = tensor(self.vacuum, self.vacuum)
 
 		prob_joint_detection = expect(operator_joint_detection, self.eps_state)
-		prob_joint_dark_counts = expect(operator_joint_detection, joint_vacuum)
 
-		return eps_rate * (prob_joint_detection + prob_joint_dark_counts * ((1 / (eps_rate * self.timing_window)) - 1))
+		return eps_rate * prob_joint_detection
 
 	def noise_rate(self):
 		"""
@@ -708,60 +680,6 @@ class EntangledPhotonSPDC(Source):
 		"""
 		last_element_prob = np.abs(self.eps_state[-1]) ** 2
 		return last_element_prob[0]
-
-
-# class EntangledPhotonContinuousSPDC(EntangledPhotonSPDC):
-#
-# 	def __init__(self, params, **kwargs):
-# 		super().__init__(params)
-# 		self.kwargs = kwargs
-# 		self.eps_rate_continuous, self.epsilon_continuous = self.adjusted_parameters()
-#
-# 	def adjusted_parameters(self):
-# 		eps_rate = self.compute_eps_rate()
-# 		epsilon_continuous = (self.epsilon * self.timing_window) / (1 / eps_rate)
-# 		return self.compute_eps_rate_continuous(), epsilon_continuous
-#
-# 	def compute_eps_rate_continuous(self):
-# 		return 1 / self.timing_window
-#
-# 	def squeezed_operator(self):
-# 		a = destroy(self.fock_space_dim)
-# 		a_dagger = create(self.fock_space_dim)
-# 		spdc_epsilon_continuous = np.arcsinh(np.sqrt(self.epsilon_continuous))
-# 		argument = -1j * (tensor(a, a) + tensor(a_dagger, a_dagger)) * spdc_epsilon_continuous
-# 		squeezed_operator = argument.expm()
-# 		return squeezed_operator
-#
-# 	def compute_spdc_eps_state(self):
-# 		squeezed_operator = self.squeezed_operator()
-# 		return squeezed_operator * tensor(self.vacuum, self.vacuum)
-#
-# 	def compute_effective_trigger_rate_continuous(self):
-# 		return (self.output_power * self.spdc_eps_heralding) / (
-# 				self.spdc_eps_collection * (1 + self.epsilon_continuous * self.spdc_eps_heralding))
-#
-# 	def signal_rate(self):
-# 		operator_joint_detection = tensor(self.apd_detector_idler, self.apd_detector_signal)
-# 		return self.eps_rate_continuous * expect(operator_joint_detection, self.compute_spdc_eps_state())
-#
-# 	def noise_rate(self):
-# 		operator_detector_signal_only = tensor(qeye(self.fock_space_dim), self.apd_detector_signal)
-# 		joint_vacuum = tensor(self.vacuum, self.vacuum)
-# 		return self.compute_effective_trigger_rate_continuous() * expect(operator_detector_signal_only, joint_vacuum)
-#
-# 	def signal_to_noise_rate(self):
-# 		signal = self.signal_rate()
-# 		noise = self.noise_rate()
-# 		return (signal - noise) / noise
-#
-# 	@property
-# 	def average_photon_per_pulse(self):
-# 		return self.epsilon_continuous
-#
-# 	def prob_of_last_element_fock_space(self):
-# 		last_element_prob = np.abs(self.compute_spdc_eps_state()[-1]) ** 2
-# 		return last_element_prob[0]
 
 
 class SetupParameters:

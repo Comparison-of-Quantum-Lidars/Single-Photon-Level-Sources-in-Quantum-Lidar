@@ -311,6 +311,8 @@ class RangeLimitation:
 			threshold_limit_factor_roc: int,
 			number_nv_pulse_for_match: Optional[float] = None,
 			number_sps_array: int = 1,
+			early_stop: bool = False,
+			show_progress_bar: bool = True
 	):
 		"""
 		:param params: SetupParams object containing the parameters of the LiDAR system.
@@ -331,6 +333,9 @@ class RangeLimitation:
 		impossible to cross it. The better is the system, the lower should be this parameter. The threshold is computed
 		using trigger_rate/threshold_limit_factor_roc.
 		:param number_sps_array: Number of Single Photon sources to consider in the analysis.
+		:param early_stop: If True, the computation will stop for a given acquisition time when the true positive rate
+		is below the target true positive rate for all sources. This can save computation time when the distance is too large for the given acquisition time.
+		:param show_progress_bar: If True, a progress bar will be shown during the computation.
 		"""
 		self.params = params
 		self.parameter_to_match = parameter_to_match
@@ -342,6 +347,8 @@ class RangeLimitation:
 		self.precision_roc = precision_roc
 		self.threshold_limit_factor_roc = threshold_limit_factor_roc
 		self.number_sps_array = number_sps_array
+		self.early_stop = early_stop
+		self.show_progress_bar = show_progress_bar
 
 		self.number_nv_pulse_for_match = number_nv_pulse_for_match if number_nv_pulse_for_match is not None else params["number_nv_pulse"]
 
@@ -440,7 +447,18 @@ class RangeLimitation:
 		:return: a dictionary containing the distance, the SNR for each source, the distance cutoff for each source and
 		the SNR at the distance cutoff for each source. [dict]
 		"""
-		for idx, d in enumerate(tqdm(self.distance)):
+		early_stop_dict = {
+			"laser": {acquisition_time: False for acquisition_time in self.acquisition_time},
+			"sps": {acquisition_time: False for acquisition_time in self.acquisition_time},
+			"eps": {acquisition_time: False for acquisition_time in self.acquisition_time}
+		}
+
+		if not self.keep_sps:
+			early_stop_dict["sps"] = {acquisition_time: True for acquisition_time in self.acquisition_time}
+
+		for idx, d in enumerate(tqdm(self.distance, disable=not self.show_progress_bar)):
+			if self.early_stop and all(early_stop_dict[source][at] for source in early_stop_dict for at in early_stop_dict[source]):
+				break
 			self.param_laser["target_distance"] = d
 			self.param_sps["target_distance"] = d
 			self.param_eps["target_distance"] = d
@@ -470,6 +488,11 @@ class RangeLimitation:
 			self.snr_eps.append(snr_eps_current)
 
 			for at in self.acquisition_time:
+
+				if self.early_stop:
+					if early_stop_dict["laser"][at] and early_stop_dict["sps"][at] and early_stop_dict["eps"][at]:
+						continue
+
 				true_positive_laser, false_positive_laser = self.compute_roc_curve(
 					signal=signal_laser,
 					noise=noise_laser,
@@ -513,6 +536,14 @@ class RangeLimitation:
 					np.flip(false_positive_eps),
 					np.flip(true_positive_eps)
 				)
+
+				if self.early_stop:
+					if self.true_positive_at_target_false_value_laser[at][idx] < self.target_true_positive:
+						early_stop_dict["laser"][at] = True
+					if self.keep_sps and self.true_positive_at_target_false_value_sps[at][idx] < self.target_true_positive:
+						early_stop_dict["sps"][at] = True
+					if self.true_positive_at_target_false_value_eps[at][idx] < self.target_true_positive:
+						early_stop_dict["eps"][at] = True
 
 		results = self.prepare_results()
 

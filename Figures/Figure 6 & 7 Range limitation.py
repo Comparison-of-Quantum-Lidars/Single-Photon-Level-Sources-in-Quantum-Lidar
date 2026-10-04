@@ -58,7 +58,7 @@ results = RangeLimitation(
 	number_nv_pulse_for_match=number_nv_pulse_sps,
 	number_sps_array=number_sps_array
 )#.compute()
-# Uncomment to generate new data
+# Uncomment .compute() to generate new data
 
 ### LOAD PREVIOUS DATA ###
 
@@ -124,20 +124,20 @@ plt.tick_params(axis='both', which='major', labelsize=25)
 plt.xlim([0, 50])
 plt.show()
 
-exit()
 
 ### Option to check the ROC curves at a given distance ###
 
-distance = 28
-at = 3600.0
+distance = 300
+at = 3600
 range_interval = distance
-threshold_limit_factor = 500
+threshold_limit_factor = 0.5
 
 param_test = deepcopy(param)
+param_test["receiver_diameter"] = 2
 param_test["number_nv_pulse"] = None
 param_test["target_distance"] = distance
 
-sps = SinglePhoton(param_test, number_sps=1)
+sps = SinglePhoton(param_test, number_sps=10)
 param_test["number_nv_pulse"] = sps.number_nv_pulse
 
 laser = PulsedLaser(param_test)

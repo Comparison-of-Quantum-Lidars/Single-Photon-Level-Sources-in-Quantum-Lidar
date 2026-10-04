@@ -16,6 +16,6 @@ Graphs/data/match_mpp_June13.npz
 Graphs/data
 Graphs/
 Pre-Analysis Graphs/
-Figures_to_del/
+/Figures_to_del/
 old_version/
 *.npy

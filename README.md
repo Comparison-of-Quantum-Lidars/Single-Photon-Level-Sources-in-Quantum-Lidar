@@ -85,9 +85,41 @@ Tutorials on using this module are available and should be followed in order:
 3) [Histogram simulation](Tutorials/Histogram%20simulation.ipynb)
 4) [Range limitation](Tutorials/Range%20limitation.ipynb)
 
-## Paper
+## Manuscript
 
-TODO: ADD LINK TO PAPER AND ADD THE FACT THAT PEOPLE CAN REPRODUCE THE GRAPH
+This work is part of the manuscript *Comparison and limitations of quantum lidar in the single-photon regime*, published in *Optica Quantum*, which is accessible [here](https://doi.org/10.1364/OPTICAQ.579366). We encourage readers to familiarize themselves with the content of the manuscript before using this package.
+
+While we have made every effort to make the package as easy to use as possible, we do not claim that it follows all best practices for code formatting and presentation. However, we believe that science benefits from open and accessible research, which is why we are making our code publicly available.
+
+Every figure from the manuscript can be reproduced using the provided scripts, with the exception of Fig. 1 and Fig. 2, which are schematics. The scripts used to reproduce the figures are located in the [Figures](Figures) folder.
+
+### Figures 3, 4, and 5
+
+To reproduce Figures 3, 4, and 5, the user must first run [Figure 3_4_5 data generator.py](Figures/Figure%203_4_5%20data%20generator.py). This script generates a `.npy` file containing the raw data used for the figures, including the SNR and triggering rate for different collection efficiencies and numbers of single-photon sources (SPS).
+
+Generating this file may take some time, as it requires a large number of calculations. Once the `.npy` file has been generated, [Figure 3 - SNR vs number non vacuum pulse.py](Figures/Figure%203%20-%20SNR%20vs%20number%20non%20vacuum%20pulse.py) can be run to reproduce Figure 3.
+
+Figures 4 and 5 can be reproduced using [Figure 4 & 5 - ROC curves.py](Figures/Figure%204%20%26%205%20-%20ROC%20curves.py). Before running the script, the user must specify the number of SPS using the `number_sps` variable:
+
+- `number_sps = 10` reproduces Figure 4.
+- `number_sps = 1` reproduces Figure 5.
+
+### Figures 6 and 7
+
+Figures 6 and 7 can be reproduced using [Figure 6 & 7 Range limitation.py](Figures/Figure%206%20%26%207%20Range%20limitation.py).
+
+Before running the script, the user must set `number_sps_array` to the desired number of SPS:
+
+- `number_sps_array = 10` reproduces Figure 6.
+- `number_sps_array = 1` reproduces Figure 7.
+
+On the first run, the `.compute()` command at line 60 can be uncommented to generate the required `.npy` file. Generating this file may take some time. Once the `.npy` file has been generated, we recommend commenting out `.compute()` again and loading the saved dataset instead. This avoids repeating the computationally intensive calculation each time the script is run.
+
+### Supplementary Figures
+
+A similar procedure is required for [Figure S2](Figures/Figure%20S2%20-%20Distance%20vs%20apperture.py) and [Figure S3](Figures/Figure%20S3%20-%20Distance%20vs%20acquisition%20time.py). The first time the scripts are run, the required `.npy` files must be generated using `.compute()`. Once the data have been generated, the calculation can be commented out and the saved datasets can be loaded for faster execution.
+
+[Figure S1](Figures/Figure%20S1%20-%20ROC%20curves%20%26%20Histogram%20simulation.py) can be run directly without first generating a dataset.
 
 ## Citation
 

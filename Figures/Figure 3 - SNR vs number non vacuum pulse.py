@@ -63,8 +63,8 @@ ax1.semilogy(non_vacuum_number / 1e3, snr_laser, "-.", label="Pulsed Laser", col
 ax1.scatter(number_nv_pulse_sps / 1e3, snr_sps, label="Single-Photon Source", color="red", s=100, zorder=3)
 ax1.scatter(number_nv_pulse_sps_array_10 / 1e3, snr_sps_array_10, label="Array of 10 Single-Photon Sources", color="red", s=75, marker="s", zorder=3, alpha=0.7)
 
-ax1.axvspan(50000 / 1e3, 100000 / 1e3, color="dodgerblue", alpha=0.35, label="Preferred regime against a non-PNR det.", zorder=0)
-ax1.axvspan(350000 / 1e3, 400000 / 1e3, color="lightcoral", alpha=0.35, label="Preferred regime against a PNR det.", zorder=0)
+ax1.axvspan(50000 / 1e3, 100000 / 1e3, color="dodgerblue", alpha=0.35, hatch='//', label="Preferred regime against a non-PNR det.", zorder=0)
+ax1.axvspan(350000 / 1e3, 400000 / 1e3, color="lightcoral", alpha=0.35, hatch='..', label="Preferred regime against a PNR det.", zorder=0)
 
 ax1.set_xlabel(r"Number of non-vacuum pulses $(\times 10^3)$", fontsize=25)
 ax1.set_ylabel("SNR", fontsize=25)
@@ -115,4 +115,5 @@ secax.set_xlabel("Average photon number per non-vacuum pulse", fontsize=25)
 secax.set_ticks(xticks_second)
 secax.tick_params(axis="x", labelsize=25)
 
+#plt.savefig("SNR_vs_number_non_vacuum_pulse.png", dpi=600, bbox_inches="tight")
 plt.show()

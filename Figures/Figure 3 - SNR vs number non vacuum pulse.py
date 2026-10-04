@@ -3,10 +3,6 @@ import matplotlib.pyplot as plt
 from Sources import SinglePhoton
 from copy import deepcopy
 
-#result = np.load("data/fig_3_4_5_matching_number_non_vacuum_pulses.npy", allow_pickle=True).item()
-#result = np.load("data/3m_snr_matching_non_vacuum_pulse_sps_array_2025_12_09.npy", allow_pickle=True).item()
-#result = np.load("data/3m_snr_matching_non_vacuum_pulse_sps_array_2025_12_09_b100.npy", allow_pickle=True).item()
-#result = np.load("data/3m_snr_matching_non_vacuum_pulse_sps_array_2025_12_09_b10000.npy", allow_pickle=True).item()
 result = np.load("data/Figure_3_4_5.npy", allow_pickle=True).item()
 
 non_vacuum_number = result["non_vacuum_number"]

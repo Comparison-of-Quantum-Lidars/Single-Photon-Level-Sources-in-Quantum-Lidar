@@ -123,7 +123,7 @@ A similar procedure is required for [Figure S2](Figures/Figure%20S2%20-%20Distan
 
 ## Citation
 
-[...]
+Anthony Drouin, Jean-Philippe Bourgoin, Sara Hosseini, François Sfigakis, Jonathan Baugh, and Michael E. Reimer, "Comparison and limitations of quantum lidar in the single-photon regime," Optica Quantum 4, 496-510 (2026)
 
 ## Authors
 
